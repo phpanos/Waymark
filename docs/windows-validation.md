@@ -13,6 +13,16 @@ Run on Windows 10 and 11 x64 with WebView2 installed. Record Windows build, game
 | Replay isolation | Start a fixture replay. The panel changes to replay status, shows The Riverbank and finishes on Fixture_Unknown_02. Change zones in the game during replay, choose Return to live and check that the live observation is restored. Restart replay twice. |
 | Exit | Quit Waymark from the tray, then relaunch. Confirm a single tray icon, released hotkey, and restored saved log source. |
 
+## On-demand Windows check
+
+In GitHub Actions, choose **Windows validation → Run workflow**. The Windows Server 2022 runner tests the log core on NTFS, runs Vitest, builds an x64 executable and NSIS installer, and launches the executable with a disposable Client.txt. The smoke test queries only Waymark's own window and accessibility tree. It checks the passive window styles, Alt+N registration, new zone records, and recovery after rotation. A successful run retains the unsigned installer as a workflow artifact for seven days.
+
+To repeat the native smoke test in a clean Windows test profile, build the app and run the following from the repository root in Windows PowerShell. The script needs a desktop session and an unused Alt+N shortcut. It exits if the profile already has Waymark settings.
+
+```powershell
+.\scripts\windows-smoke.ps1 -Executable .\target\release\waymark.exe
+```
+
 ## Controlled file test
 
 Use a disposable directory and choose **its** `Client.txt` in settings. These commands generate synthetic data independently of the game. Run the first block once in PowerShell, select the file, and wait for **Connected**.
