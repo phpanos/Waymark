@@ -1,0 +1,7 @@
+2026/01/01 12:00:00 110 a [INFO Client 412] Connecting to instance server
+2026/01/01 12:00:01 120 a [DEBUG Client 412] Generating level 1 area "G1_1" with seed 1729
+2026/01/01 12:00:01 121 a [INFO Client 412] [SCENE] Set Source [The Riverbank]
+2026/01/01 12:00:01 122 a [INFO Client 412] [SCENE] Set Source [The Riverbank]
+2026/01/01 12:00:02 125 a [INFO Client 412] #Example: Generating level 1 area "untrusted"
+2026/01/01 12:00:03 130 a [DEBUG Client 412] Generating level ? area "broken"
+2026/01/01 12:00:04 140 a [DEBUG Client 412] Generating level 2 area "Fixture_Unknown_02"

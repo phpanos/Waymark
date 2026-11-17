@@ -1,0 +1,12 @@
+{
+  "identifier": "local-events",
+  "description": "Both local views can subscribe to native state changes.",
+  "windows": [
+    "overlay",
+    "settings"
+  ],
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
+}
