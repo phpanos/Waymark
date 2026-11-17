@@ -4,8 +4,6 @@ param([Parameter(Mandatory)][string]$Executable)
 
 $ErrorActionPreference = 'Stop'
 $exe = (Resolve-Path -LiteralPath $Executable).Path
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
 Add-Type @'
 using System;
 using System.Runtime.InteropServices;
@@ -40,15 +38,6 @@ function Wait-For($Description, [scriptblock]$Probe) {
     throw "Timed out waiting for $Description"
 }
 
-function Wait-ForText([string]$Label) {
-    $match = [Windows.Automation.PropertyCondition]::new([Windows.Automation.AutomationElement]::NameProperty, $Label)
-    [void](Wait-For $Label {
-        $root = [Windows.Automation.AutomationElement]::FromHandle($hwnd)
-        $root.FindFirst([Windows.Automation.TreeScope]::Descendants, $match)
-    })
-    Write-Host "Overlay displayed '$Label'"
-}
-
 if (Get-Process waymark -ErrorAction SilentlyContinue) { throw 'Use a test profile with no running Waymark.' }
 if (!(Test-HotkeyAvailable)) { throw 'Alt+N is already registered before startup.' }
 $settingsDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'app.waymark.overlay'
@@ -69,7 +58,12 @@ try {
         $bytes = $utf8.GetBytes((@{logPath = $log} | ConvertTo-Json -Compress))
         $stream.Write($bytes, 0, $bytes.Length)
     } finally { $stream.Dispose() }
-    $process = Start-Process -FilePath $exe -PassThru
+    $profile = Join-Path $fixtureDir 'WebView2'
+    $start = [Diagnostics.ProcessStartInfo]::new($exe)
+    $start.UseShellExecute = $false
+    $start.EnvironmentVariables['WEBVIEW2_USER_DATA_FOLDER'] = $profile
+    $start.EnvironmentVariables['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS'] = '--remote-debugging-port=0 --remote-debugging-address=127.0.0.1'
+    $process = [Diagnostics.Process]::Start($start)
     $hwnd = Wait-For 'the compact Waymark window' {
         $process.Refresh()
         if ($process.MainWindowTitle -eq 'Waymark') { $process.MainWindowHandle }
@@ -81,19 +75,15 @@ try {
     if (![OverlayCheck]::IsWindowVisible($hwnd)) { throw 'Compact window is hidden.' }
     if ([OverlayCheck]::GetForegroundWindow() -eq $hwnd) { throw 'Compact window has foreground focus.' }
     if (Test-HotkeyAvailable) { throw 'Waymark did not register Alt+N.' }
-    Wait-ForText 'Connected'
-    Wait-ForText 'Awaiting zone'
-    [IO.File]::AppendAllText($log, ('Generating level 1 area "G1_1"' + "`r`n"), $utf8)
-    Wait-ForText 'The Riverbank'
-    [IO.File]::AppendAllText($log, "[SCENE] Set Source [Smoke test crossing]`r`n", $utf8)
-    Wait-ForText 'Smoke test crossing'
-    [IO.File]::Move($log, (Join-Path $fixtureDir 'Client.old'))
-    Wait-ForText 'File missing'
-    [IO.File]::WriteAllText($log, ('Generating level 9 area "Smoke_Unknown"' + "`r`n"), $utf8)
-    Wait-ForText 'Smoke_Unknown'
+    node (Join-Path $PSScriptRoot 'check-overlay.mjs') $profile $log
+    if ($LASTEXITCODE -ne 0) { throw 'Rendered overlay check failed.' }
     Write-Host 'Native overlay, hotkey registration and live log recovery passed.'
 } finally {
     if ($process -and !$process.HasExited) { $process.Kill(); $process.WaitForExit() }
     if ($createdSettings) { Remove-Item -LiteralPath $settingsFile }
-    if (Test-Path -LiteralPath $fixtureDir) { Remove-Item -Recurse -LiteralPath $fixtureDir }
+    # WebView2 child processes can briefly hold profile files after their host exits.
+    for ($i = 0; $i -lt 20 -and (Test-Path -LiteralPath $fixtureDir); $i++) {
+        Remove-Item -Recurse -Force -LiteralPath $fixtureDir -ErrorAction SilentlyContinue
+        if (Test-Path -LiteralPath $fixtureDir) { Start-Sleep -Milliseconds 250 }
+    }
 }
