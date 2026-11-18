@@ -181,9 +181,9 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
           {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
         </p>
       </>}
-      {reward && <div className="quest-reward">
+      {reward && <div className={town.claimTarget ? 'quest-reward with-claim-control' : 'quest-reward'}>
         <span className="optional-label">{pinned ? 'Pinned reward' : zone.arrivalReward?.optional ? 'Optional reward' : 'Reward'}</span>
-        <span><strong>{reward}</strong>
+        <span className="quest-reward-copy"><strong>{reward}</strong>
           {claim && <span className="reward-claim">{claim}</span>}
         </span>
         {town.claimTarget && <button type="button" className="reward-claim-button" data-reward-target={town.claimTarget} onClick={town.claim}>Mark claimed</button>}

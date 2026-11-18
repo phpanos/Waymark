@@ -89,6 +89,11 @@ button:disabled { opacity: .55; cursor: default }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
 .quest-reward { display: flex; align-items: baseline; gap: 6px; min-height: 17px; color: #dfc99d; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere }
 .quest-reward .optional-label { flex-shrink: 0 }
+.quest-reward.with-claim-control {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 6px; align-items: center;
+}
+.with-claim-control .quest-reward-copy { grid-area: 2 / 1 / 3 / -1 }
+.with-claim-control .reward-claim-button { grid-area: 1 / 2; justify-self: end }
 .reward-claim { display: block; color: var(--muted); font-weight: 400 }
 .objective-loot { display: block; color: #dfc99d; font-size: 12px }
 .build-milestone { margin-top: 3px; border-top: 1px solid var(--line); padding-top: 2px; color: #a9c6bf; font-size: 11px }
@@ -179,7 +184,6 @@ button:disabled { opacity: .55; cursor: default }
 .reward-direction { margin: 2px 0; color: var(--paper); font-size: 12px }
 .reward-feedback { color: var(--gold) }
 .reward-undo, .reward-claim-button { justify-self: start; border-radius: 3px; padding: 2px 7px; font-size: 11px }
-.reward-claim-button { flex-shrink: 0; margin-left: auto }
 .town-reward-actions, .town-reward-source { margin: 3px 0 }
 .town-reward-actions { display: flex; align-items: center; justify-content: space-between; gap: 6px }
 .town-reward-source { color: var(--muted); font-size: 11px }

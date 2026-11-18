@@ -479,11 +479,19 @@ try {
       await appendFile(log, `Generating level 40 area "${town}"\r\n`)
       await expectText(reward, '.quest-reward strong')
       await expectText(claim, '.quest-reward .reward-claim')
-      await waitFor('the town reward to fit in the overlay without opening the permanent reward list', () => evaluate(`(() => {
-        const card = document.querySelector('.compact').getBoundingClientRect()
-        const claim = document.querySelector('.reward-claim').getBoundingClientRect()
-        return claim.bottom < card.bottom && card.bottom <= innerHeight && !document.querySelector('.reward-list')
-      })()`))
+      await waitFor(`the ${town} reward and its controls to fit in the overlay`, async () => {
+        const { card, claim, button, viewport, recap } = await evaluate(`(() => ({
+          card: document.querySelector('.compact').getBoundingClientRect().bottom,
+          claim: document.querySelector('.reward-claim').getBoundingClientRect().bottom,
+          button: document.querySelector('.reward-claim-button')?.getBoundingClientRect().bottom ?? 0,
+          viewport: innerHeight,
+          recap: !!document.querySelector('.reward-list')
+        }))()`)
+        if (Math.max(claim, button) >= card || card > viewport || recap) {
+          throw new Error(JSON.stringify({ card, claim, button, viewport, recap }))
+        }
+        return true
+      })
     }
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
