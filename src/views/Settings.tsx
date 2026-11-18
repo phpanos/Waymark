@@ -35,7 +35,10 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
       <label key={name}>{name}<span><input type="number" min="0" max="4096" step="1" required value={value} onChange={e => set(e.target.value)}/> DIP</span></label>)}</div>
     <label className="check"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)}/>Follow the game window</label>
     <p className="hint">Current anchor · {anchored ? 'Game client area' : 'Primary display work area'}</p>
-    <button className="primary" disabled={!dirty}>Save position</button>
+    <div className="position-actions">
+      <button className="primary" disabled={!dirty}>Save position</button>
+      <button type="button" onClick={() => run(native.beginMove)}>Move overlay</button>
+    </div>
   </form>
 }
 
@@ -58,7 +61,7 @@ export function Settings({ state }: { state: Snapshot }) {
       <h2>{zone.title}</h2>{zone.act && <span className="act">Act {zone.act}</span>}
     </section>
     <nav aria-label="Settings sections">{(['Log source', 'Position', 'Diagnostics', 'Updates'] as const).map(t =>
-      <button key={t} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
+      <button key={t} disabled={state.moving || busy} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
     <fieldset className="pane" disabled={busy} aria-label={tab}>
       {tab === 'Log source' && <>
         <Field label="Client log"><div className="path">{state.settings.logPath || state.activePath || 'Looking for Client.txt…'}</div></Field>
@@ -66,7 +69,16 @@ export function Settings({ state }: { state: Snapshot }) {
         <div className="actions"><button className="primary" onClick={() => run(native.pick)}>Choose Client.txt…</button>
         {state.settings.logPath && <button onClick={() => run(native.discover)}>Use auto-detection</button>}</div>
       </>}
-      {tab === 'Position' && <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>}
+      {tab === 'Position' && <div hidden={state.moving}>
+        <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>
+      </div>}
+      {state.moving && <>
+        <p className="hint" role="status">Drag the Waymark header, then confirm here. The saved position stays within the current anchor.</p>
+        <div className="position-actions">
+          <button className="primary" onClick={() => run(() => native.finishMove(true))}>Confirm position</button>
+          <button onClick={() => run(() => native.finishMove(false))}>Cancel</button>
+        </div>
+      </>}
       <div hidden={tab !== 'Updates'}><Updates/></div>
       {tab === 'Diagnostics' && <>
         <Field label="Fixture replay"><p>Play a sample log through the zone detector. Live log observation continues in the background.</p></Field>

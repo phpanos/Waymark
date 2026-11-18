@@ -7,6 +7,7 @@ import { useSession } from './session'
 
 const snapshot: Snapshot = {
   version: 1, revision: 0, kind: 'snapshot', status: 'watching', zone: null,
+  moving: false,
   activePath: null, visible: true, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
   settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true } },
 }
@@ -26,6 +27,10 @@ describe('zone presentation', () => {
   it('prefers a scene label and handles waiting for the first record', () => {
     expect(describeZone({areaId:'future',name:'A new zone',level:null}).title).toBe('A new zone')
     expect(describeZone(null).title).toBe('Awaiting zone')
+  })
+  it('shows the drag handle only during move mode', () => {
+    expect(renderToStaticMarkup(<Compact state={snapshot}/>)).not.toContain('Drag Waymark here')
+    expect(renderToStaticMarkup(<Compact state={{ ...snapshot, moving: true }}/>)).toContain('Drag Waymark here')
   })
 })
 

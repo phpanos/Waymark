@@ -7,9 +7,38 @@ use windows_sys::Win32::{
     },
     UI::{
         HiDpi::{GetDpiForMonitor, GetDpiForWindow, MDT_EFFECTIVE_DPI},
+        Input::KeyboardAndMouse::{GetAsyncKeyState, ReleaseCapture, VK_LBUTTON, VK_RBUTTON},
         WindowsAndMessaging::*,
     },
 };
+
+pub fn start_drag(hwnd: isize) -> io::Result<()> {
+    unsafe {
+        let button = if GetSystemMetrics(SM_SWAPBUTTON) == 0 {
+            VK_LBUTTON
+        } else {
+            VK_RBUTTON
+        };
+        if GetAsyncKeyState(i32::from(button)) >= 0 {
+            return Ok(());
+        }
+        let mut cursor = POINT::default();
+        if GetCursorPos(&mut cursor) == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        // The caption message packs signed screen coordinates into its low and high words.
+        let coords = u32::from(cursor.x as u16) | (u32::from(cursor.y as u16) << 16);
+        ReleaseCapture();
+        if PostMessageW(hwnd as HWND, WM_NCLBUTTONDOWN, HTCAPTION as usize, coords as isize) == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        Ok(())
+    }
+}
+
+pub fn cancel_drag(hwnd: isize) {
+    unsafe { SendMessageW(hwnd as HWND, WM_CANCELMODE, 0, 0) };
+}
 
 /// Only remember a handle observed in the foreground. Revalidate before every use.
 #[derive(Default)]
@@ -68,14 +97,46 @@ unsafe fn primary_bounds() -> io::Result<(RECT, u32)> {
     Ok((info.rcWork, dpi))
 }
 
+struct Anchor {
+    rect: RECT,
+    dpi: i32,
+    width: i32,
+    height: i32,
+    game: bool,
+}
+
+impl Anchor {
+    fn pixels(&self, dip: u16) -> i32 {
+        (i32::from(dip) * self.dpi + 48) / 96
+    }
+
+    fn inset(&self, pixels: i32) -> u16 {
+        let dpi = i64::from(self.dpi);
+        ((i64::from(pixels) * 96 + dpi / 2) / dpi).min(4096) as u16
+    }
+
+    fn origin(&self, p: Placement) -> (i32, i32) {
+        let r = self.rect;
+        let dx = self.pixels(p.inset_x).min(r.right - r.left - self.width);
+        let dy = self.pixels(p.inset_y).min(r.bottom - r.top - self.height);
+        let x = match p.corner {
+            Corner::TopLeft | Corner::BottomLeft => r.left + dx,
+            _ => r.right - self.width - dx,
+        };
+        let y = match p.corner {
+            Corner::TopLeft | Corner::TopRight => r.top + dy,
+            _ => r.bottom - self.height - dy,
+        };
+        (x, y)
+    }
+}
+
 impl Tracker {
-    /// All coordinates are physical desktop pixels. The webview layout and insets use DIPs.
-    pub fn apply(&mut self, hwnd: isize, p: Placement, visible: bool) -> io::Result<bool> {
+    fn anchor(&mut self, follow_game: bool) -> io::Result<Anchor> {
         // HWNDs are borrowed OS identifiers; failed/stale lookups fall back to the work area.
         unsafe {
-            let hwnd = hwnd as HWND;
             let mut bounds = None;
-            if p.follow_game {
+            if follow_game {
                 let fg = GetForegroundWindow();
                 bounds = game_bounds(fg);
                 if bounds.is_some() {
@@ -84,24 +145,57 @@ impl Tracker {
                     bounds = game_bounds(self.game as HWND);
                 }
             }
-            let anchored = bounds.is_some();
-            let (r, dpi) = match bounds {
+            let game = bounds.is_some();
+            let (rect, dpi) = match bounds {
                 Some(b) => b,
                 None => primary_bounds()?,
             };
-            let px = |dip: i32| (dip * dpi.max(96) as i32 + 48) / 96;
-            let w = px(328).min(r.right - r.left);
-            let h = px(172).min(r.bottom - r.top);
-            let dx = px(p.inset_x.into()).min(r.right - r.left - w);
-            let dy = px(p.inset_y.into()).min(r.bottom - r.top - h);
-            let x = match p.corner {
-                Corner::TopLeft | Corner::BottomLeft => r.left + dx,
-                _ => r.right - w - dx,
-            };
-            let y = match p.corner {
-                Corner::TopLeft | Corner::TopRight => r.top + dy,
-                _ => r.bottom - h - dy,
-            };
+            let dpi = dpi.max(96) as i32;
+            Ok(Anchor {
+                rect,
+                dpi,
+                width: ((328 * dpi + 48) / 96).min(rect.right - rect.left),
+                height: ((172 * dpi + 48) / 96).min(rect.bottom - rect.top),
+                game,
+            })
+        }
+    }
+
+    pub fn capture(&mut self, hwnd: isize, saved: Placement) -> io::Result<Placement> {
+        let anchor = self.anchor(saved.follow_game)?;
+        let mut actual = RECT::default();
+        if unsafe { GetWindowRect(hwnd as HWND, &mut actual) } == 0 {
+            return Err(io::Error::last_os_error());
+        }
+        if (actual.left, actual.top) == anchor.origin(saved) {
+            return Ok(saved);
+        }
+        let r = anchor.rect;
+        let x = actual.left.clamp(r.left, r.right - anchor.width);
+        let y = actual.top.clamp(r.top, r.bottom - anchor.height);
+        let (left, right) = (x - r.left, r.right - anchor.width - x);
+        let (top, bottom) = (y - r.top, r.bottom - anchor.height - y);
+        let corner = match (left <= right, top <= bottom) {
+            (true, true) => Corner::TopLeft,
+            (false, true) => Corner::TopRight,
+            (true, false) => Corner::BottomLeft,
+            (false, false) => Corner::BottomRight,
+        };
+        Ok(Placement {
+            corner,
+            inset_x: anchor.inset(left.min(right)),
+            inset_y: anchor.inset(top.min(bottom)),
+            follow_game: saved.follow_game,
+        })
+    }
+
+    /// All coordinates are physical desktop pixels. The webview layout and insets use DIPs.
+    pub fn apply(&mut self, hwnd: isize, p: Placement, visible: bool) -> io::Result<bool> {
+        let anchor = self.anchor(p.follow_game)?;
+        let (w, h) = (anchor.width, anchor.height);
+        let (x, y) = anchor.origin(p);
+        unsafe {
+            let hwnd = hwnd as HWND;
             let mut actual = RECT::default();
             let matches = GetWindowRect(hwnd, &mut actual) != 0
                 && actual.left == x
@@ -120,7 +214,7 @@ impl Tracker {
                     return Err(io::Error::last_os_error());
                 }
             }
-            Ok(anchored)
+            Ok(anchor.game)
         }
     }
 }

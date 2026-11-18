@@ -1,4 +1,4 @@
-use super::{discovery, window::Tracker, Kind, Runtime, Status};
+use super::{apply_overlay, discovery, Kind, Runtime, Status};
 use std::{
     path::PathBuf,
     thread,
@@ -59,7 +59,6 @@ impl Replay {
 pub(super) fn run(app: AppHandle, hwnd: isize) {
     let state = app.state::<Runtime>();
     let start = Instant::now();
-    let mut tracker = Tracker::default();
     let mut requested: Option<PathBuf> = None;
     let mut path: Option<PathBuf> = None;
     let mut tail: Option<Tail> = None;
@@ -129,10 +128,6 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             }
             None => (live_zone.clone(), live_status, error),
         };
-        let (anchored, window_error) = match tracker.apply(hwnd, s.settings.placement, s.visible) {
-            Ok(a) => (a, None),
-            Err(e) => (false, Some(e.to_string())),
-        };
         // Preserve every accepted transition even when one disk read contains several.
         for detection in events {
             let (kind, z) = match detection {
@@ -158,8 +153,6 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 && v.status == status
                 && v.active_path == path
                 && v.log_error == error
-                && v.window_error == window_error
-                && v.anchored == anchored
             {
                 return false;
             }
@@ -167,11 +160,15 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             v.status = status;
             v.active_path.clone_from(&path);
             v.log_error = error;
-            v.window_error = window_error;
-            v.anchored = anchored;
             true
         });
         if !again {
+            if !s.moving {
+                let handle = app.clone();
+                if let Err(e) = app.run_on_main_thread(move || apply_overlay(&handle, hwnd)) {
+                    eprintln!("Overlay placement dispatch failed: {e}");
+                }
+            }
             thread::sleep(POLL);
         }
     }

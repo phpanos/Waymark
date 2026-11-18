@@ -12,6 +12,7 @@ export interface Snapshot {
   status: Status
   zone: Zone | null
   visible: boolean
+  moving: boolean
   anchored: boolean
   logError: string | null
   windowError: string | null

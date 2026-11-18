@@ -42,6 +42,9 @@ struct Snapshot {
     status: Status,
     zone: Option<Zone>,
     visible: bool,
+    moving: bool,
+    #[serde(skip)]
+    visible_before_move: bool,
     anchored: bool,
     log_error: Option<String>,
     window_error: Option<String>,
@@ -74,17 +77,24 @@ impl Runtime {
         self.mutate(app, Kind::Snapshot, |s| {
             let mut next = s.settings.clone();
             f(&mut next);
-            if next == s.settings {
-                return false;
+            match self.save_settings(&mut s.settings, next) {
+                Ok(changed) => changed,
+                Err(e) => {
+                    result = Err(e);
+                    false
+                }
             }
-            if let Err(e) = settings::save(&self.file, &next) {
-                result = Err(e.to_string());
-                return false;
-            }
-            s.settings = next;
-            true
         });
         result
+    }
+
+    fn save_settings(&self, current: &mut Settings, next: Settings) -> Result<bool, String> {
+        if *current == next {
+            return Ok(false);
+        }
+        settings::save(&self.file, &next).map_err(|e| e.to_string())?;
+        *current = next;
+        Ok(true)
     }
 }
 
@@ -100,7 +110,119 @@ fn set_placement(
     placement: Placement,
 ) -> Result<(), String> {
     placement.validate()?;
+    if state.read().moving {
+        return Err("Finish moving the overlay first.".into());
+    }
     state.edit(&app, |s| s.placement = placement)
+}
+
+// Apply geometry on the UI thread so a watcher poll cannot undo an active drag.
+fn apply_overlay(app: &AppHandle, hwnd: isize) {
+    let state = app.state::<Runtime>();
+    let s = state.read();
+    if s.moving {
+        return;
+    }
+    let result = app
+        .state::<Mutex<window::Tracker>>()
+        .lock()
+        .unwrap()
+        .apply(hwnd, s.settings.placement, s.visible);
+    let (anchored, error) = match result {
+        Ok(anchored) => (anchored, None),
+        Err(e) => (false, Some(e.to_string())),
+    };
+    state.mutate(app, Kind::Snapshot, |s| {
+        if s.anchored == anchored && s.window_error == error {
+            return false;
+        }
+        s.anchored = anchored;
+        s.window_error = error;
+        true
+    });
+}
+
+#[tauri::command]
+fn begin_move(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
+    let s = state.read();
+    if s.moving {
+        return Ok(());
+    }
+    let overlay = app.get_webview_window("overlay").unwrap();
+    let hwnd = overlay.hwnd().map_err(|e| e.to_string())?.0 as isize;
+    let anchored = app
+        .state::<Mutex<window::Tracker>>()
+        .lock()
+        .unwrap()
+        .apply(hwnd, s.settings.placement, true)
+        .map_err(|e| e.to_string())?;
+    if let Err(e) = overlay.set_ignore_cursor_events(false) {
+        apply_overlay(&app, hwnd);
+        return Err(e.to_string());
+    }
+    state.mutate(&app, Kind::Snapshot, |s| {
+        s.visible_before_move = s.visible;
+        s.visible = true;
+        s.moving = true;
+        s.anchored = anchored;
+        s.window_error = None;
+        true
+    });
+    Ok(())
+}
+
+fn end_move(app: &AppHandle, save: bool, hide: bool) -> Result<(), String> {
+    let state = app.state::<Runtime>();
+    let s = state.read();
+    if !s.moving {
+        return Ok(());
+    }
+    let overlay = app.get_webview_window("overlay").unwrap();
+    let hwnd = overlay.hwnd().map_err(|e| e.to_string())?.0 as isize;
+    let placement = if save {
+        Some(
+            app.state::<Mutex<window::Tracker>>()
+                .lock()
+                .unwrap()
+                .capture(hwnd, s.settings.placement)
+                .map_err(|e| e.to_string())?,
+        )
+    } else {
+        None
+    };
+    overlay
+        .set_ignore_cursor_events(true)
+        .map_err(|e| e.to_string())?;
+    if !save {
+        window::cancel_drag(hwnd);
+    }
+    let mut result = Ok(());
+    state.mutate(app, Kind::Snapshot, |s| {
+        if let Some(placement) = placement {
+            let mut next = s.settings.clone();
+            next.placement = placement;
+            result = state.save_settings(&mut s.settings, next).map(|_| ());
+        }
+        s.visible = !hide && ((save && result.is_ok()) || s.visible_before_move);
+        s.moving = false;
+        true
+    });
+    apply_overlay(app, hwnd);
+    result
+}
+
+#[tauri::command]
+fn finish_move(app: AppHandle, save: bool) -> Result<(), String> {
+    end_move(&app, save, false)
+}
+
+#[tauri::command]
+fn drag_overlay(app: AppHandle, webview: tauri::WebviewWindow) -> Result<(), String> {
+    if webview.label() == "overlay" && app.state::<Runtime>().read().moving {
+        let hwnd = webview.hwnd().map_err(|e| e.to_string())?.0 as isize;
+        window::start_drag(hwnd).map_err(|e| e.to_string())?;
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -143,19 +265,24 @@ fn replay_fixture(app: AppHandle, state: State<'_, Runtime>, enabled: bool) {
     });
 }
 
-fn toggle(app: &AppHandle) {
+fn toggle(app: &AppHandle) -> Result<(), String> {
+    if app.state::<Runtime>().read().moving {
+        return end_move(app, false, true);
+    }
     app.state::<Runtime>().mutate(app, Kind::Snapshot, |s| {
         s.visible = !s.visible;
         true
     });
+    Ok(())
 }
 #[tauri::command]
-fn toggle_overlay(app: AppHandle) {
-    toggle(&app);
+fn toggle_overlay(app: AppHandle) -> Result<(), String> {
+    toggle(&app)
 }
 
 #[tauri::command]
 fn close_settings(app: AppHandle) -> Result<(), String> {
+    end_move(&app, false, false)?;
     app.get_webview_window("settings")
         .unwrap()
         .hide()
@@ -169,6 +296,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             snapshot,
             set_placement,
+            begin_move,
+            finish_move,
+            drag_overlay,
             pick_log,
             use_discovery,
             replay_fixture,
@@ -178,7 +308,9 @@ pub fn run() {
         .setup(|app| {
             if let Err(e) = app.global_shortcut().on_shortcut("Alt+N", |app, _, event| {
                 if event.state == ShortcutState::Pressed {
-                    toggle(app);
+                    if let Err(e) = toggle(app) {
+                        eprintln!("Overlay toggle failed: {e}");
+                    }
                 }
             }) {
                 app.state::<Runtime>()
@@ -209,7 +341,11 @@ pub fn run() {
                         let _ = w.show();
                         let _ = w.set_focus();
                     }
-                    "toggle" => toggle(app),
+                    "toggle" => {
+                        if let Err(e) = toggle(app) {
+                            eprintln!("Overlay toggle failed: {e}");
+                        }
+                    }
                     "quit" => app.exit(0),
                     _ => {}
                 })
@@ -224,7 +360,12 @@ pub fn run() {
             if win.label() == "settings" {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
-                    let _ = win.hide();
+                    match end_move(win.app_handle(), false, false) {
+                        Ok(()) => {
+                            let _ = win.hide();
+                        }
+                        Err(e) => eprintln!("Overlay move cancellation failed: {e}"),
+                    }
                 }
             }
         })
@@ -239,6 +380,7 @@ pub fn run() {
         .expect("Unable to resolve the Waymark settings directory")
         .join("settings-v1.json");
     let (settings, notice) = settings::load(&file);
+    app.manage(Mutex::new(window::Tracker::default()));
     app.manage(Runtime {
         file,
         snapshot: Mutex::new(Snapshot {
@@ -250,6 +392,8 @@ pub fn run() {
             status: Status::Searching,
             zone: None,
             visible: true,
+            moving: false,
+            visible_before_move: true,
             anchored: false,
             log_error: None,
             notices: notice.into_iter().collect(),
