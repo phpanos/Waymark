@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = view === 'update' ? 'settings' : view
+const pageView = view === 'overlay' ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -73,6 +73,8 @@ try {
     })
     console.log(`Overlay displayed '${text}'`)
   }
+  const click = label => evaluate(`Array.from(document.querySelectorAll('button'))
+    .find(button => !button.disabled && !button.closest('[hidden]') && button.textContent.trim() === ${JSON.stringify(label)})?.click()`)
   await expectText('Connected')
   await expectText('Awaiting zone')
   if (view === 'update') {
@@ -95,8 +97,6 @@ try {
       server.once('error', reject)
       server.listen(44891, '127.0.0.1', resolve)
     })
-    const click = label => evaluate(`Array.from(document.querySelectorAll('button'))
-      .find(button => !button.disabled && button.textContent.trim() === ${JSON.stringify(label)})?.click()`)
     try {
       await click('Updates')
       await expectText('Check for updates')
@@ -113,6 +113,13 @@ try {
     }
   } else if (view === 'settings') {
     await expectText('Settings')
+    await click('Position')
+    await expectText('Move overlay')
+    await click('Move overlay')
+    await expectText('Confirm position')
+  } else if (view === 'cancel-move') {
+    await click('Cancel')
+    await expectText('Move overlay')
   } else {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')

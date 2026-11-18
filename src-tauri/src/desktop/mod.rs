@@ -156,7 +156,7 @@ fn begin_move(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
         .unwrap()
         .apply(hwnd, s.settings.placement, true)
         .map_err(|e| e.to_string())?;
-    if let Err(e) = overlay.set_ignore_cursor_events(false) {
+    if let Err(e) = window::set_click_through(hwnd, false) {
         apply_overlay(&app, hwnd);
         return Err(e.to_string());
     }
@@ -190,9 +190,7 @@ fn end_move(app: &AppHandle, save: bool, hide: bool) -> Result<(), String> {
     } else {
         None
     };
-    overlay
-        .set_ignore_cursor_events(true)
-        .map_err(|e| e.to_string())?;
+    window::set_click_through(hwnd, true).map_err(|e| e.to_string())?;
     if !save {
         window::cancel_drag(hwnd);
     }
@@ -322,8 +320,8 @@ pub fn run() {
                     });
             }
             let overlay = app.get_webview_window("overlay").unwrap();
-            overlay.set_ignore_cursor_events(true)?;
             let hwnd = overlay.hwnd()?.0 as isize;
+            window::set_click_through(hwnd, true)?;
             let menu = MenuBuilder::new(app)
                 .text("settings", "Open settings…")
                 .text("toggle", "Show / hide overlay")

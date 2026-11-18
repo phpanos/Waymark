@@ -1,7 +1,7 @@
 use super::settings::{Corner, Placement};
 use std::{io, mem::size_of};
 use windows_sys::Win32::{
-    Foundation::{HWND, POINT, RECT},
+    Foundation::{GetLastError, SetLastError, HWND, POINT, RECT},
     Graphics::Gdi::{
         ClientToScreen, GetMonitorInfoW, MonitorFromPoint, MONITORINFO, MONITOR_DEFAULTTOPRIMARY,
     },
@@ -11,6 +11,32 @@ use windows_sys::Win32::{
         WindowsAndMessaging::*,
     },
 };
+
+pub fn set_click_through(hwnd: isize, enabled: bool) -> io::Result<()> {
+    // Keep the overlay layered and leave its visibility under Tracker's control.
+    // Tao's cursor-ignore setter rewrites both window styles and can hide the overlay.
+    unsafe {
+        let hwnd = hwnd as HWND;
+        SetLastError(0);
+        let style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+        if style == 0 && GetLastError() != 0 {
+            return Err(io::Error::last_os_error());
+        }
+        let layered = style | WS_EX_LAYERED as i32;
+        let next = if enabled {
+            layered | WS_EX_TRANSPARENT as i32
+        } else {
+            layered & !(WS_EX_TRANSPARENT as i32)
+        };
+        if next != style {
+            SetLastError(0);
+            if SetWindowLongW(hwnd, GWL_EXSTYLE, next) == 0 && GetLastError() != 0 {
+                return Err(io::Error::last_os_error());
+            }
+        }
+        Ok(())
+    }
+}
 
 pub fn start_drag(hwnd: isize) -> io::Result<()> {
     unsafe {

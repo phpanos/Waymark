@@ -38,6 +38,16 @@ function Wait-For($Description, [scriptblock]$Probe) {
     throw "Timed out waiting for $Description"
 }
 
+function Assert-OverlayStyle($Hwnd, [bool]$ClickThrough) {
+    # WS_EX_TOPMOST, WS_EX_LAYERED, WS_EX_NOACTIVATE, plus WS_EX_TRANSPARENT when passive.
+    $expected = if ($ClickThrough) { 0x08080028 } else { 0x08080008 }
+    $style = [OverlayCheck]::GetWindowLong($Hwnd, -20)
+    if (($style -band 0x08080028) -ne $expected) {
+        throw ('Unexpected overlay styles with click-through {0}: 0x{1:X}' -f $ClickThrough, $style)
+    }
+    if (![OverlayCheck]::IsWindowVisible($Hwnd)) { throw 'Compact window is hidden.' }
+}
+
 if (Get-Process waymark -ErrorAction SilentlyContinue) { throw 'Use a test profile with no running Waymark.' }
 if (!(Test-HotkeyAvailable)) { throw 'Alt+N is already registered before startup.' }
 $settingsDir = Join-Path ([Environment]::GetFolderPath('ApplicationData')) 'app.waymark.overlay'
@@ -71,17 +81,18 @@ try {
             $process.Refresh()
             if ($process.MainWindowTitle -eq 'Waymark') { $process.MainWindowHandle }
         }
-        $style = [OverlayCheck]::GetWindowLong($hwnd, -20)
-        # WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_EX_LAYERED, WS_EX_NOACTIVATE.
-        $required = 0x08080028
-        if (($style -band $required) -ne $required) { throw ('Missing passive window styles: 0x{0:X}' -f $style) }
-        if (![OverlayCheck]::IsWindowVisible($hwnd)) { throw 'Compact window is hidden.' }
+        Assert-OverlayStyle $hwnd $true
         if ([OverlayCheck]::GetForegroundWindow() -eq $hwnd) { throw 'Compact window has foreground focus.' }
         if (Test-HotkeyAvailable) { throw 'Waymark did not register Alt+N.' }
-        foreach ($view in 'settings', 'overlay') {
-            node (Join-Path $PSScriptRoot 'check-overlay.mjs') $profile $log $view
-            if ($LASTEXITCODE -ne 0) { throw "Rendered $view check failed on launch $launch." }
-        }
+        $check = Join-Path $PSScriptRoot 'check-overlay.mjs'
+        node $check $profile $log settings
+        if ($LASTEXITCODE -ne 0) { throw "Could not enter move mode on launch $launch." }
+        Assert-OverlayStyle $hwnd $false
+        node $check $profile $log cancel-move
+        if ($LASTEXITCODE -ne 0) { throw "Could not cancel move mode on launch $launch." }
+        Assert-OverlayStyle $hwnd $true
+        node $check $profile $log overlay
+        if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         $process.Kill()
         $process.WaitForExit()
     }
