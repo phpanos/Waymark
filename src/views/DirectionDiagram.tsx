@@ -6,14 +6,17 @@ const arrows: Record<Motion, string> = {
 }
 
 export function DirectionDiagram({ guide }: { guide: DirectionGuide }) {
+  const Legs = guide.layout ? 'ul' : 'ol'
   return <figure className="direction-diagram" aria-label="Directions diagram" data-layout={guide.layout ?? 'path'}>
     <figcaption>Directions</figcaption>
     <p className="direction-origin">{guide.origin}</p>
-    <ul className="direction-legs" role="list">
+    <Legs className="direction-legs" role="list">
       {guide.legs.map(([motion, instruction, destination]) => <li key={instruction} data-motion={motion}>
         <span className="direction-arrow" aria-hidden="true">{arrows[motion]}</span>
-        <p><strong>{destination}</strong>{' '}<span>{instruction}</span></p>
+        <p>{guide.layout === 'worldMap'
+          ? <><strong>{destination}</strong>{' '}<span>{instruction}</span></>
+          : <><span>{instruction}</span>{' '}<strong>{destination}</strong></>}</p>
       </li>)}
-    </ul>
+    </Legs>
   </figure>
 }

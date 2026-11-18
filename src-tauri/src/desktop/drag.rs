@@ -1,5 +1,6 @@
+use super::{reward_click, Runtime};
 use std::{cell::RefCell, io, ptr::null_mut};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter, Manager};
 use windows_sys::Win32::{
     Foundation::{HWND, POINT, RECT},
     System::LibraryLoader::GetModuleHandleW,
@@ -33,6 +34,7 @@ struct Input {
     hook: HHOOK,
     timer: usize,
     gesture: Option<Gesture>,
+    reward_pressed: Option<(u32, reward_click::RewardClick)>,
 }
 
 pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
@@ -51,6 +53,7 @@ pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
             hook,
             timer: 0,
             gesture: None,
+            reward_pressed: None,
         });
     });
     Ok(())
@@ -115,6 +118,20 @@ unsafe extern "system" fn mouse_hook(code: i32, message: usize, data: isize) -> 
 
 impl Input {
     fn on_mouse(&mut self, message: u32, cursor: Point) -> bool {
+        if let Some((button_up, target)) = &self.reward_pressed {
+            if message != *button_up {
+                return false;
+            }
+            let activate = self.reward_at(cursor).as_ref() == Some(target);
+            let pressed = self.reward_pressed.take().unwrap().1;
+            if activate {
+                let handle = self.app.clone();
+                let _ = self.app.run_on_main_thread(move || {
+                    let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                });
+            }
+            return true;
+        }
         if let Some(gesture) = &mut self.gesture {
             if gesture.released_at.is_none() && message == gesture.button_up {
                 gesture.released_at = Some(cursor);
@@ -123,9 +140,7 @@ impl Input {
             return false;
         }
 
-        if !matches!(message, WM_LBUTTONDOWN | WM_RBUTTONDOWN)
-            || unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } >= 0
-        {
+        if !matches!(message, WM_LBUTTONDOWN | WM_RBUTTONDOWN) {
             return false;
         }
         let (button_down, button_up) = if unsafe { GetSystemMetrics(SM_SWAPBUTTON) } == 0 {
@@ -134,6 +149,13 @@ impl Input {
             (WM_RBUTTONDOWN, WM_RBUTTONUP)
         };
         if message != button_down {
+            return false;
+        }
+        if unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } >= 0 {
+            if let Some(target) = self.reward_at(cursor) {
+                self.reward_pressed = Some((button_up, target));
+                return true;
+            }
             return false;
         }
 
@@ -159,6 +181,17 @@ impl Input {
             cancelled: false,
         });
         true
+    }
+
+    fn reward_at(&self, point: Point) -> Option<reward_click::RewardClick> {
+        let hwnd = self.hwnd as HWND;
+        let mut rect = RECT::default();
+        if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 } {
+            return None;
+        }
+        self.app
+            .state::<Runtime>()
+            .reward_click_at(rect, unsafe { GetDpiForWindow(hwnd) }, point)
     }
 }
 

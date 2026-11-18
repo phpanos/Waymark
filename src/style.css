@@ -18,28 +18,35 @@ button:focus-visible, input:focus-visible { outline: 2px solid #e4c78d; outline-
 button:disabled { opacity: .55; cursor: default }
 .overlay-window { overflow: hidden }
 .compact {
-  height: calc(168px + var(--build-height, 0px) + var(--quest-reward-height, 0px)); margin: 2px; overflow: hidden; border: 1px solid #817452;
+  min-height: calc(168px + var(--build-height, 0px) + var(--quest-reward-height, 0px)); margin: 2px; overflow: hidden; border: 1px solid #817452;
   background: linear-gradient(112deg,rgba(30,36,33,.95),rgba(17,22,22,.95));
   box-shadow: inset 0 0 0 3px #1b201df0, inset 0 0 0 4px #685e443d;
-  padding: 0 16px; user-select: none;
+  padding: 0 16px 7px; user-select: none;
 }
 .compact.with-build { --build-height: 22px }
 .compact.with-quest-reward:not(.expanded) {
   --quest-reward-height: 18px;
-  height: auto;
-  min-height: calc(168px + var(--build-height, 0px) + var(--quest-reward-height));
-  padding-bottom: 7px;
 }
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--heading); letter-spacing: .19em; text-transform: uppercase; color: #dfc99d }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
-.compact-head { height: 42px; border-bottom: 1px solid var(--line) }
-.act-timer { display: flex; align-items: baseline; gap: 5px; color: var(--muted); font-size: 10px; white-space: nowrap }
-.act-timer::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; align-self: center }
-.act-timer[data-running="true"]::before { color: #a2c6a5 }
-.act-timer kbd { font: inherit }
+.compact-head { height: 42px; gap: 8px; border-bottom: 1px solid var(--line) }
+.overlay-identity { display: grid; gap: 1px; min-width: 0 }
+.overlay-identity .brand { gap: 5px; font-size: 11px }
+.overlay-identity .brand img { width: 18px; height: 18px }
+.overlay-identity .status { font-size: 10px; line-height: 12px }
+.overlay-identity .status i { width: 4px; height: 4px }
+.act-timer { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 1px; padding: 3px 6px; border: 1px solid #62604d; border-radius: 4px; background: #171d1a; color: var(--muted); font-size: 10px; line-height: 1.2; white-space: nowrap }
+.act-timer-label { color: #dfc99d; font-weight: 600 }
+.act-timer-state { color: var(--muted); font-size: 10px; white-space: nowrap }
+.act-timer[data-running="true"] .act-timer-state, .act-timer-state[data-running="true"] { color: #a2c6a5 }
 .act-timer-value { color: var(--paper); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums }
-.act-timer-settings .act-timer-value { font-size: 24px }
+.act-timer .act-timer-value { font-size: 16px; line-height: 1; text-align: right }
+.act-timer-card { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel) }
+.act-timer-card-heading { display: flex; justify-content: space-between; align-items: baseline }
+.act-timer-card-heading .eyebrow, .act-timer-card :is(.actions, .hint) { margin: 0 }
+.act-timer-card .actions { align-items: center }
+.act-timer-settings .act-timer-value { font-size: 29px; line-height: 1.1 }
 .act-timer-history { margin: 0 }
 .act-timer-history div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line) }
 .act-timer-history dd { margin: 0; font-variant-numeric: tabular-nums }
@@ -52,10 +59,13 @@ button:disabled { opacity: .55; cursor: default }
 .zone-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 5px }
 .zone-actions { display: flex; gap: 8px; align-items: baseline }
 .details-gesture { color: var(--muted); font: 11px/14px Barlow, sans-serif; white-space: nowrap }
+.details-gesture [aria-hidden] { color: var(--gold); margin-left: 2px }
+.control-guide kbd, .act-timer-card kbd { font: inherit; padding: 1px 4px; border: 1px solid #5a5e53; border-radius: 3px; background: #262d26; color: var(--paper); white-space: nowrap }
 .reward-count { color: var(--gold); font: 600 11px/14px Barlow, sans-serif; white-space: nowrap }
 .eyebrow, .act { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .15em; text-transform: uppercase; color: #b5ad96 }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
+.zone-context .act:first-child { margin-left: 0; padding-left: 0; border-left: 0 }
 .zone-block h1 { font: 500 24px/1.5 var(--heading); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.035em }
 .with-shortcut .zone-block, .with-route .zone-block { height: 50px; padding: 5px 0 2px }
 .with-shortcut .zone-block h1, .with-route .zone-block h1 { line-height: 1.2 }
@@ -70,6 +80,8 @@ button:disabled { opacity: .55; cursor: default }
 .optional-preview, .route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
 .route-preview { color: var(--gold) }
 .route-preview.direction .optional-hint { font-weight: 600 }
+.quick-route { display: grid; gap: 2px; margin: 5px 0; padding-left: 19px; color: #d9e9df; font-size: 12px; line-height: 1.3 }
+.quick-route li::marker { color: #a8c8b6; font-weight: 600 }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
 .quest-reward { display: flex; align-items: baseline; gap: 6px; min-height: 17px; color: #dfc99d; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere }
@@ -104,14 +116,19 @@ button:disabled { opacity: .55; cursor: default }
 .overlay-details .route-landmarks p { font-size: inherit }
 .overlay-details h2 { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--gold) }
 .overlay-details ul { padding-left: 16px; margin: 0; color: var(--muted) }
+.zone-shortcut { padding: 5px 7px; border-left: 2px solid #78998b; background: #22312a }
+.zone-shortcut h2 { color: #b9d1c5 }
+.zone-shortcut p { margin-top: 2px; color: var(--paper) }
 .direction-diagram { margin: 0; padding: 6px 7px; border: 1px solid #62726a; border-radius: 4px; background: #151e1d; font-size: 12px; line-height: 1.2 }
 .direction-diagram figcaption { color: #b9d1c5; font-size: 10px; letter-spacing: .12em; text-transform: uppercase }
 .direction-origin { margin: 2px 0 4px; color: var(--gold); font-weight: 600 }
-.direction-diagram .direction-legs { display: grid; gap: 4px; padding: 0; list-style: none }
+.direction-diagram .direction-legs { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none }
 .direction-legs li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 4px; min-width: 0; padding: 3px 5px; border: 1px solid #45554c; border-radius: 3px; background: #202b28 }
 .direction-diagram[data-layout="path"] li + li { position: relative }
 .direction-diagram[data-layout="path"] li + li::before { content: ""; position: absolute; top: -5px; left: 17px; height: 5px; border-left: 1px solid #718579 }
 .direction-legs strong { color: var(--paper); margin-right: 5px }
+.direction-diagram:not([data-layout="worldMap"]) .direction-legs p span { color: var(--paper); font-weight: 600 }
+.direction-diagram:not([data-layout="worldMap"]) .direction-legs strong { color: #b9d1c5; font-weight: 400 }
 .direction-arrow { text-align: center; color: #b9d1c5; font: 600 18px/1 "Segoe UI Symbol", sans-serif }
 .direction-diagram[data-layout="worldMap"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; text-align: center }
 .direction-diagram[data-layout="worldMap"] figcaption { grid-area: 1 / 1 / 2 / -1; text-align: left }
@@ -149,15 +166,18 @@ button:disabled { opacity: .55; cursor: default }
 .route-diagram strong { display: block; color: var(--paper) }
 .route-diagram span { display: block; color: var(--gold) }
 .reward-recap { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px }
+.reward-recap-heading { display: flex; justify-content: space-between; gap: 8px; align-items: baseline }
 .reward-recap .reward-list { list-style: none; padding: 0; display: grid; gap: 2px }
-.reward-list li { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6px; align-items: baseline; padding: 2px 5px; border-left: 2px solid transparent }
+.reward-list li { display: grid; grid-template-columns: auto minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; align-items: center; padding: 2px 3px; border-left: 2px solid transparent }
+.reward-list input[type="checkbox"] { width: 21px; height: 21px; margin: 0; accent-color: var(--gold); cursor: pointer }
+.reward-list input:disabled { cursor: default }
 .reward-list li[aria-current] { border-left-color: var(--gold); background: #cbb2841c; color: var(--paper) }
 .reward-list span { font-size: 11px; line-height: 1.25 }
 .reward-direction { margin: 2px 0; color: var(--paper); font-size: 12px }
 .reward-feedback { color: var(--gold) }
-.reward-keys { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: 11px }
-.reward-keys kbd { font: inherit; color: var(--paper) }
+.reward-undo { justify-self: start; border-radius: 3px; padding: 1px 7px; font-size: 11px }
 .town-reward-actions, .town-reward-source { margin: 3px 0 }
+.town-reward-source { color: var(--muted); font-size: 11px }
 .town-reward-actions .reward-feedback { font-size: 12px }
 .campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
 .campaign-results button { display: block; width: 100%; text-align: left; margin-bottom: 3px }
@@ -198,6 +218,8 @@ nav button:hover:enabled { background: transparent; color: var(--paper) }
 .pane, .corner-group { border: 0; min-width: 0; padding: 0; margin: 0 }
 .field .eyebrow, .corner-group legend { margin-bottom: 8px }
 .field, .hint, .check { margin-bottom: 13px }
+.control-guide dl, .control-guide dd { margin: 0 }
+.control-guide dl > div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13px }
 .path, code { display: block; padding: 11px 12px; border: 1px solid var(--line); background: #101513; font: 12px/1.55 Consolas, monospace; overflow-wrap: anywhere; color: #d0d3c6 }
 .hint { color: #adb4aa; font-size: 14px }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px }

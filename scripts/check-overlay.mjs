@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram', 'timer'].includes(view) ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram', 'timer', 'quick-route'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -100,15 +100,25 @@ try {
       await click('Stop timer')
       await expectText('Start timer', '.act-timer-settings button')
     }
+  } else if (view === 'quick-route') {
+    await appendFile(log, 'Generating level 5 area "G1_5"\r\n')
+    await expectText('Find all three rust obelisks.', '.quick-route li:nth-child(1)')
+    await expectText('Defeat the Rust King and collect the final girdle.', '.quick-route li:nth-child(2)')
+    await expectText('Portal to town and get the Runed Spikes from Renly.', '.quick-route li:nth-child(3)')
+    await waitFor('the ordered steps to fit without a duplicate shortcut', () => evaluate(`(() => {
+      const panel = document.querySelector('.compact').getBoundingClientRect()
+      return !document.querySelector('.shortcut-preview, .overlay-details') && panel.bottom <= innerHeight - 1
+    })()`))
   } else if (view === 'diagram') {
-    await expectText('Sweep the edges for both tomb doors', '.direction .optional-hint')
     if (argument === 'collapsed') {
-      await expectText('Alt+click header +', '.details-gesture')
+      await expectText('Follow the perimeter and check both side walls', '.quick-route li:first-child')
+      await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
       await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
         const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
         return !document.querySelector('.route-diagram, .direction-diagram') && Math.abs(innerHeight - height) <= 1
       })()`))
     } else {
+      await expectText('Sweep the edges for both tomb doors', '.direction .optional-hint')
       await expectText('Clear either tomb first', '.route-diagram figcaption')
       await expectText('Draven · 1 key piece', '.route-diagram li:first-child span')
       await expectText('Asinia · 1 key piece', '.route-diagram li:last-child span')
@@ -169,7 +179,7 @@ try {
     const claim = 'Bring the Hammer of Kamasa to Oswald if you recovered it.'
     if (argument === 'source') {
       await appendFile(log, 'Generating level 40 area "G3_9"\r\n')
-      await expectText(`Alt+Shift+P Pin for Ziggurat Encampment · ${reward}`, '.town-reward-source')
+      await expectText('The Molten Vault', '.zone-block h1')
     } else if (argument === 'claimed' || argument === 'dismissed') {
       await expectText(`${argument === 'claimed' ? 'Claimed' : 'Dismissed'} · ${reward}`, '.town-reward-actions .reward-feedback')
       await waitFor('the removed pin and its undo action', () => evaluate(`
@@ -177,7 +187,6 @@ try {
       `))
     } else {
       if (argument === 'detour' || argument === 'restart') {
-        if (argument === 'detour') await expectText('Pinned for Ziggurat Encampment', '.town-reward-source')
         await appendFile(log, 'Generating level 40 area "G3_8"\r\n')
         await expectText('The Drowned City', '.zone-block h1')
         await waitFor('the pin to stay hidden in the Drowned City', () => evaluate('!document.querySelector(".town-reward-actions")'))
@@ -204,6 +213,16 @@ try {
     } else if (argument === 'completed') {
       await expectText('4 rewards left', '.reward-count')
       await expectText('Marked done · Passive points from the Crowbell', '.reward-feedback')
+    } else if (argument === 'checkbox-point' || argument === 'undo-point') {
+      const selector = argument === 'checkbox-point' ? '.reward-list li[aria-current] input:enabled' : '.reward-undo:enabled'
+      const point = await waitFor('the visible reward control', () => evaluate(`(() => {
+        const bounds = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect()
+        const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
+        if (!bounds || bounds.bottom > innerHeight || Math.abs(innerHeight - height) > 1) return null
+        return [Math.round((bounds.left + bounds.width / 2) * devicePixelRatio),
+                Math.round((bounds.top + bounds.height / 2) * devicePixelRatio)]
+      })()`))
+      console.log('Reward control point ' + point.join(' '))
     } else {
       await expectText('5 rewards left', '.reward-count')
       await expectText('Restored · Passive points from the Crowbell', '.reward-feedback')
@@ -211,12 +230,13 @@ try {
   } else if (view === 'details') {
     await expectText('The Grelwood')
     if (argument === 'expanded' || argument === 'reopened') {
-      await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
+      await expectText('Follow the orange mushrooms after freeing the Hooded One and reporting to Una', '.direction-diagram li:last-child p span')
       await expectText('Defeat the Brambleghast', '.zone-optional ul li')
       const expectDetailsToFit = () => waitFor('all objective details to fit', () => evaluate(`(() => {
         const panel = document.querySelector('.compact')
         const cue = panel?.querySelector('.direction .optional-hint')
-        return panel?.classList.contains('expanded') && panel.getBoundingClientRect().bottom <= innerHeight - 1 &&
+        const expectedHeight = Math.ceil(panel.getBoundingClientRect().height) + 4
+        return panel?.classList.contains('expanded') && Math.abs(innerHeight - expectedHeight) <= 1 &&
           cue?.scrollWidth <= cue?.clientWidth
       })()`))
       await expectDetailsToFit()
@@ -233,9 +253,10 @@ try {
         }
         await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
         await expectText('The Grelwood')
+        await expectDetailsToFit()
       }
     } else {
-      await expectText('Alt+click header +', '.details-gesture')
+      await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
       await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
       await waitFor('native window to match the compact overlay height', () => evaluate(`(() => {
         const panel = document.querySelector('.compact')
@@ -311,6 +332,11 @@ try {
     if (firstLaunch) await evaluate(`${recommendationToggle}.click()`)
     await click('Position')
     await expectText('Hold Alt and drag the Waymark header to move it. Release the mouse to save.')
+    await click('Controls')
+    await waitFor('the Controls tab to list the timer and permanent rewards hotkeys', () => evaluate(`(() => {
+      const text = document.querySelector('.control-guide')?.innerText
+      return text?.includes('Alt+Shift+T') && text.includes('Alt+Shift+R')
+    })()`))
     await click('Objectives')
     const fill = (selector, value) => evaluate(`(() => {
       const input = document.querySelector(${JSON.stringify(selector)})
@@ -381,7 +407,7 @@ try {
     await waitFor('the first-visit reward to stay hidden on a return visit', () => evaluate('!document.querySelector(".quest-reward")'))
     await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
     await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
-    await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
+    await expectText('Follow the orange mushrooms after freeing the Hooded One and reporting to Una', '.direction-diagram li:last-child p span')
     await expectText('SHORTCUT', '.zone-shortcut h2')
     await expectText('Gem · Rolling Slam', '.build-milestone-change')
     await expectText('BUILD LV 14', '.build-milestone-row .optional-label')

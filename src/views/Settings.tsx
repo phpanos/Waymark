@@ -9,11 +9,40 @@ import { RouteLandmarks, StatusLight } from './Compact'
 import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
-const tabs = ['Log source', 'Position', 'Objectives', 'Act timer', 'Build', 'Diagnostics', 'Updates'] as const
+const tabs = ['Log source', 'Position', 'Objectives', 'Act timer', 'Build', 'Controls', 'Diagnostics', 'Updates'] as const
 type Tab = typeof tabs[number]
 const Build = lazy(() => import('./Build'))
 const corners: [Corner, string][] = [['topLeft', 'Top left'], ['topRight', 'Top right'], ['bottomLeft', 'Bottom left'], ['bottomRight', 'Bottom right']]
 const campaignActs = [...new Set(campaignAreas.map(area => area.act))].sort((a, b) => a - b)
+
+const controls = [
+  { title: 'Overlay', actions: [
+    ['Alt+N', 'Show or hide Waymark'],
+    ['Alt+drag header', 'Move the overlay'],
+    ['Alt+click header', 'Open or close route details'],
+    ['Alt+Shift+T', 'Start or stop the act timer'],
+  ] },
+  { title: 'Rewards', actions: [
+    ['Alt+Shift+R', 'Open or close permanent rewards'],
+    ['Alt+Shift+N', 'Select the next reward or town pin'],
+    ['Alt+Shift+D', 'Mark a reward done or a town pin claimed'],
+    ['Alt+Shift+U', 'Undo the last reward action'],
+    ['Alt+Shift+P', 'Pin a town reward from its quest area'],
+    ['Alt+Shift+X', 'Dismiss the selected town pin'],
+  ] },
+] as const
+
+function Controls() {
+  return <div className="control-guide">
+    {controls.map(({ title, actions }) => <section className="field" key={title}>
+      <h2 className="eyebrow">{title}</h2>
+      <dl>{actions.map(([keys, action]) => <div key={keys}>
+        <dt>{action}</dt><dd><kbd>{keys}</kbd></dd>
+      </div>)}</dl>
+    </section>)}
+    <p className="hint">In the permanent reward recap, click a checkbox to mark a reward done. Click Undo to restore it.</p>
+  </div>
+}
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="field"><div className="eyebrow">{label}</div>{children}</div>
@@ -151,6 +180,7 @@ export function Settings({ state }: { state: Snapshot }) {
       {tab === 'Objectives' && <Objectives zone={state.zone} settings={state.settings} run={run}/>}
       {tab === 'Act timer' && <ActTimerSettings state={state} act={zone.act} run={run}/>}
       {tab === 'Build' && <Suspense fallback={<p role="status">Loading build guide…</p>}><Build state={state} run={run}/></Suspense>}
+      {tab === 'Controls' && <Controls/>}
       <div hidden={tab !== 'Updates'}><Updates/></div>
       {tab === 'Diagnostics' && <>
         <Field label="Fixture replay"><p>Play a sample log through the zone detector. Live log observation continues in the background.</p></Field>

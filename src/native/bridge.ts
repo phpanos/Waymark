@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import { channel, rewardChannel, type RewardAction, type Snapshot, type Placement, type TownRewardStatus } from './contract'
+import { channel, rewardChannel, rewardClickChannel, type RewardAction, type RewardClick, type RewardTarget, type Snapshot, type Placement, type TownRewardStatus } from './contract'
 
 export const native = {
   listen: (accept: (s: Snapshot) => void) => listen<Snapshot>(channel, e => accept(e.payload)),
@@ -15,6 +15,8 @@ export const native = {
   setTownReward: (profile: number | null, reward: string, expected: TownRewardStatus | null, status: TownRewardStatus) =>
     invoke<boolean>('set_town_reward', { profile, reward, expected, status }),
   listenRewards: (accept: (action: RewardAction) => void) => listen<RewardAction>(rewardChannel, e => accept(e.payload)),
+  listenRewardClicks: (accept: (click: RewardClick) => void) => listen<RewardClick>(rewardClickChannel, e => accept(e.payload)),
+  setRewardTargets: (revision: number, height: number, targets: RewardTarget[]) => invoke<void>('set_reward_targets', { revision, height, targets }),
   toggle: () => invoke<void>('toggle_overlay'),
   toggleActTimer: () => invoke<void>('toggle_act_timer'),
   overlayHeight: (height: number) => invoke<void>('set_overlay_height', { height }),

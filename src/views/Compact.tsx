@@ -78,11 +78,11 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const recommended = showRecommendations ? remaining.find(objective => objective.leagueStart) : undefined
   const featuredOptional = recommended ?? remaining[0]
   const stale = state.status === 'missing' || state.status === 'readError'
-  const context = state.zone && stale ? 'Last zone' : 'Current zone'
   const shortcut = stale ? null : zone.shortcut
   const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
   const navigation = stale ? null : zone.navigation
   const direction = !stale && zone.areaId ? directionsByArea[zone.areaId] : undefined
+  const showRouteLandmarks = route && !(direction && (route.diagram || direction.layout === 'landmarks'))
   const tip = stale ? null : zone.tip
   const hasDiagram = navigation && (navigation.waypoint || navigation.exits.length || zone.objective || remaining.length)
   const hasDirections = !!(direction || route || hasDiagram || shortcut || tip || remaining.length)
@@ -90,9 +90,11 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const town = useTownRewards(state, zone.areaId, zone.arrivalReward?.id, recap.showRecap)
   const reward = town.selected?.reward ?? (town.hideDirect ? null : zone.questReward)
   const claim = town.selected?.claim ?? zone.arrivalReward?.claim
-  const townActions = !recap.showRecap && (town.source || town.selected || town.undo || town.errorMessage)
+  const townFeedback = !recap.showRecap && (town.undo || town.errorMessage)
   const hasDetails = hasDirections || recap.showRecap || !!milestone
   const expanded = state.detailsExpanded && hasDetails
+  const quickRoute = !expanded && !recap.showRecap && direction && !direction.layout && !zone.arrivalReward?.objective
+    ? direction.quickSteps ?? direction.legs.map(([, instruction]) => instruction) : null
   const optionalLoot = !expanded && !zone.objective ? featuredOptional?.loot : undefined
   const next = navigation?.exits.length === 1 ? navigation.exits[0].landmark : null
   const optionalObjectives = remaining.length > 0 && <div className="zone-optional"><h2>Optional objectives</h2>
@@ -102,17 +104,16 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
       {objective.loot && <span className="objective-loot">{objective.loot}</span>}
     </li>)}</ul>
   </div>
-  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route || next ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}${reward || optionalLoot || townActions ? ' with-quest-reward' : ''}`}>
-    <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span>
-      <OverlayActTimer state={state} act={zone.act}/><StatusLight status={state.status}/>
+  return <main ref={panel} className={`compact${expanded && shortcut ? ' with-shortcut' : ''}${route || next || quickRoute ? ' with-route' : ''}${expanded ? ' expanded' : ''}${expanded && milestone ? ' with-build' : ''}${reward || optionalLoot || townFeedback ? ' with-quest-reward' : ''}`}>
+    <header className="compact-head">
+      <div className="overlay-identity"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></div>
+      <OverlayActTimer state={state} act={zone.act}/>
     </header>
     <div className="zone-block">
       <div className="zone-meta">
-        <div className="eyebrow">{context}{zone.act && <span className="act">Act {zone.act}</span>}</div>
+        <div className="eyebrow zone-context">{state.zone && stale && <span>Last zone</span>}{zone.act && <span className="act">Act {zone.act}</span>}</div>
         <div className="zone-actions">
-          {recap.catalog.length > 0 && <span className="reward-count">{recap.remaining.length} {recap.remaining.length === 1 ? 'reward' : 'rewards'} left</span>}
-          {hasDetails && <span className="details-gesture">Alt+click header {expanded ? '−' : '+'}</span>}
-          {!hasDetails && recap.available && <span className="details-gesture">Alt+Shift+R</span>}
+          {hasDetails && <span className="details-gesture" data-expanded={expanded} title="Alt+click the header">Details <span aria-hidden="true">{expanded ? '▾' : '▸'}</span></span>}
         </div>
       </div>
       <h1 title={zone.title}>{zone.title}</h1>
@@ -130,28 +131,21 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
           {claim && <span className="reward-claim">{claim}</span>}
         </span>
       </p>}
-      {!recap.showRecap && town.selected && <p className="reward-keys town-reward-actions">
-        {town.pinnedCount > 1 && <span>{town.pinnedCount} pinned · <kbd>Alt+Shift+N</kbd> Next</span>}
-        <span><kbd>Alt+Shift+D</kbd> Claimed</span>
-        <span><kbd>Alt+Shift+X</kbd> Dismiss</span>
-      </p>}
       {!recap.showRecap && town.undo && <div className="town-reward-actions" role="status">
         <p className="reward-feedback">{town.undo.status === 'claimed' ? 'Claimed' : 'Dismissed'} · {town.undo.reward.reward}</p>
-        <p className="reward-keys"><span><kbd>Alt+Shift+U</kbd> Undo</span></p>
       </div>}
       {!recap.showRecap && town.errorMessage && <p className="reward-feedback" role="status">{town.errorMessage}</p>}
-      {route && <p className="route-preview direction" title={route.cue}>
+      {quickRoute && <ol className="quick-route" aria-label="Route steps" role="list">
+        {quickRoute.map(step => <li key={step}>{step}</li>)}
+      </ol>}
+      {route && !quickRoute && !recap.showRecap && <p className="route-preview direction" title={route.cue}>
         <span className="optional-label">Route</span>
         <span className="optional-hint">{route.cue}</span>
       </p>}
-      {!expanded && !route && navigation && next && <p className="route-preview" title={next}>
+      {!expanded && !quickRoute && !route && navigation && next && <p className="route-preview" title={next}>
         <span className="optional-label">{navigation.label}</span><span className="optional-hint">{next}</span>
       </p>}
-      {!expanded && shortcut && <p className="route-preview" title={shortcut.detail}>
-        <span className="optional-label">Shortcut</span>
-        <span className="optional-hint">{shortcut.cue}</span>
-      </p>}
-      {!expanded && featuredOptional && <div className="optional-preview" title={featuredOptional.hint}>
+      {!expanded && featuredOptional && !zone.objective && <div className="optional-preview" title={featuredOptional.hint}>
         <span className="optional-label">Optional</span>
         <span className="optional-hint">{featuredOptional.hint}</span>
         {recommended && <span className="recommended">Recommended</span>}
@@ -161,24 +155,21 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         <span className="optional-label">Reward</span>
         <strong>{optionalLoot}</strong>
       </p>}
-      {!recap.showRecap && town.source && <p className="reward-keys town-reward-source" title={town.source.reward}>
+      {expanded && !recap.showRecap && town.source && <p className="town-reward-source" title={town.source.reward}>
         {town.sourcePinned ? <span>Pinned for {town.source.townName}</span>
-          : <span><kbd>Alt+Shift+P</kbd> Pin for {town.source.townName} · {town.source.reward}</span>}
+          : <span>Pin for {town.source.townName} · {town.source.reward}</span>}
       </p>}
-      {milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
+      {expanded && !recap.showRecap && milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
       {expanded && (hasDirections || recap.showRecap || recap.available) && <section className="overlay-details" aria-label="Objective details">
-        {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>
+        {recap.showRecap ? <RewardRecap act={zone.act} revision={state.revision} recap={recap}/> : <>
           {direction && <DirectionDiagram guide={direction}/>}
+          {shortcut && <aside className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></aside>}
           {hasDiagram && navigation ? <AreaOverview navigation={navigation} fork={route?.diagram}>
             {optionalObjectives}
           </AreaOverview> : optionalObjectives}
-          {route && (!route.diagram || !direction) && <RouteLandmarks route={route}/>}
-          {shortcut && <div className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
+          {showRouteLandmarks && <RouteLandmarks route={route}/>}
           {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
         </>}
-        {recap.available && <p className="reward-keys">
-          <span><kbd>Alt+Shift+R</kbd> {recap.showRecap ? 'Return to current objective' : 'Permanent rewards'}</span>
-        </p>}
       </section>}
     </footer>
   </main>

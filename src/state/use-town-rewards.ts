@@ -70,7 +70,7 @@ export function useTownRewards(state: Snapshot, areaId: string | null, directId:
 
   return {
     source, sourcePinned: source && progress[source.id] === 'pinned', selected,
-    pinnedCount: pinned.length, undo, errorMessage,
+    undo, errorMessage,
     hideDirect: directStatus === 'claimed' || directStatus === 'dismissed',
   }
 }

@@ -6,11 +6,16 @@ export type DirectionGuide = {
   origin: string
   legs: readonly Leg[]
   layout?: 'worldMap' | 'landmarks'
+  quickSteps?: readonly string[]
 }
 
 // Screen arrows refer to the game map. Other arrows are relative to the named starting point.
 export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>> = {
-  G1_1: { origin: "Starting shore", legs: [
+  G1_1: { origin: "Starting shore", quickSteps: [
+    "Follow the path inland.",
+    "Defeat the Bloated Miller.",
+    "Enter Clearfell Encampment.",
+  ], legs: [
     ["forward", "Follow the path inland", "The Bloated Miller"],
     ["forward", "Continue past the arena", "Clearfell Encampment"],
   ] },
@@ -26,11 +31,15 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
     ["left-wall", "Try following the left edge through the tunnels", "Devourer’s nest"],
   ] },
   G1_4: { origin: "Grelwood landmarks", layout: "landmarks", legs: [
-    ["follow", "Follow the glowing roots", "Tree of Souls"],
+    ["follow", "Follow the glowing roots and activate the nearby waypoint", "Tree of Souls"],
     ["follow", "Follow the river", "The Red Vale"],
-    ["follow", "Follow the orange mushrooms", "The Grim Tangle"],
+    ["follow", "Follow the orange mushrooms after freeing the Hooded One and reporting to Una", "The Grim Tangle"],
   ] },
-  G1_5: { origin: "Rust obelisks", legs: [
+  G1_5: { origin: "Rust obelisks", quickSteps: [
+    "Find all three rust obelisks.",
+    "Defeat the Rust King and collect the final girdle.",
+    "Portal to town and get the Runed Spikes from Renly.",
+  ], legs: [
     ["loop", "Sweep around the zone", "Find three obelisks"],
     ["inward", "Check near the blood river if you missed one", "Final obelisk"],
   ] },
@@ -86,7 +95,11 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
   G2_4_1: { origin: "Keth entrance", legs: [
     ["follow", "Take either outer wall toward the far corner", "The Lost City"],
   ] },
-  G2_4_2: { origin: "Lost City entrance", legs: [
+  G2_4_2: { origin: "Lost City entrance", quickSteps: [
+    "Cross the V-shaped bridge.",
+    "Follow the far wall to the wing-shaped approach.",
+    "Enter the Buried Shrines.",
+  ], legs: [
     ["across", "Cross the V-shaped bridge", "Second section"],
     ["follow", "Sweep the far wall for a wing-shaped approach", "Buried Shrines"],
   ] },
@@ -144,7 +157,10 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
   G3_2_1: { origin: "Alva and the waypoint", legs: [
     ["follow", "Follow the outer boundary", "Chimeral Wetlands"],
   ] },
-  G3_2_2: { origin: "First canal", legs: [
+  G3_2_2: { origin: "First canal", quickSteps: [
+    "Cross each canal after stepping on its pressure pad",
+    "When the quest updates, portal to town and speak to Alva.",
+  ], legs: [
     ["across", "Cross each canal after stepping on its pressure pad", "Canal lever"],
   ] },
   G3_5: { origin: "Wetlands entrance", legs: [

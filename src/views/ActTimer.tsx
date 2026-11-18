@@ -28,10 +28,12 @@ function TimerValue({ clock }: { clock?: ActClock | null }) {
 export function OverlayActTimer({ state, act }: { state: Snapshot; act: number | null }) {
   const clock = activeTiming(state.settings)?.current
   const running = clock?.startedAt != null
-  if (!clock && (act === null || state.status !== 'watching' || state.replaySession !== 0)) return null
+  const canStart = act !== null && state.status === 'watching' && state.replaySession === 0
+  if (!clock && !canStart) return null
   return <div className="act-timer" data-running={running} aria-label={`Act ${clock?.act ?? act} timer ${running ? 'running' : 'stopped'}`}>
-    {clock && clock.act !== act && <span>Act {clock.act}</span>}
-    <TimerValue clock={clock}/><kbd>Alt+Shift+T</kbd>
+    <span className="act-timer-label">Act {clock?.act ?? act} timer</span>
+    <TimerValue clock={clock}/>
+    <span className="act-timer-state">{running ? 'Running' : clock ? 'Paused' : 'Ready'}</span>
   </div>
 }
 
@@ -44,8 +46,9 @@ export function ActTimerSettings({ state, act, run }: {
   const canStart = state.status === 'watching' && state.replaySession === 0 && act !== null
   const saved = Object.entries(timing?.finished ?? {})
   return <div className="act-timer-settings">
-    <div className="field">
-      <div className="eyebrow">{clock || canStart ? `Act ${clock?.act ?? act}` : 'Act timer'}</div>
+    <div className="field act-timer-card">
+      <div className="act-timer-card-heading"><div className="eyebrow">{clock || canStart ? `Act ${clock?.act ?? act}` : 'Act timer'}</div>
+        <span className="act-timer-state" data-running={running}>{running ? 'Running' : clock ? 'Paused' : 'Ready'}</span></div>
       <TimerValue clock={clock}/>
       <div className="actions"><button className="primary" disabled={!running && !canStart} onClick={() => run(native.toggleActTimer)}>
         {running ? 'Stop timer' : 'Start timer'}

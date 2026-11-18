@@ -1,10 +1,12 @@
 mod act_timer;
 mod discovery;
 mod drag;
+mod reward_click;
 mod settings;
 mod watcher;
 mod window;
 
+use reward_click::{RewardClick, RewardTarget, RewardTargets};
 use serde::Serialize;
 use settings::{CampaignProfile, Placement, Settings, TownRewardStatus};
 use std::{
@@ -24,6 +26,7 @@ use waymark_log::parser::Zone;
 
 const CHANNEL: &str = "waymark://state-v1";
 const REWARD_ACTION: &str = "waymark://reward-action";
+const MAX_OVERLAY_HEIGHT: u16 = 720;
 const ACT_TIMER_SHORTCUT: &str = "Alt+Shift+T";
 const REWARD_SHORTCUTS: [(&str, &str, &str); 6] = [
     (
@@ -81,11 +84,33 @@ struct Snapshot {
 struct Runtime {
     snapshot: Mutex<Snapshot>,
     overlay_height: AtomicU16,
+    reward_targets: Mutex<RewardTargets>,
     file: PathBuf,
 }
 impl Runtime {
     fn read(&self) -> Snapshot {
         self.snapshot.lock().unwrap().clone()
+    }
+    fn reward_click_at(
+        &self,
+        rect: windows_sys::Win32::Foundation::RECT,
+        dpi: u32,
+        point: (i32, i32),
+    ) -> Option<RewardClick> {
+        let state = self.snapshot.try_lock().ok()?;
+        if !state.visible
+            || !state.details_expanded
+            || !state.reward_recap
+            || state.status != Status::Watching
+            || state.replay_session != 0
+        {
+            return None;
+        }
+        let targets = self.reward_targets.try_lock().ok()?;
+        if targets.revision != state.revision {
+            return None;
+        }
+        targets.hit(rect, dpi, point)
     }
     fn mutate(&self, app: &AppHandle, kind: Kind, f: impl FnOnce(&mut Snapshot) -> bool) {
         let mut s = self.snapshot.lock().unwrap();
@@ -178,6 +203,26 @@ fn snapshot(state: State<'_, Runtime>) -> Snapshot {
 }
 
 #[tauri::command]
+fn set_reward_targets(
+    window: WebviewWindow,
+    state: State<'_, Runtime>,
+    revision: u64,
+    height: u16,
+    targets: Vec<RewardTarget>,
+) {
+    if window.label() != "overlay"
+        || targets.len() > 24
+        || !(window::COMPACT_HEIGHT..=MAX_OVERLAY_HEIGHT).contains(&height)
+    {
+        return;
+    }
+    let mut hitboxes = state.reward_targets.lock().unwrap();
+    if revision >= hitboxes.revision {
+        *hitboxes = RewardTargets { revision, height, targets };
+    }
+}
+
+#[tauri::command]
 fn toggle_act_timer(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
     state.try_edit_with_snapshot(&app, |snapshot, settings| {
         let act = if snapshot.status == Status::Watching && snapshot.replay_session == 0 {
@@ -244,7 +289,7 @@ fn set_overlay_height(window: WebviewWindow, state: State<'_, Runtime>, height: 
     if window.label() == "overlay" {
         state
             .overlay_height
-            .store(height.clamp(window::COMPACT_HEIGHT, 720), Ordering::Relaxed);
+            .store(height.clamp(window::COMPACT_HEIGHT, MAX_OVERLAY_HEIGHT), Ordering::Relaxed);
     }
 }
 
@@ -481,6 +526,7 @@ pub fn run() {
             set_campaign_profile,
             set_objective_completed,
             set_town_reward,
+            set_reward_targets,
             toggle_act_timer,
             replay_fixture,
             set_overlay_height,
@@ -603,6 +649,7 @@ pub fn run() {
     app.manage(Runtime {
         file,
         overlay_height: AtomicU16::new(window::COMPACT_HEIGHT),
+        reward_targets: Mutex::new(RewardTargets::default()),
         snapshot: Mutex::new(Snapshot {
             version: 1,
             revision: 0,
@@ -613,7 +660,7 @@ pub fn run() {
             zone: None,
             character_level: None,
             visible: true,
-            details_expanded: true,
+            details_expanded: false,
             reward_recap: false,
             anchored: false,
             log_error: None,

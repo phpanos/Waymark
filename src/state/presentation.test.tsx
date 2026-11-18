@@ -35,11 +35,10 @@ describe('zone presentation', () => {
     const standard = renderToStaticMarkup(<Compact state={state}/>)
     expect(standard).toContain('Story objective')
     expect(standard).toContain('Find the path into the Grelwood')
-    expect(standard).toContain('Optional')
-    expect(standard).toContain('Defeat Beira for cold resistance')
+    expect(standard).not.toContain('Defeat Beira for cold resistance')
     expect(standard).not.toContain('Recommended')
     const leagueStart = { ...state, settings: { ...state.settings, leagueStart: true } }
-    expect(renderToStaticMarkup(<Compact state={leagueStart}/>)).toContain('Recommended')
+    expect(renderToStaticMarkup(<Compact state={{ ...leagueStart, detailsExpanded: true }}/>)).toContain('Recommended')
   })
   it('shows only optional objectives for a side area', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_3', name: null, level: 3 } }
@@ -58,8 +57,8 @@ describe('zone presentation', () => {
     const state = { ...snapshot, zone: { areaId: 'G3_2_2', name: null, level: 39 } }
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Cross the canals using the pressure pads')
-    expect(html).toContain('Portal after crossing the canals')
-    expect(html).toContain('Take the detour to the Azak Bog')
+    expect(html).toContain('When the quest updates, portal to town and speak to Alva.')
+    expect(html).not.toContain('Take the detour to the Azak Bog')
     expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Shortcut')
     expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('Once the quest updates')
     expect(describeZone({ areaId: 'G1_1', name: null, level: 1 }).shortcut).toBeNull()
@@ -67,7 +66,7 @@ describe('zone presentation', () => {
   it('keeps the Cemetery cue visible and shows the two tomb branches only in expanded directions', () => {
     const state: Snapshot = { ...snapshot, zone: { areaId: 'G1_7', name: null, level: 9 } }
     const collapsed = renderToStaticMarkup(<Compact state={state}/>)
-    expect(collapsed).toContain('Sweep the edges for both tomb doors')
+    expect(collapsed).toContain('Follow the perimeter and check both side walls')
     expect(collapsed).not.toContain('route-diagram')
     const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
     expect(expanded).toContain('Clear either tomb first')
@@ -153,8 +152,8 @@ describe('zone presentation', () => {
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Investigate the Tree of Souls')
     expect(html).toContain('Glowing roots lead to the tree')
-    expect(html).toContain('Tag the Grim Tangle waypoint early')
-    expect(html).toContain('Defeat the Brambleghast')
+    expect(html).not.toContain('Tag the Grim Tangle waypoint early')
+    expect(html).not.toContain('Defeat the Brambleghast')
     expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('Glowing roots')
     expect(describeZone({ areaId: null, name: 'The Riverbank', level: null }).route?.steps).toHaveLength(2)
     expect(describeZone({ areaId: 'UNKNOWN', name: 'The Riverbank', level: null }).route).toBeNull()
@@ -163,17 +162,17 @@ describe('zone presentation', () => {
     const zone = { areaId: 'G1_4', name: null, level: 4 }
     const collapsed = renderToStaticMarkup(<Compact state={{ ...snapshot, zone }}/>)
     const expanded = renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>)
-    expect(collapsed).not.toContain('Orange mushrooms')
-    expect(expanded).toContain('Orange mushrooms')
+    expect(collapsed).not.toContain('orange mushrooms')
+    expect(expanded).toContain('Follow the orange mushrooms after freeing the Hooded One and reporting to Una')
     expect(expanded).toContain('step inside to activate its waypoint')
     expect(expanded).toContain('Defeat the Brambleghast')
     expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: null, detailsExpanded: true }}/>)).not.toContain('Objective details')
   })
   it.each([
-    ['G2_2', 'Look for the Six Sisters bridge', 'Yellow paper seals · Optional'],
-    ['G3_2_2', 'Step on pads to lower the water', 'Azak Bog entrance · Optional'],
-    ['G4_4_1', 'Look for the fork after the third test', 'Silent Hall · Optional'],
-  ])('keeps the route cue visible with the details collapsed or expanded in %s', (areaId, cue, detour) => {
+    ['G2_2', 'Look for the curved Six Sisters bridge', 'Yellow paper seals · Optional'],
+    ['G3_2_2', 'Cross each canal after stepping on its pressure pad', 'Azak Bog entrance · Optional'],
+    ['G4_4_1', 'Follow the path through three tests', 'Silent Hall · Optional'],
+  ])('keeps the first route action visible with the details collapsed or expanded in %s', (areaId, cue, detour) => {
     const state = { ...snapshot, zone: { areaId, name: null, level: null } }
     const collapsed = renderToStaticMarkup(<Compact state={state}/>)
     const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
@@ -182,9 +181,21 @@ describe('zone presentation', () => {
     expect(expanded).toContain(cue)
     expect(expanded).toContain(detour)
   })
+  it('shows the portal after collecting the girdle and keeps longer instructions in details', () => {
+    const state = { ...snapshot, zone: { areaId: 'G1_5', name: null, level: 5 } }
+    const compact = renderToStaticMarkup(<Compact state={state}/>)
+    const pickup = compact.indexOf('collect the final girdle')
+    expect(pickup).toBeGreaterThan(-1)
+    expect(compact.indexOf('Portal to town and get the Runed Spikes')).toBeGreaterThan(pickup)
+    expect(compact).not.toContain('Portal after collecting all three pieces')
+    expect(compact).not.toContain('Objectives and exits')
+    expect(compact).not.toContain('<kbd>')
+    expect(compact).toContain('Act 1 timer')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)).toContain('use the Grelwood waypoint')
+  })
   it('hides completed recommendations for the active character and league only', () => {
     const state = {
-      ...snapshot, zone: { areaId: 'G1_2', name: null, level: 2 },
+      ...snapshot, detailsExpanded: true, zone: { areaId: 'G1_2', name: null, level: 2 },
       settings: { ...snapshot.settings, leagueStart: true, activeProfile: 0, profiles: [
         { character: 'Exile', league: 'One', completed: ['G1_2:1'] },
         { character: 'Exile', league: 'Two', completed: [] },
@@ -238,7 +249,7 @@ describe('permanent reward recap', () => {
     expect(intro).toContain('Speak to Renly to claim the Miller reward')
     expect(intro).toContain('Level 1 Uncut Skill Gem')
     expect(intro).not.toContain('Act 1 permanent rewards')
-    expect(intro).toContain('Alt+Shift+R')
+    expect(intro).not.toContain('<kbd>')
     expect(renderToStaticMarkup(<Compact state={{ ...state, rewardRecap: true }} previousZone={riverbank}/>))
       .toContain('Act 1 permanent rewards')
     const revisit = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'G1_2', name: null, level: 2 }}/>)
@@ -274,7 +285,7 @@ describe('pinned town rewards', () => {
   it('offers a gem reward to pin in each act and uses unique IDs', () => {
     expect(new Set(townRewards.map(reward => reward.id)).size).toBe(townRewards.length)
     for (const area of ['G1_3', 'G2_4_3', 'G3_9', 'G4_2_2']) {
-      expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: zone(area) }}/>)).toContain('Alt+Shift+P')
+      expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: zone(area), detailsExpanded: true }}/>)).toContain('Pin for')
     }
   })
 
@@ -301,7 +312,7 @@ describe('pinned town rewards', () => {
         ...snapshot.settings, defaultTownRewards: { [oswald]: status },
       } }
       expect(renderToStaticMarkup(<Compact state={state} previousZone={zone('G3_9')}/>)).not.toContain('Hammer of Kamasa')
-      expect(renderToStaticMarkup(<Compact state={{ ...state, zone: zone('G3_9') }}/>).includes('Alt+Shift+P'))
+      expect(renderToStaticMarkup(<Compact state={{ ...state, zone: zone('G3_9'), detailsExpanded: true }}/>).includes('Pin for'))
         .toBe(status === 'dismissed')
     }
   })

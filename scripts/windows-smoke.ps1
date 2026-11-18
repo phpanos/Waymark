@@ -118,6 +118,27 @@ function Invoke-RewardShortcut([byte]$Key) {
     }
 }
 
+function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target) {
+    $output = node $Check $Profile $Log rewards $Target
+    if ($LASTEXITCODE -ne 0) { throw "Could not locate the reward control $Target." }
+    $point = $output | Where-Object { $_ -match '^Reward control point \d+ \d+$' } | Select-Object -Last 1
+    if (!$point) { throw "Missing coordinates for $Target." }
+    $parts = $point -split ' '
+    $bounds = [OverlayCheck]::WindowBounds($Hwnd)
+    $cursor = New-Object OverlayCheck+Point
+    if (![OverlayCheck]::GetCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
+    try {
+        if (![OverlayCheck]::SetCursorPos(($bounds.Left + [int]$parts[3]), ($bounds.Top + [int]$parts[4]))) {
+            throw 'Could not position the pointer over the reward control.'
+        }
+        [OverlayCheck]::PrimaryButton($true)
+        Start-Sleep -Milliseconds 70
+    } finally {
+        [OverlayCheck]::PrimaryButton($false)
+        [void][OverlayCheck]::SetCursorPos($cursor.X, $cursor.Y)
+    }
+}
+
 function Test-AltDrag($Hwnd) {
     $origin = [OverlayCheck]::WindowBounds($Hwnd)
     $cursor = New-Object OverlayCheck+Point
@@ -222,6 +243,9 @@ try {
             node $check $profile $log timer stopped-two
             if ($LASTEXITCODE -ne 0) { throw 'The stopped act timer did not survive restart.' }
         }
+        # The recap shortcut expands the panel, and switching back leaves directions expanded.
+        Invoke-RewardShortcut 0x52 # R
+        Invoke-RewardShortcut 0x52 # R
         node $check $profile $log overlay
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
@@ -253,6 +277,15 @@ try {
             if ('G1_11:1' -in (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
                 throw 'Undo did not restore the saved reward.'
             }
+            Invoke-RewardControlClick $hwnd $check $profile $log 'checkbox-point'
+            node $check $profile $log rewards completed
+            if ($LASTEXITCODE -ne 0) { throw 'Clicking the reward checkbox did not mark it done.' }
+            Invoke-RewardControlClick $hwnd $check $profile $log 'undo-point'
+            node $check $profile $log rewards undone
+            if ($LASTEXITCODE -ne 0) { throw 'Clicking Undo did not restore the reward.' }
+            if ('G1_11:1' -in (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
+                throw 'Clicking Undo did not persist the restored reward.'
+            }
             Assert-PassiveOverlay $hwnd
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details collapsed
@@ -262,8 +295,11 @@ try {
                 $bounds.Top -eq $collapsed.Top -and $bounds.Bottom -eq $collapsed.Bottom
             })
             node $check $profile $log town source
-            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not offer to pin the reward from Oswald.' }
+            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not detect the Molten Vault.' }
             Invoke-RewardShortcut 0x50 # P
+            [void](Wait-For 'the pinned reward to be saved' {
+                (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].townRewards.'treasures-of-utzaal' -eq 'pinned'
+            })
             node $check $profile $log town detour
             if ($LASTEXITCODE -ne 0) { throw 'The pinned reward did not survive the detour to town.' }
             Invoke-RewardShortcut 0x44 # D
@@ -287,6 +323,8 @@ try {
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log diagram collapsed
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
+            node $check $profile $log quick-route
+            if ($LASTEXITCODE -ne 0) { throw 'The compact route did not show the ordered portal steps.' }
             Invoke-RewardShortcut 0x54 # T
             node $check $profile $log timer running-one
             if ($LASTEXITCODE -ne 0) { throw 'The Act 1 timer did not start.' }

@@ -1,6 +1,9 @@
 export const channel = 'waymark://state-v1'
 export const rewardChannel = 'waymark://reward-action'
+export const rewardClickChannel = 'waymark://reward-click'
 export type RewardAction = 'next' | 'done' | 'undo' | 'pin' | 'dismiss'
+export type RewardClick = { revision: number; id: string | null }
+export type RewardTarget = { id: string | null; left: number; top: number; right: number; bottom: number }
 export type TownRewardStatus = 'pinned' | 'claimed' | 'dismissed'
 export type TownRewardProgress = Partial<Record<string, TownRewardStatus>>
 export type ActClock = { act: number; elapsedMs: number; startedAt: number | null }
