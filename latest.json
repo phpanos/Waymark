@@ -1,9 +1,9 @@
 {
-  "version": "0.1.9",
+  "version": "0.1.11",
   "platforms": {
     "windows-x86_64": {
-      "url": "https://github.com/phpanos/Waymark/releases/download/v0.1.9-alpha.1/Waymark_0.1.9_x64-setup.exe",
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQW1tUXhFYUtLS090alBKUkZQcXpBTGQrMHB0SUovOG9YL3pBcm5CQWVkOWhtNThXamxkZURORENRV1FYTFZGK01VYWZVbzEzdFJBQ1Y0T3ZXRFUyUUY1MDZvMjhyQVFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MDAyNDI2CWZpbGU6V2F5bWFya18wLjEuOV94NjQtc2V0dXAuZXhlCXZlcnNpb246MC4xLjkKaS9xSEV6R29teXpPS2RZekdsNFJJRHhSN1g1RjZXcHRwQ1JTcThWTHE2MU12RWpwMW1vbnAxU0ZvZVM3Znl5alZWRHFkbkJEd0VWZmpXRzJFTE44QUE9PQo="
+      "url": "https://github.com/phpanos/Waymark/releases/download/v0.1.11-alpha.1/Waymark_0.1.11_x64-setup.exe",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTQW1tUXhFYUtLS1B3Tlg4VTh3YnFvUDZRMmFlbnN1SEl0T3VrbnA5L2ZDWlYwa2hIUmdrRFNTN0VHT1o0UXRDV2VXYjdaUWpLem1DT0hHN2hjazZBMEgxTzg1WHVVMVFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzk1MDA0ODE5CWZpbGU6V2F5bWFya18wLjEuMTFfeDY0LXNldHVwLmV4ZQl2ZXJzaW9uOjAuMS4xMQp1UE50UHFBUkFmajBSUjJWQmQ1VDF5NEJabmlmSGNtMG9WcUlyV1k2bk1mRGYyeG14RWZ6N3daZUNZc1RPcVFiQjhzZXlqTXQxLzJyYVNabnZrVm1EZz09Cg=="
     }
   }
 }
