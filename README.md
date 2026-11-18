@@ -58,6 +58,8 @@ Selected zones in Acts 1–4 show a **Route** cue. The overlay starts expanded a
 
 The expanded overlay includes a diagram for each cataloged area in Acts 1–4. It shows the waypoint where available, local objectives, and where to go next, including return trips and town travel choices. The diagrams show how to progress through areas with variable layouts.
 
+Press **Alt+Shift+T** to start or stop the act timer, or use **Settings → Act timer**. When Waymark detects a later act, it saves the previous act’s time and resets the clock for the new act. A running timer continues into the new act and through app restarts. Switching campaign profiles stops the previous profile’s clock. See **Settings → Act timer** for the active profile’s saved times.
+
 The Waterways and island directions also use the [0.5.5 campaign walkthrough](https://pathofexile.gg/campaign/), the [0.5.5 Act 3 route](https://worstguidesever.com/poe2-act-3-campaign-guide/), and the [0.5.5 Act 4 guide](https://domistae.github.io/poe2-leveling/poe2_act4_guide.html).
 
 The overlay shows how many permanent rewards remain in the current act. Use **Alt+Shift+R** to open the recap or return to the current objective. The recap shows the rewards, their zones, and directions to the highlighted reward. Use **Alt+Shift+N** to select the next reward, **Alt+Shift+D** to mark it done, and **Alt+Shift+U** to undo the last overlay completion in the current session. The **Campaign rewards** tray menu offers the same actions.

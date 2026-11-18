@@ -164,6 +164,12 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 if matches!(kind, Kind::ZoneChanged) {
                     v.reward_recap = false;
                 }
+                if session == 0
+                    && status == Status::Watching
+                    && v.settings.active_profile == tracked_profile
+                {
+                    state.advance_act_timer(v, &z);
+                }
                 v.zone = Some(z);
                 v.status = status;
                 v.active_path.clone_from(&path);

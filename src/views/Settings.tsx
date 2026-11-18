@@ -4,11 +4,13 @@ import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
 import { campaignAreas, completedObjectives, describeZone, searchCampaign } from '../state/presentation'
 import { CharacterProfile } from './CharacterProfile'
+import { ActTimerSettings } from './ActTimer'
 import { RouteLandmarks, StatusLight } from './Compact'
 import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
-type Tab = 'Log source' | 'Position' | 'Objectives' | 'Build' | 'Diagnostics' | 'Updates'
+const tabs = ['Log source', 'Position', 'Objectives', 'Act timer', 'Build', 'Diagnostics', 'Updates'] as const
+type Tab = typeof tabs[number]
 const Build = lazy(() => import('./Build'))
 const corners: [Corner, string][] = [['topLeft', 'Top left'], ['topRight', 'Top right'], ['bottomLeft', 'Bottom left'], ['bottomRight', 'Bottom right']]
 const campaignActs = [...new Set(campaignAreas.map(area => area.act))].sort((a, b) => a - b)
@@ -134,7 +136,7 @@ export function Settings({ state }: { state: Snapshot }) {
       <div className="readout-head"><span className="eyebrow">{state.status === 'replaying' || state.status === 'replayComplete' ? 'Fixture zone' : 'Latest zone'}</span><StatusLight status={state.status}/></div>
       <h2>{zone.title}</h2>{zone.act && <span className="act">Act {zone.act}</span>}
     </section>
-    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Objectives', 'Build', 'Diagnostics', 'Updates'] as const).map(t =>
+    <nav aria-label="Settings sections">{tabs.map(t =>
       <button key={t} disabled={busy} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
     <fieldset className="pane" disabled={busy} aria-label={tab}>
       {tab === 'Log source' && <>
@@ -147,6 +149,7 @@ export function Settings({ state }: { state: Snapshot }) {
         <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>
       }
       {tab === 'Objectives' && <Objectives zone={state.zone} settings={state.settings} run={run}/>}
+      {tab === 'Act timer' && <ActTimerSettings state={state} act={zone.act} run={run}/>}
       {tab === 'Build' && <Suspense fallback={<p role="status">Loading build guide…</p>}><Build state={state} run={run}/></Suspense>}
       <div hidden={tab !== 'Updates'}><Updates/></div>
       {tab === 'Diagnostics' && <>

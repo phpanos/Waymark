@@ -1,3 +1,4 @@
+use super::act_timer::ActTiming;
 use serde::{Deserialize, Serialize};
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -13,6 +14,7 @@ pub struct CampaignProfile {
     pub league: String,
     pub completed: BTreeSet<String>,
     pub town_rewards: BTreeMap<String, TownRewardStatus>,
+    pub(super) act_timing: ActTiming,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -70,11 +72,24 @@ pub struct Settings {
     pub active_profile: Option<usize>,
     pub default_completed: BTreeSet<String>,
     pub default_town_rewards: BTreeMap<String, TownRewardStatus>,
+    pub(super) default_act_timing: ActTiming,
 }
 
 impl Settings {
     pub fn campaign_profile(&self) -> Option<&CampaignProfile> {
         self.profiles.get(self.active_profile?)
+    }
+
+    pub(super) fn act_timing(&self) -> &ActTiming {
+        self.campaign_profile()
+            .map_or(&self.default_act_timing, |profile| &profile.act_timing)
+    }
+
+    pub(super) fn act_timing_for(&mut self, profile: Option<usize>) -> Option<&mut ActTiming> {
+        match profile {
+            Some(index) => self.profiles.get_mut(index).map(|item| &mut item.act_timing),
+            None => Some(&mut self.default_act_timing),
+        }
     }
 
     pub fn completed_for(&mut self, profile: Option<usize>) -> Option<&mut BTreeSet<String>> {

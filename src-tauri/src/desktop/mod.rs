@@ -1,3 +1,4 @@
+mod act_timer;
 mod discovery;
 mod drag;
 mod settings;
@@ -23,6 +24,7 @@ use waymark_log::parser::Zone;
 
 const CHANNEL: &str = "waymark://state-v1";
 const REWARD_ACTION: &str = "waymark://reward-action";
+const ACT_TIMER_SHORTCUT: &str = "Alt+Shift+T";
 const REWARD_SHORTCUTS: [(&str, &str, &str); 6] = [
     (
         "Alt+Shift+R",
@@ -109,36 +111,92 @@ impl Runtime {
         app: &AppHandle,
         f: impl FnOnce(&mut Settings) -> Result<(), String>,
     ) -> Result<bool, String> {
+        self.try_edit_with_snapshot(app, |_, settings| f(settings))
+    }
+    fn try_edit_with_snapshot(
+        &self,
+        app: &AppHandle,
+        f: impl FnOnce(&Snapshot, &mut Settings) -> Result<(), String>,
+    ) -> Result<bool, String> {
         let mut result = Ok(false);
         self.mutate(app, Kind::Snapshot, |s| {
             let mut next = s.settings.clone();
-            if let Err(error) = f(&mut next) {
+            if let Err(error) = f(s, &mut next) {
                 result = Err(error);
                 return false;
             }
             if next == s.settings {
                 return false;
             }
-            if let Err(e) = settings::save(&self.file, &next) {
+            if next.active_profile != s.settings.active_profile {
+                if let Some(timing) = next.act_timing_for(s.settings.active_profile) {
+                    timing.pause(act_timer::timestamp());
+                }
+            }
+            if let Err(e) = self.store_settings(s, next) {
                 result = Err(e.to_string());
                 return false;
             }
-            if next.active_profile != s.settings.active_profile
-                || next.log_path != s.settings.log_path
-            {
-                s.character_level = None;
-            }
-            s.settings = next;
             result = Ok(true);
             true
         });
         result
+    }
+    fn store_settings(&self, state: &mut Snapshot, next: Settings) -> std::io::Result<()> {
+        settings::save(&self.file, &next)?;
+        if next.active_profile != state.settings.active_profile
+            || next.log_path != state.settings.log_path
+        {
+            state.character_level = None;
+        }
+        state.settings = next;
+        Ok(())
+    }
+    fn advance_act_timer(&self, state: &mut Snapshot, zone: &Zone) {
+        let Some(clock) = &state.settings.act_timing().current else {
+            return;
+        };
+        let Some(act) = act_timer::act_for_zone(zone).filter(|act| *act > clock.act) else {
+            return;
+        };
+        let mut next = state.settings.clone();
+        if let Some(timing) = next.act_timing_for(next.active_profile) {
+            timing.advance(act, act_timer::timestamp());
+            if let Err(error) = self.store_settings(state, next) {
+                let notice = format!("Act timer could not be saved ({error}).");
+                if !state.notices.contains(&notice) {
+                    state.notices.push(notice);
+                }
+            }
+        }
     }
 }
 
 #[tauri::command]
 fn snapshot(state: State<'_, Runtime>) -> Snapshot {
     state.read()
+}
+
+#[tauri::command]
+fn toggle_act_timer(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
+    state.try_edit_with_snapshot(&app, |snapshot, settings| {
+        let act = if snapshot.status == Status::Watching && snapshot.replay_session == 0 {
+            snapshot.zone.as_ref().and_then(act_timer::act_for_zone)
+        } else {
+            None
+        };
+        let timing = settings
+            .act_timing_for(settings.active_profile)
+            .ok_or("Choose a campaign profile first.")?;
+        timing.toggle(act, act_timer::timestamp())
+    })
+    .map(|_| ())
+}
+
+fn toggle_timer_from_shortcut(app: &AppHandle) {
+    if let Err(error) = toggle_act_timer(app.clone(), app.state::<Runtime>()) {
+        report_notice(app, error);
+    }
 }
 
 #[tauri::command]
@@ -423,6 +481,7 @@ pub fn run() {
             set_campaign_profile,
             set_objective_completed,
             set_town_reward,
+            toggle_act_timer,
             replay_fixture,
             set_overlay_height,
             toggle_overlay,
@@ -459,6 +518,19 @@ pub fn run() {
                     );
                 }
             }
+            if let Err(error) = app.global_shortcut().on_shortcut(
+                ACT_TIMER_SHORTCUT,
+                |app, _, event| {
+                    if event.state == ShortcutState::Pressed {
+                        toggle_timer_from_shortcut(app);
+                    }
+                },
+            ) {
+                report_notice(
+                    app.handle(),
+                    format!("{ACT_TIMER_SHORTCUT} unavailable ({error}). Use Act timer in Settings."),
+                );
+            }
             let overlay = app.get_webview_window("overlay").unwrap();
             let hwnd = overlay.hwnd()?.0 as isize;
             window::enable_click_through(hwnd)?;
@@ -476,6 +548,7 @@ pub fn run() {
                 .text("settings", "Open settings…")
                 .text("toggle", "Show / hide overlay")
                 .text("details", "Expand / collapse overlay details")
+                .text("act-timer", "Start / stop act timer")
                 .item(&rewards.build()?)
                 .separator()
                 .text("quit", "Quit Waymark")
@@ -493,6 +566,7 @@ pub fn run() {
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
+                    "act-timer" => toggle_timer_from_shortcut(app),
                     action @ ("recap" | "next" | "done" | "undo" | "pin" | "dismiss") => {
                         send_reward_action(app, action)
                     }

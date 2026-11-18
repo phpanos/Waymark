@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram'].includes(view) ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram', 'timer'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -82,7 +82,25 @@ try {
   })()`))
   await expectText('Connected')
   if (view === 'settings' || view === 'overlay') await expectText('Awaiting zone')
-  if (view === 'diagram') {
+  if (view === 'timer') {
+    const ready = argument === 'ready-one'
+    const running = !ready && argument !== 'stopped-two'
+    const act = ready || argument === 'running-one' ? 1 : 2
+    if (argument === 'backtracked') await expectText('Clearfell', '.zone-block h1')
+    await waitFor(`the act ${act} timer to be ${running ? 'running' : 'stopped'}`, () => evaluate(`(() => {
+      const timer = document.querySelector('.act-timer')
+      return timer?.getAttribute('aria-label') === 'Act ${act} timer ${running ? 'running' : 'stopped'}' &&
+        (timer.querySelector('.act-timer-value').innerText === '00:00:00') === ${ready}
+    })()`))
+  } else if (view === 'timer-settings') {
+    await click('Act timer')
+    await expectText('Stop timer', '.act-timer-settings button')
+    await expectText('Act 1', '.act-timer-history dt')
+    if (argument === 'stop') {
+      await click('Stop timer')
+      await expectText('Start timer', '.act-timer-settings button')
+    }
+  } else if (view === 'diagram') {
     await expectText('Sweep the edges for both tomb doors', '.direction .optional-hint')
     if (argument === 'collapsed') {
       await expectText('Alt+click header +', '.details-gesture')

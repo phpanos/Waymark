@@ -16,6 +16,7 @@ export const native = {
     invoke<boolean>('set_town_reward', { profile, reward, expected, status }),
   listenRewards: (accept: (action: RewardAction) => void) => listen<RewardAction>(rewardChannel, e => accept(e.payload)),
   toggle: () => invoke<void>('toggle_overlay'),
+  toggleActTimer: () => invoke<void>('toggle_act_timer'),
   overlayHeight: (height: number) => invoke<void>('set_overlay_height', { height }),
   replay: (enabled: boolean) => invoke<void>('replay_fixture', { enabled }),
   close: () => invoke<void>('close_settings'),

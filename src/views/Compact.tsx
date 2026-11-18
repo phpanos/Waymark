@@ -5,6 +5,7 @@ import type { Snapshot, Status, Zone } from '../native/contract'
 import { completedObjectives, describeZone, statusText, type Route, type ZoneNavigation } from '../state/presentation'
 import { useBuildMilestone } from '../state/use-build-milestone'
 import { useTownRewards } from '../state/use-town-rewards'
+import { OverlayActTimer } from './ActTimer'
 import { RewardRecap, useRewardRecap } from './RewardRecap'
 
 const BuildMilestoneRow = lazy(() => import('./BuildMilestone'))
@@ -98,7 +99,9 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     </li>)}</ul>
   </div>
   return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route || next ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}${reward || optionalLoot || townActions ? ' with-quest-reward' : ''}`}>
-    <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></header>
+    <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span>
+      <OverlayActTimer state={state} act={zone.act}/><StatusLight status={state.status}/>
+    </header>
     <div className="zone-block">
       <div className="zone-meta">
         <div className="eyebrow">{context}{zone.act && <span className="act">Act {zone.act}</span>}</div>

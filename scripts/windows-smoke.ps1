@@ -218,6 +218,10 @@ try {
                 throw 'The Alt-drag position did not survive restart.'
             }
         }
+        if ($launch -eq 2) {
+            node $check $profile $log timer stopped-two
+            if ($LASTEXITCODE -ne 0) { throw 'The stopped act timer did not survive restart.' }
+        }
         node $check $profile $log overlay
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
@@ -283,6 +287,24 @@ try {
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log diagram collapsed
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
+            Invoke-RewardShortcut 0x54 # T
+            node $check $profile $log timer running-one
+            if ($LASTEXITCODE -ne 0) { throw 'The Act 1 timer did not start.' }
+            [IO.File]::AppendAllText($log, "Generating level 16 area `"G2_1`"`r`n", $utf8)
+            node $check $profile $log timer running-two
+            if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not start after the transition.' }
+            $timing = (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].actTiming
+            if ($timing.finished.'1' -lt 1000 -or $timing.current.elapsedMs -ne 0 -or !$timing.current.startedAt) {
+                throw 'The timer did not save the Act 1 time and start Act 2 from zero.'
+            }
+            node $check $profile $log timer-settings
+            if ($LASTEXITCODE -ne 0) { throw 'The saved Act 1 time did not appear in Settings.' }
+            [IO.File]::AppendAllText($log, "Generating level 2 area `"G1_2`"`r`n", $utf8)
+            node $check $profile $log timer backtracked
+            if ($LASTEXITCODE -ne 0) { throw 'Backtracking moved the timer to an earlier act.' }
+            Invoke-RewardShortcut 0x54 # T
+            node $check $profile $log timer stopped-two
+            if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not stop.' }
         } else {
             node $check $profile $log town restart
             if ($LASTEXITCODE -ne 0) { throw 'The pinned town reward did not survive restart.' }

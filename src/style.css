@@ -34,6 +34,15 @@ button:disabled { opacity: .55; cursor: default }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
 .compact-head { height: 42px; border-bottom: 1px solid var(--line) }
+.act-timer { display: flex; align-items: baseline; gap: 5px; color: var(--muted); font-size: 10px; white-space: nowrap }
+.act-timer::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; align-self: center }
+.act-timer[data-running="true"]::before { color: #a2c6a5 }
+.act-timer kbd { font: inherit }
+.act-timer-value { color: var(--paper); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums }
+.act-timer-settings .act-timer-value { font-size: 24px }
+.act-timer-history { margin: 0 }
+.act-timer-history div { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--line) }
+.act-timer-history dd { margin: 0; font-variant-numeric: tabular-nums }
 .status { display: inline-flex; align-items: center; gap: 7px; color: #d2bc92; font-size: 12px; white-space: nowrap }
 .status i { width: 6px; height: 6px; background: currentColor; border-radius: 50% }
 .status.watching { color: #a2c6a5 }
