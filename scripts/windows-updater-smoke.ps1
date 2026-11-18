@@ -28,6 +28,7 @@ try {
             pubkey = (Get-Content "$key.pub" -Raw).Trim()
             endpoints = @('http://127.0.0.1:44891/latest.json')
             dangerousInsecureTransportProtocol = $true
+            requireSignedVersion = $true
             windows = @{ installMode = 'passive' }
         }}
     }

@@ -40,6 +40,7 @@ jobs:
             plugins = @{ updater = @{
               pubkey = $env:WAYMARK_PUBLIC_KEY.Trim()
               endpoints = @('https://raw.githubusercontent.com/phpanos/Waymark/update-feed/latest.json')
+              requireSignedVersion = $true
               windows = @{ installMode = 'passive' }
             }}
           } | ConvertTo-Json -Depth 5 | Set-Content updater-release.json
