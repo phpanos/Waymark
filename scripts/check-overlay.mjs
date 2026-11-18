@@ -149,12 +149,7 @@ try {
     if (enabled !== !firstLaunch) throw new Error('Unexpected saved league-start preference')
     if (firstLaunch) await evaluate(`${recommendationToggle}.click()`)
     await click('Position')
-    await expectText('Move overlay')
-    await click('Move overlay')
-    await expectText('Confirm position')
-  } else if (view === 'cancel-move') {
-    await click('Cancel')
-    await expectText('Move overlay')
+    await expectText('Hold Alt and drag the Waymark header to move it. Release the mouse to save.')
   } else {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')

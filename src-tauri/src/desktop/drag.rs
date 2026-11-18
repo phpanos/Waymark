@@ -1,0 +1,230 @@
+use std::{cell::RefCell, io, ptr::null_mut};
+use tauri::AppHandle;
+use windows_sys::Win32::{
+    Foundation::{HWND, POINT, RECT},
+    System::LibraryLoader::GetModuleHandleW,
+    UI::{
+        HiDpi::GetDpiForWindow,
+        Input::KeyboardAndMouse::{GetAsyncKeyState, VK_MENU},
+        WindowsAndMessaging::*,
+    },
+};
+
+// The hook, timer and Waymark window all run on the Tauri event-loop thread.
+thread_local! {
+    static INPUT: RefCell<Option<Input>> = const { RefCell::new(None) };
+}
+
+type Point = (i32, i32);
+
+#[derive(Clone, Copy)]
+struct Gesture {
+    origin: Point,
+    start: Point,
+    preview: Point,
+    button_up: u32,
+    released_at: Option<Point>,
+    cancelled: bool,
+}
+
+struct Input {
+    app: AppHandle,
+    hwnd: isize,
+    hook: HHOOK,
+    timer: usize,
+    gesture: Option<Gesture>,
+}
+
+pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
+    let module = unsafe { GetModuleHandleW(std::ptr::null()) };
+    if module.is_null() {
+        return Err(io::Error::last_os_error());
+    }
+    let hook = unsafe { SetWindowsHookExW(WH_MOUSE_LL, Some(mouse_hook), module, 0) };
+    if hook.is_null() {
+        return Err(io::Error::last_os_error());
+    }
+    INPUT.with(|input| {
+        *input.borrow_mut() = Some(Input {
+            app,
+            hwnd,
+            hook,
+            timer: 0,
+            gesture: None,
+        });
+    });
+    Ok(())
+}
+
+pub(super) fn uninstall() {
+    if let Some(input) = INPUT.with(|input| input.take()) {
+        unsafe {
+            UnhookWindowsHookEx(input.hook);
+            if input.timer != 0 {
+                KillTimer(null_mut(), input.timer);
+            }
+        }
+    }
+}
+
+pub(super) fn active() -> bool {
+    INPUT.with(|input| {
+        input
+            .borrow()
+            .as_ref()
+            .and_then(|input| input.gesture)
+            .is_some_and(|gesture| !gesture.cancelled)
+    })
+}
+
+pub(super) fn cancel() {
+    INPUT.with(|input| {
+        if let Some(gesture) = input
+            .borrow_mut()
+            .as_mut()
+            .and_then(|input| input.gesture.as_mut())
+        {
+            // Keep consuming the matching release, even after restoring placement.
+            gesture.cancelled = true;
+        }
+    });
+}
+
+unsafe extern "system" fn mouse_hook(code: i32, message: usize, data: isize) -> isize {
+    let button = message as u32;
+    if code == HC_ACTION as i32
+        && matches!(
+            button,
+            WM_LBUTTONDOWN | WM_LBUTTONUP | WM_RBUTTONDOWN | WM_RBUTTONUP
+        )
+        && INPUT.with(|input| {
+            let Ok(mut input) = input.try_borrow_mut() else {
+                return false;
+            };
+            input.as_mut().is_some_and(|input| {
+                // Windows provides this structure for every HC_ACTION callback.
+                let point = (*(data as *const MSLLHOOKSTRUCT)).pt;
+                input.on_mouse(button, (point.x, point.y))
+            })
+        })
+    {
+        return 1;
+    }
+    CallNextHookEx(null_mut(), code, message, data)
+}
+
+impl Input {
+    fn on_mouse(&mut self, message: u32, cursor: Point) -> bool {
+        if let Some(gesture) = &mut self.gesture {
+            if gesture.released_at.is_none() && message == gesture.button_up {
+                gesture.released_at = Some(cursor);
+                return true;
+            }
+            return false;
+        }
+
+        if !matches!(message, WM_LBUTTONDOWN | WM_RBUTTONDOWN)
+            || unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } >= 0
+        {
+            return false;
+        }
+        let (button_down, button_up) = if unsafe { GetSystemMetrics(SM_SWAPBUTTON) } == 0 {
+            (WM_LBUTTONDOWN, WM_LBUTTONUP)
+        } else {
+            (WM_RBUTTONDOWN, WM_RBUTTONUP)
+        };
+        if message != button_down {
+            return false;
+        }
+
+        let hwnd = self.hwnd as HWND;
+        let mut rect = RECT::default();
+        if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 }
+            || !header_contains(rect, unsafe { GetDpiForWindow(hwnd) }, cursor)
+        {
+            return false;
+        }
+
+        // Move and save outside the hook so it returns promptly to the input queue.
+        self.timer = unsafe { SetTimer(null_mut(), 0, 16, Some(update_drag)) };
+        if self.timer == 0 {
+            return false;
+        }
+        self.gesture = Some(Gesture {
+            origin: (rect.left, rect.top),
+            start: cursor,
+            preview: cursor,
+            button_up,
+            released_at: None,
+            cancelled: false,
+        });
+        true
+    }
+}
+
+fn header_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
+    // The compact panel starts after a 2 DIP margin, then a 1 DIP border and 42 DIP header.
+    let dpi = if dpi == 0 { 96 } else { dpi as i32 };
+    let px = |dip| (dip * dpi + 48) / 96;
+    x >= rect.left + px(2)
+        && x < rect.right - px(2)
+        && y >= rect.top + px(2)
+        && y < rect.bottom.min(rect.top + px(45))
+}
+
+unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
+    let frame = INPUT.with(|input| {
+        let mut input = input.borrow_mut();
+        let input = input.as_mut().filter(|input| input.timer == timer)?;
+        let gesture = input.gesture?;
+        let cursor = if let Some(cursor) = gesture.released_at {
+            KillTimer(null_mut(), timer);
+            input.timer = 0;
+            input.gesture = None;
+            cursor
+        } else {
+            let mut cursor = POINT::default();
+            if gesture.cancelled || GetCursorPos(&mut cursor) == 0 {
+                return None;
+            }
+            let cursor = (cursor.x, cursor.y);
+            if cursor == gesture.preview {
+                return None;
+            }
+            input.gesture.as_mut()?.preview = cursor;
+            cursor
+        };
+        Some((input.app.clone(), input.hwnd, gesture, cursor))
+    });
+    let Some((app, hwnd, gesture, cursor)) = frame else {
+        return;
+    };
+    if gesture.cancelled || (cursor == gesture.start && gesture.preview == gesture.start) {
+        return;
+    }
+    let x = gesture.origin.0 + (cursor.0 - gesture.start.0);
+    let y = gesture.origin.1 + (cursor.1 - gesture.start.1);
+    let moved = SetWindowPos(
+        hwnd as HWND,
+        null_mut(),
+        x,
+        y,
+        0,
+        0,
+        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER,
+    );
+    if gesture.released_at.is_some() {
+        let result = if moved == 0 {
+            Err(io::Error::last_os_error().to_string())
+        } else {
+            super::save_drag_position(&app, hwnd)
+        };
+        if let Err(error) = result {
+            super::report_drag_problem(
+                &app,
+                format!("Overlay position could not be saved ({error})."),
+            );
+        }
+        super::apply_overlay(&app, hwnd);
+    }
+}

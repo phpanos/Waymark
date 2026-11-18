@@ -163,11 +163,9 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             true
         });
         if !again {
-            if !s.moving {
-                let handle = app.clone();
-                if let Err(e) = app.run_on_main_thread(move || apply_overlay(&handle, hwnd)) {
-                    eprintln!("Overlay placement dispatch failed: {e}");
-                }
+            let handle = app.clone();
+            if let Err(e) = app.run_on_main_thread(move || apply_overlay(&handle, hwnd)) {
+                eprintln!("Overlay placement dispatch failed: {e}");
             }
             thread::sleep(POLL);
         }

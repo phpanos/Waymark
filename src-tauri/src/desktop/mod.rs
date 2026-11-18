@@ -1,4 +1,5 @@
 mod discovery;
+mod drag;
 mod settings;
 mod watcher;
 mod window;
@@ -42,9 +43,6 @@ struct Snapshot {
     status: Status,
     zone: Option<Zone>,
     visible: bool,
-    moving: bool,
-    #[serde(skip)]
-    visible_before_move: bool,
     anchored: bool,
     log_error: Option<String>,
     window_error: Option<String>,
@@ -77,24 +75,17 @@ impl Runtime {
         self.mutate(app, Kind::Snapshot, |s| {
             let mut next = s.settings.clone();
             f(&mut next);
-            match self.save_settings(&mut s.settings, next) {
-                Ok(changed) => changed,
-                Err(e) => {
-                    result = Err(e);
-                    false
-                }
+            if next == s.settings {
+                return false;
             }
+            if let Err(e) = settings::save(&self.file, &next) {
+                result = Err(e.to_string());
+                return false;
+            }
+            s.settings = next;
+            true
         });
         result
-    }
-
-    fn save_settings(&self, current: &mut Settings, next: Settings) -> Result<bool, String> {
-        if *current == next {
-            return Ok(false);
-        }
-        settings::save(&self.file, &next).map_err(|e| e.to_string())?;
-        *current = next;
-        Ok(true)
     }
 }
 
@@ -110,7 +101,7 @@ fn set_placement(
     placement: Placement,
 ) -> Result<(), String> {
     placement.validate()?;
-    if state.read().moving {
+    if drag::active() {
         return Err("Finish moving the overlay first.".into());
     }
     state.edit(&app, |s| s.placement = placement)
@@ -118,11 +109,11 @@ fn set_placement(
 
 // Apply geometry on the UI thread so a watcher poll cannot undo an active drag.
 fn apply_overlay(app: &AppHandle, hwnd: isize) {
-    let state = app.state::<Runtime>();
-    let s = state.read();
-    if s.moving {
+    if drag::active() {
         return;
     }
+    let state = app.state::<Runtime>();
+    let s = state.read();
     let result = app
         .state::<Mutex<window::Tracker>>()
         .lock()
@@ -142,85 +133,26 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
     });
 }
 
-#[tauri::command]
-fn begin_move(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
-    let s = state.read();
-    if s.moving {
-        return Ok(());
-    }
-    let overlay = app.get_webview_window("overlay").unwrap();
-    let hwnd = overlay.hwnd().map_err(|e| e.to_string())?.0 as isize;
-    let anchored = app
+fn save_drag_position(app: &AppHandle, hwnd: isize) -> Result<(), String> {
+    let state = app.state::<Runtime>();
+    let saved = state.read().settings.placement;
+    let placement = app
         .state::<Mutex<window::Tracker>>()
         .lock()
         .unwrap()
-        .apply(hwnd, s.settings.placement, true)
+        .capture(hwnd, saved)
         .map_err(|e| e.to_string())?;
-    if let Err(e) = window::set_click_through(hwnd, false) {
-        apply_overlay(&app, hwnd);
-        return Err(e.to_string());
-    }
-    state.mutate(&app, Kind::Snapshot, |s| {
-        s.visible_before_move = s.visible;
-        s.visible = true;
-        s.moving = true;
-        s.anchored = anchored;
-        s.window_error = None;
-        true
-    });
-    Ok(())
+    state.edit(app, |settings| settings.placement = placement)
 }
 
-fn end_move(app: &AppHandle, save: bool, hide: bool) -> Result<(), String> {
-    let state = app.state::<Runtime>();
-    let s = state.read();
-    if !s.moving {
-        return Ok(());
-    }
-    let overlay = app.get_webview_window("overlay").unwrap();
-    let hwnd = overlay.hwnd().map_err(|e| e.to_string())?.0 as isize;
-    let placement = if save {
-        Some(
-            app.state::<Mutex<window::Tracker>>()
-                .lock()
-                .unwrap()
-                .capture(hwnd, s.settings.placement)
-                .map_err(|e| e.to_string())?,
-        )
-    } else {
-        None
-    };
-    window::set_click_through(hwnd, true).map_err(|e| e.to_string())?;
-    if !save {
-        window::cancel_drag(hwnd);
-    }
-    let mut result = Ok(());
-    state.mutate(app, Kind::Snapshot, |s| {
-        if let Some(placement) = placement {
-            let mut next = s.settings.clone();
-            next.placement = placement;
-            result = state.save_settings(&mut s.settings, next).map(|_| ());
+fn report_drag_problem(app: &AppHandle, message: String) {
+    app.state::<Runtime>().mutate(app, Kind::Snapshot, |state| {
+        if state.notices.contains(&message) {
+            return false;
         }
-        s.visible = !hide && ((save && result.is_ok()) || s.visible_before_move);
-        s.moving = false;
+        state.notices.push(message);
         true
     });
-    apply_overlay(app, hwnd);
-    result
-}
-
-#[tauri::command]
-fn finish_move(app: AppHandle, save: bool) -> Result<(), String> {
-    end_move(&app, save, false)
-}
-
-#[tauri::command]
-fn drag_overlay(app: AppHandle, webview: tauri::WebviewWindow) -> Result<(), String> {
-    if webview.label() == "overlay" && app.state::<Runtime>().read().moving {
-        let hwnd = webview.hwnd().map_err(|e| e.to_string())?.0 as isize;
-        window::start_drag(hwnd).map_err(|e| e.to_string())?;
-    }
-    Ok(())
 }
 
 #[tauri::command]
@@ -268,24 +200,25 @@ fn replay_fixture(app: AppHandle, state: State<'_, Runtime>, enabled: bool) {
     });
 }
 
-fn toggle(app: &AppHandle) -> Result<(), String> {
-    if app.state::<Runtime>().read().moving {
-        return end_move(app, false, true);
-    }
+fn toggle(app: &AppHandle) {
+    drag::cancel();
     app.state::<Runtime>().mutate(app, Kind::Snapshot, |s| {
         s.visible = !s.visible;
         true
     });
-    Ok(())
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        if let Ok(hwnd) = overlay.hwnd() {
+            apply_overlay(app, hwnd.0 as isize);
+        }
+    }
 }
 #[tauri::command]
-fn toggle_overlay(app: AppHandle) -> Result<(), String> {
-    toggle(&app)
+fn toggle_overlay(app: AppHandle) {
+    toggle(&app);
 }
 
 #[tauri::command]
 fn close_settings(app: AppHandle) -> Result<(), String> {
-    end_move(&app, false, false)?;
     app.get_webview_window("settings")
         .unwrap()
         .hide()
@@ -299,9 +232,6 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             snapshot,
             set_placement,
-            begin_move,
-            finish_move,
-            drag_overlay,
             pick_log,
             use_discovery,
             set_league_start,
@@ -312,9 +242,7 @@ pub fn run() {
         .setup(|app| {
             if let Err(e) = app.global_shortcut().on_shortcut("Alt+N", |app, _, event| {
                 if event.state == ShortcutState::Pressed {
-                    if let Err(e) = toggle(app) {
-                        eprintln!("Overlay toggle failed: {e}");
-                    }
+                    toggle(app);
                 }
             }) {
                 app.state::<Runtime>()
@@ -327,7 +255,13 @@ pub fn run() {
             }
             let overlay = app.get_webview_window("overlay").unwrap();
             let hwnd = overlay.hwnd()?.0 as isize;
-            window::set_click_through(hwnd, true)?;
+            window::enable_click_through(hwnd)?;
+            if let Err(e) = drag::install(app.handle().clone(), hwnd) {
+                report_drag_problem(
+                    app.handle(),
+                    format!("Alt-drag unavailable ({e}). Use the Position settings."),
+                );
+            }
             let menu = MenuBuilder::new(app)
                 .text("settings", "Open settings…")
                 .text("toggle", "Show / hide overlay")
@@ -345,11 +279,7 @@ pub fn run() {
                         let _ = w.show();
                         let _ = w.set_focus();
                     }
-                    "toggle" => {
-                        if let Err(e) = toggle(app) {
-                            eprintln!("Overlay toggle failed: {e}");
-                        }
-                    }
+                    "toggle" => toggle(app),
                     "quit" => app.exit(0),
                     _ => {}
                 })
@@ -364,12 +294,7 @@ pub fn run() {
             if win.label() == "settings" {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
-                    match end_move(win.app_handle(), false, false) {
-                        Ok(()) => {
-                            let _ = win.hide();
-                        }
-                        Err(e) => eprintln!("Overlay move cancellation failed: {e}"),
-                    }
+                    let _ = win.hide();
                 }
             }
         })
@@ -396,8 +321,6 @@ pub fn run() {
             status: Status::Searching,
             zone: None,
             visible: true,
-            moving: false,
-            visible_before_move: true,
             anchored: false,
             log_error: None,
             notices: notice.into_iter().collect(),
@@ -405,5 +328,9 @@ pub fn run() {
             replay_session: 0,
         }),
     });
-    app.run(|_, _| {});
+    app.run(|_, event| {
+        if let tauri::RunEvent::Exit = event {
+            drag::uninstall();
+        }
+    });
 }

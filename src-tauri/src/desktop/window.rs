@@ -7,12 +7,11 @@ use windows_sys::Win32::{
     },
     UI::{
         HiDpi::{GetDpiForMonitor, GetDpiForWindow, MDT_EFFECTIVE_DPI},
-        Input::KeyboardAndMouse::{GetAsyncKeyState, ReleaseCapture, VK_LBUTTON, VK_RBUTTON},
         WindowsAndMessaging::*,
     },
 };
 
-pub fn set_click_through(hwnd: isize, enabled: bool) -> io::Result<()> {
+pub fn enable_click_through(hwnd: isize) -> io::Result<()> {
     // Keep the overlay layered and leave its visibility under Tracker's control.
     // Tao's cursor-ignore setter rewrites both window styles and can hide the overlay.
     unsafe {
@@ -22,12 +21,7 @@ pub fn set_click_through(hwnd: isize, enabled: bool) -> io::Result<()> {
         if style == 0 && GetLastError() != 0 {
             return Err(io::Error::last_os_error());
         }
-        let layered = style | WS_EX_LAYERED as i32;
-        let next = if enabled {
-            layered | WS_EX_TRANSPARENT as i32
-        } else {
-            layered & !(WS_EX_TRANSPARENT as i32)
-        };
+        let next = style | (WS_EX_LAYERED | WS_EX_TRANSPARENT) as i32;
         if next != style {
             SetLastError(0);
             if SetWindowLongW(hwnd, GWL_EXSTYLE, next) == 0 && GetLastError() != 0 {
@@ -36,34 +30,6 @@ pub fn set_click_through(hwnd: isize, enabled: bool) -> io::Result<()> {
         }
         Ok(())
     }
-}
-
-pub fn start_drag(hwnd: isize) -> io::Result<()> {
-    unsafe {
-        let button = if GetSystemMetrics(SM_SWAPBUTTON) == 0 {
-            VK_LBUTTON
-        } else {
-            VK_RBUTTON
-        };
-        if GetAsyncKeyState(i32::from(button)) >= 0 {
-            return Ok(());
-        }
-        let mut cursor = POINT::default();
-        if GetCursorPos(&mut cursor) == 0 {
-            return Err(io::Error::last_os_error());
-        }
-        // The caption message packs signed screen coordinates into its low and high words.
-        let coords = u32::from(cursor.x as u16) | (u32::from(cursor.y as u16) << 16);
-        ReleaseCapture();
-        if PostMessageW(hwnd as HWND, WM_NCLBUTTONDOWN, HTCAPTION as usize, coords as isize) == 0 {
-            return Err(io::Error::last_os_error());
-        }
-        Ok(())
-    }
-}
-
-pub fn cancel_drag(hwnd: isize) {
-    unsafe { SendMessageW(hwnd as HWND, WM_CANCELMODE, 0, 0) };
 }
 
 /// Only remember a handle observed in the foreground. Revalidate before every use.
