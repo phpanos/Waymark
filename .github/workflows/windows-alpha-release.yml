@@ -40,6 +40,13 @@ jobs:
           if (!$env:WAYMARK_PUBLIC_KEY -or !$env:TAURI_SIGNING_PRIVATE_KEY) {
             throw 'Set the updater public key variable and signing key secret before publishing.'
           }
+          $env:TAURI_SIGNING_PRIVATE_KEY = $env:TAURI_SIGNING_PRIVATE_KEY.Trim()
+          $probe = Join-Path $env:RUNNER_TEMP 'waymark-signing-check.txt'
+          Set-Content $probe 'Waymark signing check'
+          npm run tauri -- signer sign $probe *> $null
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Tauri could not sign with TAURI_SIGNING_PRIVATE_KEY. Check the full single-line key and its password.'
+          }
           @{
             bundle = @{ createUpdaterArtifacts = $true }
             plugins = @{ updater = @{
