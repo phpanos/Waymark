@@ -1,6 +1,11 @@
 name: Publish signed Windows alpha
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      validation_run:
+        description: Optional Windows validation run to pass before publishing
+        type: string
 
 permissions:
   contents: read
@@ -60,7 +65,9 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
+      actions: read
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
@@ -73,6 +80,18 @@ jobs:
         with:
           name: signed-installer
           path: installer
+      - name: Wait for signed-upgrade validation
+        if: inputs.validation_run != ''
+        env:
+          VALIDATION_RUN: ${{ inputs.validation_run }}
+        shell: bash
+        run: |
+          [[ "$VALIDATION_RUN" =~ ^[0-9]+$ ]]
+          gh run watch "$VALIDATION_RUN" --exit-status --interval 20
+          gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN" |
+            jq -e --arg sha "$GITHUB_SHA" '.head_sha == $sha and .path == ".github/workflows/windows-validation.yml" and .conclusion == "success"'
+          gh api "repos/$GH_REPO/actions/runs/$VALIDATION_RUN/jobs" |
+            jq -e 'any(.jobs[].steps[]; .name == "Test signed in-app upgrade" and .conclusion == "success")'
       - name: Publish and advance the alpha feed
         shell: bash
         run: bash scripts/publish-alpha.sh
