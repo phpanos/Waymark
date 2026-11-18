@@ -45,9 +45,9 @@ if [[ -z "$refs" ]]; then
   # Create the initial branch and manifest together so an interrupted run can be retried.
   blob=$(gh api "repos/$GH_REPO/git/blobs" -f content="$(base64 -w0 latest.json)" -f encoding=base64 --jq .sha)
   tree=$(jq -n --arg blob "$blob" '{tree:[{path:"latest.json",mode:"100644",type:"blob",sha:$blob}]}' |
-    gh api "repos/$GH_REPO/git/trees" --input - --jq .sha)
+    gh api -X POST "repos/$GH_REPO/git/trees" --input - --jq .sha)
   commit=$(jq -n --arg tree "$tree" --arg tag "$tag" '{message:("Publish " + $tag),tree:$tree,parents:[]}' |
-    gh api "repos/$GH_REPO/git/commits" --input - --jq .sha)
+    gh api -X POST "repos/$GH_REPO/git/commits" --input - --jq .sha)
   gh api "repos/$GH_REPO/git/refs" -f ref=refs/heads/update-feed -f sha="$commit" --jq .ref
 else
   jq -n --arg sha "$feed_sha" --arg tag "$tag" --arg content "$(base64 -w0 latest.json)" \
