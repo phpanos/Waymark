@@ -1,29 +1,41 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version=$(jq -er '.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))' src-tauri/tauri.conf.json)
+numeric_version='.version | select(test("^[0-9]+\\.[0-9]+\\.[0-9]+$"))'
+version=$(jq -er "$numeric_version" src-tauri/tauri.conf.json)
+
+# Compare with the published feed before uploading anything. A retry can finish
+# advancing the feed after the release has already been uploaded.
+feed_sha=
+current=
+refs=$(gh api "repos/$GH_REPO/git/matching-refs/heads/update-feed" --jq '.[] | select(.ref=="refs/heads/update-feed") | .ref')
+if [[ -n "$refs" ]]; then
+  entry=$(gh api "repos/$GH_REPO/contents/latest.json?ref=update-feed")
+  feed_sha=$(jq -er .sha <<< "$entry")
+  current=$(jq -r .content <<< "$entry" | base64 -d | jq -er "$numeric_version")
+fi
+newest=$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1)
+
+if [[ ${1:-} == --check ]]; then
+  if [[ "$version" == "$newest" && "$version" != "$current" ]]; then
+    echo 'publish=true' >> "$GITHUB_OUTPUT"
+  else
+    echo "Waymark $version is already covered by the alpha feed ($current)."
+    echo 'publish=false' >> "$GITHUB_OUTPUT"
+  fi
+  exit 0
+fi
+
+if [[ "$newest" != "$version" ]]; then
+  echo "The alpha feed already points to a newer version ($current)." >&2
+  exit 1
+fi
+
 tag="v$version-alpha.1"
 asset="Waymark_${version}_x64-setup.exe"
 installer="installer/$asset"
 test -s "$installer"
 test -s "$installer.sig"
-
-# Compare with the published feed before uploading anything. A retry can finish
-# advancing the feed after the release has already been uploaded.
-feed_sha=
-if refs=$(gh api "repos/$GH_REPO/git/matching-refs/heads/update-feed" --jq '.[] | select(.ref=="refs/heads/update-feed") | .ref'); then
-  if [[ -n "$refs" ]]; then
-    entry=$(gh api "repos/$GH_REPO/contents/latest.json?ref=update-feed")
-    feed_sha=$(jq -er .sha <<< "$entry")
-    current=$(jq -r .content <<< "$entry" | base64 -d | jq -er .version)
-    if [[ $(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1) != "$version" ]]; then
-      echo "The alpha feed already points to a newer version ($current)." >&2
-      exit 1
-    fi
-  fi
-else
-  exit 1
-fi
 
 digest="sha256:$(sha256sum "$installer" | cut -d ' ' -f 1)"
 if ! gh release view "$tag" --json tagName >/dev/null 2>&1; then

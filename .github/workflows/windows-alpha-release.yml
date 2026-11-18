@@ -1,6 +1,8 @@
 name: Publish signed Windows alpha
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
     inputs:
       validation_run:
@@ -14,8 +16,32 @@ concurrency:
   group: windows-alpha-release
 
 jobs:
-  build:
+  prepare:
     if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      publish: ${{ steps.check.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check whether the version needs publishing
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == workflow_dispatch ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            bash scripts/publish-alpha.sh --check
+          fi
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.publish == 'true'
     runs-on: windows-2022
     timeout-minutes: 35
     steps:
@@ -88,7 +114,7 @@ jobs:
           name: signed-installer
           path: installer
       - name: Wait for signed-upgrade validation
-        if: inputs.validation_run != ''
+        if: github.event_name == 'workflow_dispatch' && inputs.validation_run != ''
         env:
           VALIDATION_RUN: ${{ inputs.validation_run }}
         shell: bash
