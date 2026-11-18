@@ -5,7 +5,7 @@ mod watcher;
 mod window;
 
 use serde::Serialize;
-use settings::{CampaignProfile, Placement, Settings};
+use settings::{CampaignProfile, Placement, Settings, TownRewardStatus};
 use std::{
     path::PathBuf,
     sync::{
@@ -23,7 +23,7 @@ use waymark_log::parser::Zone;
 
 const CHANNEL: &str = "waymark://state-v1";
 const REWARD_ACTION: &str = "waymark://reward-action";
-const REWARD_SHORTCUTS: [(&str, &str, &str); 4] = [
+const REWARD_SHORTCUTS: [(&str, &str, &str); 6] = [
     (
         "Alt+Shift+R",
         "recap",
@@ -31,7 +31,9 @@ const REWARD_SHORTCUTS: [(&str, &str, &str); 4] = [
     ),
     ("Alt+Shift+N", "next", "Select next reward"),
     ("Alt+Shift+D", "done", "Mark selected reward done"),
-    ("Alt+Shift+U", "undo", "Undo last reward completion"),
+    ("Alt+Shift+U", "undo", "Undo last reward change"),
+    ("Alt+Shift+P", "pin", "Pin reward for town"),
+    ("Alt+Shift+X", "dismiss", "Dismiss pinned reward"),
 ];
 
 #[derive(Clone, Copy, Serialize, PartialEq, Eq)]
@@ -322,6 +324,34 @@ fn set_objective_completed(
     })
 }
 
+#[tauri::command]
+fn set_town_reward(
+    app: AppHandle,
+    state: State<'_, Runtime>,
+    profile: Option<usize>,
+    reward: String,
+    expected: Option<TownRewardStatus>,
+    status: TownRewardStatus,
+) -> Result<bool, String> {
+    if reward.is_empty()
+        || reward.len() > 96
+        || !reward
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    {
+        return Err("Invalid town reward ID.".into());
+    }
+    state.try_edit(&app, |settings| {
+        let rewards = settings
+            .town_rewards_for(profile)
+            .ok_or("The active campaign profile changed.")?;
+        if rewards.get(&reward).copied() == expected {
+            rewards.insert(reward, status);
+        }
+        Ok(())
+    })
+}
+
 fn send_reward_action(app: &AppHandle, action: &str) {
     let runtime = app.state::<Runtime>();
     if action == "recap" {
@@ -336,7 +366,7 @@ fn send_reward_action(app: &AppHandle, action: &str) {
         return;
     }
     let state = runtime.read();
-    if state.visible && state.details_expanded {
+    if state.visible {
         if let Err(error) = app.emit(REWARD_ACTION, action) {
             eprintln!("Reward shortcut delivery failed: {error}");
         }
@@ -392,6 +422,7 @@ pub fn run() {
             set_league_start,
             set_campaign_profile,
             set_objective_completed,
+            set_town_reward,
             replay_fixture,
             set_overlay_height,
             toggle_overlay,
@@ -462,7 +493,7 @@ pub fn run() {
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
-                    action @ ("recap" | "next" | "done" | "undo") => {
+                    action @ ("recap" | "next" | "done" | "undo" | "pin" | "dismiss") => {
                         send_reward_action(app, action)
                     }
                     "quit" => app.exit(0),

@@ -93,6 +93,32 @@ button:disabled { opacity: .55; cursor: default }
 .overlay-details .route-landmarks p { font-size: inherit }
 .overlay-details h2 { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--gold) }
 .overlay-details ul { padding-left: 16px; margin: 0; color: var(--muted) }
+.area-diagram { display: grid; gap: 7px; margin: 0; padding-left: 11px; border-left: 1px solid #71664f; font-size: 12px; line-height: 1.3 }
+.area-diagram > :is(.area-diagram-waypoint, .area-diagram-objective, .area-diagram-exits, .zone-optional) { position: relative }
+.area-diagram > :is(.area-diagram-waypoint, .area-diagram-objective, .area-diagram-exits, .zone-optional)::before {
+  content: ""; position: absolute; top: 5px; left: -14px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold);
+}
+.area-diagram-waypoint { color: var(--gold); font-weight: 600 }
+.area-diagram-objective { color: var(--paper); font-weight: 600 }
+.area-diagram-exits ul { display: grid; gap: 2px; padding: 0; list-style: none }
+.area-diagram-exits strong { color: var(--paper) }
+.area-diagram-exits li span { display: inline-block; margin-left: 6px }
+.route-diagram { margin: 0; text-align: center; font-size: 12px; line-height: 1.3 }
+.route-diagram figcaption { margin-bottom: 5px; color: var(--muted) }
+.route-diagram .route-diagram-branches {
+  position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; list-style: none;
+}
+.route-diagram-branches::after { content: ""; position: absolute; inset: auto 25% -8px; border-top: 1px solid var(--gold) }
+.route-diagram li, .route-diagram-destination { position: relative; padding: 5px 6px; border: 1px solid #71664f; border-radius: 3px }
+.route-diagram li { margin: 0 4px; background: #171c1b }
+.route-diagram li::after, .route-diagram-destination::before {
+  content: ""; position: absolute; left: 50%; height: 9px; border-left: 1px solid var(--gold);
+}
+.route-diagram li::after { top: 100% }
+.route-diagram-destination::before { bottom: 100% }
+.route-diagram-destination { width: fit-content; max-width: 100%; margin: 16px auto 0; background: #cbb2841c }
+.route-diagram strong { display: block; color: var(--paper) }
+.route-diagram span { display: block; color: var(--gold) }
 .reward-recap { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px }
 .reward-recap .reward-list { list-style: none; padding: 0; display: grid; gap: 2px }
 .reward-list li { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6px; align-items: baseline; padding: 2px 5px; border-left: 2px solid transparent }
@@ -102,6 +128,8 @@ button:disabled { opacity: .55; cursor: default }
 .reward-feedback { color: var(--gold) }
 .reward-keys { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: 11px }
 .reward-keys kbd { font: inherit; color: var(--paper) }
+.town-reward-actions, .town-reward-source { margin: 3px 0 }
+.town-reward-actions .reward-feedback { font-size: 12px }
 .campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
 .campaign-results button { display: block; width: 100%; text-align: left; margin-bottom: 3px }
 .optional-list label { display: flex; align-items: baseline; gap: 6px; cursor: pointer }

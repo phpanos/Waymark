@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = ['overlay', 'details', 'rewards'].includes(view) ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -81,8 +81,81 @@ try {
     return true
   })()`))
   await expectText('Connected')
-  if (view !== 'details' && view !== 'rewards') await expectText('Awaiting zone')
-  if (view === 'rewards') {
+  if (view === 'settings' || view === 'overlay') await expectText('Awaiting zone')
+  if (view === 'diagram') {
+    await expectText('Sweep the edges for both tomb doors', '.direction .optional-hint')
+    if (argument === 'collapsed') {
+      await expectText('Alt+click header +', '.details-gesture')
+      await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
+        const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
+        return !document.querySelector('.route-diagram') && Math.abs(innerHeight - height) <= 1
+      })()`))
+    } else {
+      await expectText('Clear either tomb first', '.route-diagram figcaption')
+      await expectText('Draven · 1 key piece', '.route-diagram li:first-child span')
+      await expectText('Asinia · 1 key piece', '.route-diagram li:last-child span')
+      await expectText('Bring both key pieces to Lachlann', '.route-diagram-destination span')
+      await expectText('Locate and activate the checkpoints at both tomb entrances before clearing the tombs. Use the cemetery\'s checkpoint travel to get to the other entrance when you return with a key piece.', '.zone-shortcut p')
+      await waitFor('both branches and the destination to fit in the overlay', () => evaluate(`(() => {
+        const panel = document.querySelector('.compact').getBoundingClientRect()
+        const [left, right, gate] = [...document.querySelectorAll('.route-diagram li, .route-diagram-destination')]
+          .map(node => node.getBoundingClientRect())
+        return left.right < right.left && left.top === right.top && gate.top > left.bottom && gate.top > right.bottom &&
+          [left, right, gate].every(rect => rect.left > panel.left && rect.right < panel.right && rect.bottom < panel.bottom) &&
+          panel.bottom <= innerHeight - 1
+      })()`))
+      if (argument === 'expanded') {
+        for (const [area, title, next, waypoint] of [
+          ['G1_1', 'The Riverbank', 'Clearfell Encampment', false],
+          ['G2_town', 'The Ardura Caravan', 'The Halani Gates', true],
+          ['G3_9', 'The Molten Vault', 'The Drowned City', true],
+          ['G4_town', 'Kingsmarch', 'Isle of Kin', true],
+        ]) {
+          await appendFile(log, `Generating level 40 area "${area}"\r\n`)
+          await expectText(title, '.zone-block h1')
+          await expectText(next, '.area-diagram-exits li:first-child strong')
+          await waitFor('waypoint and area diagram to fit in the overlay', () => evaluate(`(() => {
+            const panel = document.querySelector('.compact').getBoundingClientRect()
+            const diagram = document.querySelector('.area-diagram')
+            return !!diagram.querySelector('.area-diagram-waypoint') === ${waypoint} &&
+              diagram.getBoundingClientRect().bottom < panel.bottom && panel.bottom <= innerHeight - 1
+          })()`))
+        }
+        await appendFile(log, 'Generating level 9 area "G1_7"\r\n')
+        await expectText('Clear either tomb first', '.route-diagram figcaption')
+        await waitFor('the Cemetery panel to be resized before clicking the header', () => evaluate(`
+          document.querySelector('.compact').getBoundingClientRect().bottom <= innerHeight - 1
+        `))
+      }
+    }
+  } else if (view === 'town') {
+    const reward = 'Level 11 Uncut Skill Gem and Reforging Bench'
+    const claim = 'Bring the Hammer of Kamasa to Oswald if you recovered it.'
+    if (argument === 'source') {
+      await appendFile(log, 'Generating level 40 area "G3_9"\r\n')
+      await expectText(`Alt+Shift+P Pin for Ziggurat Encampment · ${reward}`, '.town-reward-source')
+    } else if (argument === 'claimed' || argument === 'dismissed') {
+      await expectText(`${argument === 'claimed' ? 'Claimed' : 'Dismissed'} · ${reward}`, '.town-reward-actions .reward-feedback')
+      await waitFor('the removed pin and its undo action', () => evaluate(`
+        !document.querySelector('.quest-reward') && document.querySelector('.town-reward-actions').innerText.includes('Undo')
+      `))
+    } else {
+      if (argument === 'detour' || argument === 'restart') {
+        if (argument === 'detour') await expectText('Pinned for Ziggurat Encampment', '.town-reward-source')
+        await appendFile(log, 'Generating level 40 area "G3_8"\r\n')
+        await expectText('The Drowned City', '.zone-block h1')
+        await waitFor('the pin to stay hidden in the Drowned City', () => evaluate('!document.querySelector(".town-reward-actions")'))
+        await appendFile(log, 'Generating level 40 area "G3_town"\r\n')
+      }
+      await expectText('Work with Alva to open the route below', '.story-objective')
+      await expectText('PINNED REWARD', '.quest-reward .optional-label')
+      await expectText(reward, '.quest-reward strong')
+      await expectText(claim, '.reward-claim')
+      await waitFor('the pinned reward to fit without opening the permanent reward list', () => evaluate(`
+        document.querySelector('.compact').getBoundingClientRect().bottom <= innerHeight - 1 && !document.querySelector('.reward-list')
+      `))
+    }
+  } else if (view === 'rewards') {
     if (argument === 'opened') {
       await expectText('5 rewards left', '.reward-count')
       await expectText('Cold resistance', '.reward-list li[aria-current] strong')

@@ -257,6 +257,35 @@ try {
                 $bounds = [OverlayCheck]::WindowBounds($hwnd)
                 $bounds.Top -eq $collapsed.Top -and $bounds.Bottom -eq $collapsed.Bottom
             })
+            node $check $profile $log town source
+            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not offer to pin the reward from Oswald.' }
+            Invoke-RewardShortcut 0x50 # P
+            node $check $profile $log town detour
+            if ($LASTEXITCODE -ne 0) { throw 'The pinned reward did not survive the detour to town.' }
+            Invoke-RewardShortcut 0x44 # D
+            node $check $profile $log town claimed
+            if ($LASTEXITCODE -ne 0) { throw 'Marking a town reward claimed failed.' }
+            Invoke-RewardShortcut 0x55 # U
+            node $check $profile $log town restored
+            if ($LASTEXITCODE -ne 0) { throw 'Undo did not restore the claimed town reward.' }
+            Invoke-RewardShortcut 0x58 # X
+            node $check $profile $log town dismissed
+            if ($LASTEXITCODE -ne 0) { throw 'Dismissing a pinned town reward failed.' }
+            Invoke-RewardShortcut 0x55 # U
+            node $check $profile $log town restored
+            if ($LASTEXITCODE -ne 0) { throw 'Undo did not restore the dismissed town reward.' }
+            [IO.File]::AppendAllText($log, "Generating level 9 area `"G1_7`"`r`n", $utf8)
+            node $check $profile $log diagram collapsed
+            if ($LASTEXITCODE -ne 0) { throw 'The Cemetery cue did not display on its own.' }
+            Invoke-AltHeaderClick $hwnd
+            node $check $profile $log diagram expanded
+            if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not fit in the expanded overlay.' }
+            Invoke-AltHeaderClick $hwnd
+            node $check $profile $log diagram collapsed
+            if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
+        } else {
+            node $check $profile $log town restart
+            if ($LASTEXITCODE -ne 0) { throw 'The pinned town reward did not survive restart.' }
         }
         $process.Kill()
         $process.WaitForExit()

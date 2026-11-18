@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
-import { campaignAreas, describeZone, searchCampaign } from './presentation'
+import { campaignAreas, describeZone, searchCampaign, townRewards } from './presentation'
 import { permanentRewards, selectedReward } from './rewards'
 import { useSession } from './session'
 
@@ -63,6 +63,36 @@ describe('zone presentation', () => {
     expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Shortcut')
     expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('Once the quest updates')
     expect(describeZone({ areaId: 'G1_1', name: null, level: 1 }).shortcut).toBeNull()
+  })
+  it('keeps the Cemetery cue visible and shows the two tomb branches only in expanded directions', () => {
+    const state: Snapshot = { ...snapshot, zone: { areaId: 'G1_7', name: null, level: 9 } }
+    const collapsed = renderToStaticMarkup(<Compact state={state}/>)
+    expect(collapsed).toContain('Sweep the edges for both tomb doors')
+    expect(collapsed).not.toContain('route-diagram')
+    const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
+    expect(expanded).toContain('Clear either tomb first')
+    expect(expanded).toContain('Draven · 1 key piece')
+    expect(expanded).toContain('Asinia · 1 key piece')
+    expect(expanded).toContain('Bring both key pieces to Lachlann')
+    expect(expanded).toContain('activate the checkpoints at both tomb entrances')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true, status: 'missing' }}/>))
+      .not.toContain('route-diagram')
+  })
+  it('provides exits and an expanded diagram for every cataloged area', () => {
+    for (const area of campaignAreas) {
+      const zone = { areaId: area.id, name: null, level: null }
+      const { navigation } = describeZone(zone)
+      expect(navigation?.exits.length, area.id).toBeGreaterThan(0)
+      expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>), area.id)
+        .toContain('aria-label="Area diagram"')
+    }
+  })
+  it('distinguishes waypoint availability, side-area returns and shared scene data', () => {
+    const navigation = (areaId: string) => describeZone({ areaId, name: null, level: null }).navigation
+    expect(navigation('G1_1')).toMatchObject({ waypoint: false, exits: [{ landmark: 'Clearfell Encampment' }] })
+    expect(navigation('G3_9')).toMatchObject({ waypoint: true, label: 'Return to', exits: [{ landmark: 'The Drowned City' }] })
+    expect(describeZone({ name: 'Ngakanu', areaId: null, level: null }).navigation).toMatchObject({ waypoint: true, exits: [] })
+    expect(navigation('UNKNOWN')).toBeNull()
   })
   it('escapes unknown identifiers and leaves the act unknown', () => {
     const zone = { areaId: '<img src=x>', name: null, level: 42 }
@@ -215,6 +245,46 @@ describe('permanent reward recap', () => {
     expect(markup).not.toContain('reward-list')
     expect(renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'Unrelated', name: null, level: null }}/>))
       .not.toContain(claim)
+  })
+})
+
+describe('pinned town rewards', () => {
+  const zone = (areaId: string) => ({ areaId, name: null, level: null })
+  const oswald = 'treasures-of-utzaal'
+
+  it('offers a gem reward to pin in each act and uses unique IDs', () => {
+    expect(new Set(townRewards.map(reward => reward.id)).size).toBe(townRewards.length)
+    for (const area of ['G1_3', 'G2_4_3', 'G3_9', 'G4_2_2']) {
+      expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: zone(area) }}/>)).toContain('Alt+Shift+P')
+    }
+  })
+
+  it('shows the pin after a detour only in its town and for the active profile', () => {
+    const settings: Snapshot['settings'] = {
+      ...snapshot.settings, activeProfile: 0, profiles: [
+        { character: 'Exile', league: 'One', completed: [], townRewards: { [oswald]: 'pinned' } },
+        { character: 'Other', league: 'One', completed: [] },
+      ],
+    }
+    const town: Snapshot = { ...snapshot, settings, zone: zone('G3_town') }
+    const markup = renderToStaticMarkup(<Compact state={town} previousZone={zone('G3_8')}/>)
+    expect(markup).toContain('Pinned reward')
+    expect(markup).toContain('Bring the Hammer of Kamasa to Oswald')
+    expect(markup.indexOf('Work with Alva')).toBeLessThan(markup.indexOf('Pinned reward'))
+    expect(renderToStaticMarkup(<Compact state={{ ...town, zone: zone('G4_town') }}/>)).not.toContain('Pinned reward')
+    expect(renderToStaticMarkup(<Compact state={{ ...town, settings: { ...settings, activeProfile: 1 } }}/>)).not.toContain('Pinned reward')
+    expect(renderToStaticMarkup(<Compact state={{ ...town, status: 'replaying' }}/>)).not.toContain('Pinned reward')
+  })
+
+  it('stops showing a handled reward on a direct town arrival and lets a dismissed reward be pinned again', () => {
+    for (const status of ['claimed', 'dismissed'] as const) {
+      const state: Snapshot = { ...snapshot, zone: zone('G3_town'), settings: {
+        ...snapshot.settings, defaultTownRewards: { [oswald]: status },
+      } }
+      expect(renderToStaticMarkup(<Compact state={state} previousZone={zone('G3_9')}/>)).not.toContain('Hammer of Kamasa')
+      expect(renderToStaticMarkup(<Compact state={{ ...state, zone: zone('G3_9') }}/>).includes('Alt+Shift+P'))
+        .toBe(status === 'dismissed')
+    }
   })
 })
 

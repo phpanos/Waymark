@@ -46,6 +46,8 @@ The compact overlay puts the current objective and its known quest reward first.
 
 Choose a character and optionally name the league to save an independent reward checklist. Tick an optional objective to remove it from that character's compact overlay. Enable **League-start recommendations** to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks.
 
+When a quest area offers **Pin for town**, press **Alt+Shift+P** to save the gem reward reminder for the active character. In the matching town, press **Alt+Shift+N** to cycle between pins, **Alt+Shift+D** to mark one claimed, **Alt+Shift+X** to dismiss it, or **Alt+Shift+U** to undo the last claim or dismissal during this session. Pins survive area changes and restarts.
+
 The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](https://data.exiledata.dev/poe2/0.5.5.10/world_areas.min.json) and hints based on PoE2DB's [Act 1](https://poe2db.tw/us/Act_1), [Act 2](https://poe2db.tw/us/Act_2), [Act 3](https://poe2db.tw/us/Act_3), and [Act 4](https://poe2db.tw/us/Act_4) references. Recommendations focus on permanent campaign rewards and don’t depend on the league mechanic.
 
 **Settings → Objectives** also shows preparation tips for selected bosses and Ascendancy trials. The detected area level and any suggested character level are labeled separately. The suggested levels for a first trial are approximate and depend on your build and gear. [Campaign and trial preparation reference](https://buildmentor.org/new-player-guide/)
@@ -53,6 +55,8 @@ The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](
 The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Objectives** for the full steps, including when to use a town portal, activate a waypoint, backtrack via a checkpoint, or return to the ship. [Act 1 route](https://mobalytics.gg/poe-2/guides/act-1-guide-guythatdies), [checkpoint routes for Act 1](https://www.definitivguide.com/docs/PoE2/Act%201/overview), [Act 2 route](https://www.definitivguide.com/docs/PoE2/Act%202/overview), [Act 3 route](https://www.definitivguide.com/docs/PoE2/Act%203/overview), [Act 4 route](https://www.definitivguide.com/docs/PoE2/Act%204/overview).
 
 Selected zones in Acts 1–4 show a **Route** cue. The overlay starts expanded and shows route landmarks, optional detours, shortcuts, encounter tips and remaining optional objectives when available. Hold **Alt** and click the Waymark header to collapse or reopen the details. Orient yourself from the entrance, the world map, or the named landmarks as each instance can vary. [Act 1 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-1), [Act 2 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-2), [Act 3 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-3), [Act 4 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-4).
+
+The expanded overlay includes a diagram for each cataloged area in Acts 1–4. It shows the waypoint where available, local objectives, and where to go next, including return trips and town travel choices. The diagrams show how to progress through areas with variable layouts.
 
 The Waterways and island directions also use the [0.5.5 campaign walkthrough](https://pathofexile.gg/campaign/), the [0.5.5 Act 3 route](https://worstguidesever.com/poe2-act-3-campaign-guide/), and the [0.5.5 Act 4 guide](https://domistae.github.io/poe2-leveling/poe2_act4_guide.html).
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeMap, BTreeSet},
     fs,
     io::{self, Write},
     path::{Path, PathBuf},
@@ -12,6 +12,15 @@ pub struct CampaignProfile {
     pub character: String,
     pub league: String,
     pub completed: BTreeSet<String>,
+    pub town_rewards: BTreeMap<String, TownRewardStatus>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum TownRewardStatus {
+    Pinned,
+    Claimed,
+    Dismissed,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
@@ -60,6 +69,7 @@ pub struct Settings {
     pub profiles: Vec<CampaignProfile>,
     pub active_profile: Option<usize>,
     pub default_completed: BTreeSet<String>,
+    pub default_town_rewards: BTreeMap<String, TownRewardStatus>,
 }
 
 impl Settings {
@@ -74,6 +84,22 @@ impl Settings {
         match profile {
             Some(index) => self.profiles.get_mut(index).map(|item| &mut item.completed),
             None => Some(&mut self.default_completed),
+        }
+    }
+
+    pub fn town_rewards_for(
+        &mut self,
+        profile: Option<usize>,
+    ) -> Option<&mut BTreeMap<String, TownRewardStatus>> {
+        if self.active_profile != profile {
+            return None;
+        }
+        match profile {
+            Some(index) => self
+                .profiles
+                .get_mut(index)
+                .map(|item| &mut item.town_rewards),
+            None => Some(&mut self.default_town_rewards),
         }
     }
 }

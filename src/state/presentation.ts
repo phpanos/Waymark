@@ -1,4 +1,5 @@
 import areas from '../data/areas.json'
+import navigation from '../data/navigation.json'
 import type { Snapshot, Status, Zone } from '../native/contract'
 
 type OptionalObjective = {
@@ -8,8 +9,14 @@ type OptionalObjective = {
   reward?: { name: string; direction: string }
   loot?: string
 }
-export type Route = { cue: string; steps: readonly { landmark: string; detail: string }[] }
+type RouteLandmark = { landmark: string; detail: string }
+export type Route = {
+  cue: string
+  steps: readonly RouteLandmark[]
+  diagram?: { caption: string; branches: readonly RouteLandmark[]; destination: RouteLandmark }
+}
 type ArrivalReward = {
+  id?: string
   from: readonly string[]
   reward: string
   claim?: string
@@ -32,7 +39,32 @@ type AreaReference = {
 }
 export const campaignAreas: readonly AreaReference[] = areas
 
+export const townRewards = campaignAreas.flatMap(town => (town.arrivalRewards ?? []).flatMap(reward =>
+  reward.id && reward.claim ? [{
+    id: reward.id, from: reward.from, reward: reward.reward, claim: reward.claim,
+    townId: town.id, townName: town.name,
+  }] : []))
+
 const byId = new Map(campaignAreas.map(area => [area.id, area]))
+
+type NavigationData = { waypoint: boolean; label?: string; exits: readonly { id: string; detail?: string }[] }
+const navigationById: Readonly<Record<string, NavigationData>> = navigation
+export type ZoneNavigation = { waypoint: boolean; label: string; exits: readonly RouteLandmark[] }
+
+function describeNavigation(references: readonly AreaReference[]): ZoneNavigation | null {
+  const [reference, ...variants] = references.map(area => navigationById[area.id])
+  if (!reference) return null
+  const exits = reference.exits.filter(exit => variants.every(variant => variant?.label === reference.label &&
+    variant?.exits.some(other => other.id === exit.id && other.detail === exit.detail)))
+  return {
+    waypoint: reference.waypoint && variants.every(variant => variant?.waypoint),
+    label: reference.label ?? (exits.length > 1 ? 'Next zones' : 'Next zone'),
+    exits: exits.flatMap(exit => {
+      const area = byId.get(exit.id)
+      return area ? [{ landmark: area.name, detail: exit.detail ?? '' }] : []
+    }),
+  }
+}
 
 function sceneKey(value: string) {
   return value.trim().normalize('NFC').toLowerCase().replace(/’/g, "'").replace(/\s+/g, ' ').replace(/^the /, '')
@@ -72,7 +104,7 @@ export const statusText: Record<Status, string> = {
 }
 
 export function describeZone(zone: Zone | null, previousAreaId: string | null = null) {
-  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, questReward: null, arrivalReward: null, optional: [], tip: null, shortcut: null, route: null }
+  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, questReward: null, arrivalReward: null, optional: [], tip: null, shortcut: null, route: null, navigation: null }
   const scene = zone.name ? sceneKey(zone.name) : ''
   const matchingScenes = !zone.areaId && scene ? campaignAreas.filter(area => sceneKey(area.name) === scene) : []
   // A scene-only label cannot distinguish campaign stages which share a name and have different routes.
@@ -95,5 +127,6 @@ export function describeZone(zone: Zone | null, previousAreaId: string | null = 
     tip: known?.tip ?? null,
     shortcut: known?.shortcut ?? null,
     route: known?.route ?? null,
+    navigation: describeNavigation(known ? [known] : matchingScenes),
   }
 }

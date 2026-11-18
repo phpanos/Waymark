@@ -1,11 +1,13 @@
 export const channel = 'waymark://state-v1'
 export const rewardChannel = 'waymark://reward-action'
-export type RewardAction = 'next' | 'done' | 'undo'
+export type RewardAction = 'next' | 'done' | 'undo' | 'pin' | 'dismiss'
+export type TownRewardStatus = 'pinned' | 'claimed' | 'dismissed'
+export type TownRewardProgress = Partial<Record<string, TownRewardStatus>>
 export type Corner = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 export type Placement = { corner: Corner; insetX: number; insetY: number; followGame: boolean }
 export type Zone = { areaId: string | null; name: string | null; level: number | null }
 export type Status = 'searching' | 'watching' | 'missing' | 'readError' | 'replaying' | 'replayComplete'
-export type CampaignProfile = { character: string; league: string; completed: string[] }
+export type CampaignProfile = { character: string; league: string; completed: string[]; townRewards?: TownRewardProgress }
 export interface Snapshot {
   version: 1
   revision: number
@@ -17,6 +19,7 @@ export interface Snapshot {
     profiles: CampaignProfile[]
     activeProfile: number | null
     defaultCompleted: string[]
+    defaultTownRewards?: TownRewardProgress
   }
   activePath: string | null
   status: Status

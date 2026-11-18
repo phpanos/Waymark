@@ -9,11 +9,11 @@
   { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una",
     "arrivalRewards": [
       { "from": ["G1_1"], "objective": "Speak to Renly to claim the Miller reward", "reward": "Level 1 Uncut Skill Gem", "fallback": "Level 1 Uncut Skill Gem after defeating the Miller. Speak to Renly." },
-      { "from": ["G1_3"], "reward": "Uncut Support Gem", "claim": "Speak to Renly if you defeated the Devourer.", "optional": true },
+      { "id": "treacherous-ground", "from": ["G1_3"], "reward": "Uncut Support Gem", "claim": "Speak to Renly if you defeated the Devourer.", "optional": true },
       { "from": ["G1_5"], "reward": "Runed Spikes", "claim": "Bring the Rust King’s girdles to Renly." },
       { "from": ["G1_13_1"], "reward": "Passive skill points", "claim": "Bring the lute to Una if you found it.", "optional": true },
-      { "from": ["G1_13_2"], "reward": "Level 5 Uncut Skill Gem", "claim": "Speak to Leitis if you rescued her." },
-      { "from": ["G1_15"], "reward": "Uncut Support Gem", "claim": "Speak to the Hooded One after defeating Count Geonor." }
+      { "id": "rescue-leitis", "from": ["G1_13_2"], "reward": "Level 5 Uncut Skill Gem", "claim": "Speak to Leitis if you rescued her." },
+      { "id": "mad-wolf-of-ogham", "from": ["G1_15"], "reward": "Uncut Support Gem", "claim": "Speak to the Hooded One after defeating Count Geonor." }
     ]
   },
   { "id": "G1_2", "name": "Clearfell", "act": 1, "bosses": ["Beira of the Rotten Pack"], "objective": "Find the path into the Grelwood",
@@ -66,7 +66,14 @@
   },
   { "id": "G1_7", "name": "Cemetery of the Eternals", "act": 1, "bosses": ["Lachlann of Endless Lament"], "objective": "Recover both keys and confront Lachlann",
     "questReward": "Level 3 Uncut Skill Gem and Uncut Support Gem from Lachlann",
-    "route": { "cue": "Sweep the edges for both tomb doors", "steps": [
+    "route": { "cue": "Sweep the edges for both tomb doors", "diagram": {
+      "caption": "Clear either tomb first",
+      "branches": [
+        { "landmark": "Mausoleum of the Praetor", "detail": "Draven · 1 key piece" },
+        { "landmark": "Tomb of the Consort", "detail": "Asinia · 1 key piece" }
+      ],
+      "destination": { "landmark": "Memorial Gate", "detail": "Bring both key pieces to Lachlann" }
+    }, "steps": [
       { "landmark": "Cemetery edges", "detail": "Look for the Mausoleum of the Praetor and the Tomb of the Consort along the perimeter. You can clear them in either order." },
       { "landmark": "Memorial Gate", "detail": "After you have both key pieces, return to Lachlann to open the gate." }
     ] },
@@ -148,11 +155,11 @@
   },
   { "id": "G2_town", "name": "The Ardura Caravan", "act": 2, "objective": "Speak with Asala and use the Desert Map",
     "arrivalRewards": [
-      { "from": ["G2_1"], "reward": "Level 5 Uncut Skill Gem", "claim": "Speak to Zarka if you still need to claim Rathbreaker’s reward." },
-      { "from": ["G2_3"], "reward": "Level 7 Uncut Skill Gem", "claim": "Speak to Zarka if you defeated Jamanra at the Halani Gates." },
-      { "from": ["G2_4_3"], "reward": "Uncut Support Gem", "claim": "Bring the Essence of Water to Zarka." },
-      { "from": ["G2_5_2"], "reward": "Uncut Support Gem", "claim": "Bring the Mastodon Tusks to Zarka." },
-      { "from": ["G2_7"], "reward": "Uncut Support Gem", "claim": "Bring the Flame Ruby to Zarka." },
+      { "id": "earning-passage", "from": ["G2_1"], "reward": "Level 5 Uncut Skill Gem", "claim": "Speak to Zarka if you still need to claim Rathbreaker’s reward." },
+      { "id": "halani-gates", "from": ["G2_3"], "reward": "Level 7 Uncut Skill Gem", "claim": "Speak to Zarka if you defeated Jamanra at the Halani Gates." },
+      { "id": "city-of-seven-waters", "from": ["G2_4_3"], "reward": "Uncut Support Gem", "claim": "Bring the Essence of Water to Zarka." },
+      { "id": "theft-of-ivory", "from": ["G2_5_2"], "reward": "Uncut Support Gem", "claim": "Bring the Mastodon Tusks to Zarka." },
+      { "id": "crown-of-stone", "from": ["G2_7"], "reward": "Uncut Support Gem", "claim": "Bring the Flame Ruby to Zarka." },
       { "from": ["G2_8","G2_8a"], "reward": "Passive skill points", "claim": "Bring the Final Letter to Shambrin if you found it.", "optional": true }
     ],
     "shortcut": { "cue": "For Ancient Vows, leave the Valley last", "detail": "Once the three Horn of the Vastiri branches open, do the Keth and Bone Pits branches before the Valley of the Titans if you’re doing Ancient Vows. Bring both clan relics so you can use the altar on the same visit. Once you have turned in all three horn components, ask Asala to make the horn and claim the Uncut Support Gem." }
@@ -213,6 +220,16 @@
       { "landmark": "Outer wall", "detail": "Start by following the area boundary until you find the Bone Pits entrance." },
       { "landmark": "Effigy checkpoint · Optional", "detail": "Check the effigy beside its checkpoint if you want an extra uncut gem." }
     ] }
+  },
+  { "id": "Abyss_Intro", "name": "Lightless Passage", "act": 2,
+    "optional": [
+      { "id": "Abyss_Intro:well-of-souls", "hint": "Follow the passage to the Well of Souls" }
+    ]
+  },
+  { "id": "Abyss_Hub", "name": "The Well of Souls", "act": 2,
+    "optional": [
+      { "id": "Abyss_Hub:desecration", "hint": "Use the Well of Souls to reveal desecrated modifiers" }
+    ]
   },
   { "id": "G2_5_2", "name": "The Bone Pits", "act": 2, "bosses": ["Ekbab, Ancient Steed"], "objective": "Defeat Iktab and Ekbab for the tusks",
     "questReward": "Uncut Support Gem from Zarka on the caravan for the Mastodon Tusks",
@@ -317,7 +334,7 @@
     "arrivalRewards": [
       { "from": ["G3_4"], "reward": "Permanent Venom Draught and Artificer’s Orb", "claim": "Bring the Corpse Venom to Servi if you found it.", "optional": true },
       { "from": ["G3_7"], "reward": "Choice of charm", "claim": "Bring Ignagduk’s Ghastly Spear to Servi if you have it.", "optional": true },
-      { "from": ["G3_9"], "reward": "Level 11 Uncut Skill Gem and Reforging Bench", "claim": "Bring the Hammer of Kamasa to Oswald if you recovered it.", "optional": true }
+      { "id": "treasures-of-utzaal", "from": ["G3_9"], "reward": "Level 11 Uncut Skill Gem and Reforging Bench", "claim": "Bring the Hammer of Kamasa to Oswald if you recovered it.", "optional": true }
     ]
   },
   { "id": "G3_3", "name": "Jungle Ruins", "act": 3, "bosses": ["Mighty Silverfist"], "objective": "Find the route into the Infested Barrens",
@@ -481,7 +498,7 @@
   },
   { "id": "G4_town", "name": "Kingsmarch", "act": 4, "objective": "Arrange passage with Makoru and investigate the islands",
     "arrivalRewards": [
-      { "from": ["G4_2_2"], "reward": "Level 13 Uncut Skill Gem and passive points", "claim": "Talk to Tujen after defeating Omniphobia. If you only have the Verisium, take it to Dannig first.", "optional": true },
+      { "id": "dark-mists", "from": ["G4_2_2"], "reward": "Level 13 Uncut Skill Gem and passive points", "claim": "Talk to Tujen after defeating Omniphobia. If you only have the Verisium, take it to Dannig first.", "optional": true },
       { "from": ["G4_3_2"], "reward": "Pearlescent Amulet", "claim": "Bring the Humming Pearl to Rog if you found it.", "optional": true },
       { "from": ["G4_11_2"], "reward": "Permanent defensive bonus", "claim": "Bring the Shark Fin to Kaimana at the docks after defeating Tavakai.", "optional": true }
     ],
@@ -654,5 +671,15 @@
       { "id": "G4_13:2", "hint": "Complete the Runeseeker for the Verisium Anvil", "leagueStart": true }
     ]
   },
-  { "id": "G4_14", "name": "Brinerot Cove", "act": 4 }
+  { "id": "ExpeditionSubArea_Kalguur_Act4", "name": "Deserted Post", "act": 4,
+    "optional": [
+      { "id": "ExpeditionSubArea_Kalguur_Act4:runeseeker", "hint": "Enter the Runic Vault to complete the Runeseeker" }
+    ]
+  },
+  { "id": "G4_14", "name": "Brinerot Cove", "act": 4 },
+  { "id": "MapHideoutShoreline_Claimable", "name": "Shoreline Hideout", "act": 4,
+    "optional": [
+      { "id": "MapHideoutShoreline_Claimable:unlock", "hint": "Clear the area to claim the hideout" }
+    ]
+  }
 ]
