@@ -59,11 +59,22 @@ pub struct Settings {
     pub league_start: bool,
     pub profiles: Vec<CampaignProfile>,
     pub active_profile: Option<usize>,
+    pub default_completed: BTreeSet<String>,
 }
 
 impl Settings {
     pub fn campaign_profile(&self) -> Option<&CampaignProfile> {
         self.profiles.get(self.active_profile?)
+    }
+
+    pub fn completed_for(&mut self, profile: Option<usize>) -> Option<&mut BTreeSet<String>> {
+        if self.active_profile != profile {
+            return None;
+        }
+        match profile {
+            Some(index) => self.profiles.get_mut(index).map(|item| &mut item.completed),
+            None => Some(&mut self.default_completed),
+        }
     }
 }
 

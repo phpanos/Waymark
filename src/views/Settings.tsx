@@ -2,7 +2,7 @@ import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
-import { activeProfile, campaignAreas, describeZone, searchCampaign } from '../state/presentation'
+import { campaignAreas, completedObjectives, describeZone, searchCampaign } from '../state/presentation'
 import { CharacterProfile } from './CharacterProfile'
 import { RouteLandmarks, StatusLight } from './Compact'
 import { Updates } from './Updates'
@@ -21,7 +21,7 @@ function Objectives({ zone, settings, run }: { zone: Snapshot['zone']; settings:
   const [browse, setBrowse] = useState<{ act: number; areaId: string | null } | null>(null)
   const [query, setQuery] = useState('')
   const results = searchCampaign(query)
-  const profile = activeProfile(settings)
+  const completed = completedObjectives(settings)
   const profileIndex = settings.activeProfile
   const current = describeZone(zone)
   const act = browse?.act ?? current.act
@@ -61,16 +61,15 @@ function Objectives({ zone, settings, run }: { zone: Snapshot['zone']; settings:
     {selected?.objective && <Field label="Story objective"><p>{selected.objective}</p></Field>}
     {optional.length > 0 && <Field label="Optional objectives">
       <ul className="optional-list">{optional.map(objective => {
-        const completed = profile?.completed.includes(objective.id) ?? false
-        const hint = <><span>{objective.hint}</span>{settings.leagueStart && objective.leagueStart && !completed && <span className="recommended"> · Recommended</span>}</>
-        return <li key={objective.id} className={completed ? 'objective-completed' : undefined}>
-          {profileIndex !== null && profile ? <label><input type="checkbox" checked={completed} onChange={e => {
+        const done = completed.includes(objective.id)
+        const hint = <><span>{objective.hint}</span>{settings.leagueStart && objective.leagueStart && !done && <span className="recommended"> · Recommended</span>}</>
+        return <li key={objective.id} className={done ? 'objective-completed' : undefined}>
+          <label><input type="checkbox" checked={done} onChange={e => {
             const checked = e.target.checked
-            run(() => native.completeObjective(profileIndex, objective.id, checked))
-          }}/>{hint}</label> : hint}
+            run(async () => { await native.completeObjective(profileIndex, objective.id, checked) })
+          }}/>{hint}</label>
         </li>
       })}</ul>
-      {!profile && <p className="hint">Choose a character to record completed objectives.</p>}
     </Field>}
     {!selected?.objective && optional.length === 0 && <p className="hint">
       {browse && !areaId ? 'Choose an area to see its objectives.' : 'No objective assigned'}

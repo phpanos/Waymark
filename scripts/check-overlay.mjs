@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = view === 'overlay' || view === 'details' ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -81,16 +81,48 @@ try {
     return true
   })()`))
   await expectText('Connected')
-  if (view !== 'details') await expectText('Awaiting zone')
-  if (view === 'details') {
+  if (view !== 'details' && view !== 'rewards') await expectText('Awaiting zone')
+  if (view === 'rewards') {
+    if (argument === 'opened') {
+      await expectText('5 rewards left', '.reward-count')
+      await expectText('Cold resistance', '.reward-list li[aria-current] strong')
+      await waitFor('reward recap to fit inside the overlay', () => evaluate(`
+        document.querySelector('.compact').getBoundingClientRect().bottom <= innerHeight - 1
+      `))
+    } else if (argument === 'selected') {
+      await expectText('5 rewards left', '.reward-count')
+      await expectText('Passive points from the Crowbell', '.reward-list li[aria-current] strong')
+    } else if (argument === 'completed') {
+      await expectText('4 rewards left', '.reward-count')
+      await expectText('Marked done · Passive points from the Crowbell', '.reward-feedback')
+    } else {
+      await expectText('5 rewards left', '.reward-count')
+      await expectText('Restored · Passive points from the Crowbell', '.reward-feedback')
+    }
+  } else if (view === 'details') {
     await expectText('The Grelwood')
     if (argument === 'expanded') {
       await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
-      await expectText('Defeat the Brambleghast', '.overlay-details ul li')
-      await waitFor('all objective details to fit', () => evaluate(`(() => {
+      await expectText('Defeat the Brambleghast', '.zone-optional ul li')
+      const expectDetailsToFit = () => waitFor('all objective details to fit', () => evaluate(`(() => {
         const panel = document.querySelector('.compact')
-        return panel?.classList.contains('expanded') && panel.getBoundingClientRect().bottom <= innerHeight - 1
+        const cue = panel?.querySelector('.direction .optional-hint')
+        return panel?.classList.contains('expanded') && panel.getBoundingClientRect().bottom <= innerHeight - 1 &&
+          cue?.scrollWidth <= cue?.clientWidth
       })()`))
+      await expectDetailsToFit()
+      for (const [level, id, cue, detour] of [
+        [17, 'G2_2', 'Look for the Six Sisters bridge', 'Yellow paper seals · Optional'],
+        [39, 'G3_2_2', 'Step on pads to lower the water', 'Azak Bog entrance · Optional'],
+        [46, 'G4_4_1', 'Look for the fork after the third test', 'Silent Hall · Optional'],
+      ]) {
+        await appendFile(log, `Generating level ${level} area "${id}"\r\n`)
+        await expectText(cue, '.direction .optional-hint')
+        await expectText(detour, '.overlay-details .route-landmarks li:last-child strong')
+        await expectDetailsToFit()
+      }
+      await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
+      await expectText('The Grelwood')
     } else {
       await expectText('Alt+click header +', '.details-gesture')
       await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
@@ -226,7 +258,7 @@ try {
       return optional?.getBoundingClientRect().bottom <= card.bottom - 1 && cue?.scrollWidth <= cue?.clientWidth
     })()`))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
-    await expectText('Open a portal by the final lever', '.route-preview .optional-hint')
+    await expectText('Portal after crossing the canals', '.route-preview:not(.direction) .optional-hint')
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
     await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')

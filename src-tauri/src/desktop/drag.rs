@@ -226,7 +226,7 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
             super::save_drag_position(&app, hwnd)
         };
         if let Err(error) = result {
-            super::report_drag_problem(
+            super::report_notice(
                 &app,
                 format!("Overlay position could not be saved ({error})."),
             );

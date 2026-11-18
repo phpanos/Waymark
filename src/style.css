@@ -34,7 +34,9 @@ button:disabled { opacity: .55; cursor: default }
 .status.readError { color: #e9a78c }
 .zone-block { padding: 7px 0 4px; height: 58px }
 .zone-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 5px }
+.zone-actions { display: flex; gap: 8px; align-items: baseline }
 .details-gesture { color: var(--muted); font: 11px/14px Barlow, sans-serif; white-space: nowrap }
+.reward-count { color: var(--gold); font: 600 11px/14px Barlow, sans-serif; white-space: nowrap }
 .eyebrow, .act { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .15em; text-transform: uppercase; color: #b5ad96 }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
@@ -74,6 +76,15 @@ button:disabled { opacity: .55; cursor: default }
 .overlay-details .route-landmarks p { font-size: inherit }
 .overlay-details h2 { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--gold) }
 .overlay-details ul { padding-left: 16px; margin: 0; color: var(--muted) }
+.reward-recap { display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 8px }
+.reward-recap .reward-list { list-style: none; padding: 0; display: grid; gap: 2px }
+.reward-list li { display: grid; grid-template-columns: 1.4fr 1fr; gap: 6px; align-items: baseline; padding: 2px 5px; border-left: 2px solid transparent }
+.reward-list li[aria-current] { border-left-color: var(--gold); background: #cbb2841c; color: var(--paper) }
+.reward-list span { font-size: 11px; line-height: 1.25 }
+.reward-direction { margin: 2px 0; color: var(--paper); font-size: 12px }
+.reward-feedback { color: var(--gold) }
+.reward-keys { display: flex; flex-wrap: wrap; gap: 2px 8px; color: var(--muted); font-size: 11px }
+.reward-keys kbd { font: inherit; color: var(--paper) }
 .campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
 .campaign-results button { display: block; width: 100%; text-align: left; margin-bottom: 3px }
 .optional-list label { display: flex; align-items: baseline; gap: 6px; cursor: pointer }

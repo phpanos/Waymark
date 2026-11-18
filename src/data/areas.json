@@ -12,7 +12,7 @@
       { "landmark": "Frozen logs · Optional", "detail": "Look for frozen logs around the Frostblood Ritual to find Beira and her permanent cold resistance reward." }
     ] },
     "optional": [
-      { "id": "G1_2:1", "hint": "Defeat Beira for cold resistance", "leagueStart": true }
+      { "id": "G1_2:1", "hint": "Defeat Beira for cold resistance", "leagueStart": true, "reward": { "name": "Cold resistance", "direction": "Look for frozen logs around the Frostblood Ritual in Clearfell." } }
     ]
   },
   { "id": "G1_3", "name": "Mud Burrow", "act": 1, "bosses": ["The Devourer"],
@@ -81,7 +81,7 @@
       { "landmark": "Bloody tracks · Optional", "detail": "Follow the tracks through a narrow passage to find the Crowbell for passive points." }
     ] },
     "optional": [
-      { "id": "G1_11:1", "hint": "Defeat Crowbell for passive points", "leagueStart": true },
+      { "id": "G1_11:1", "hint": "Defeat Crowbell for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Crowbell", "direction": "Follow the bloody tracks in Hunting Grounds to the narrow entrance to the arena." } },
       { "id": "G1_11:2", "hint": "Take the side path to Freythorn", "leagueStart": true }
     ]
   },
@@ -91,7 +91,7 @@
       { "landmark": "Boss ritual", "detail": "After three rituals, activate the ritual in the boss arena to fight the King in the Mists." }
     ] },
     "optional": [
-      { "id": "G1_12:1", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true }
+      { "id": "G1_12:1", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true, "reward": { "name": "Spirit from the King in the Mists", "direction": "In Freythorn, follow the locusts between ritual sites. Finish three rituals to open the boss encounter." } }
     ]
   },
   { "id": "G1_13_1", "name": "Ogham Farmlands", "act": 1, "objective": "Continue to Ogham Village",
@@ -101,7 +101,7 @@
     ] },
     "shortcut": { "cue": "Turn in the lute on your next town trip", "detail": "Pick up Una’s lute on the way to Ogham Village. If you’re stopping in town for Renly’s tools, turn in the lute on the same visit." },
     "optional": [
-      { "id": "G1_13_1:1", "hint": "Recover Una’s lute for passive points", "leagueStart": true }
+      { "id": "G1_13_1:1", "hint": "Recover Una’s lute for passive points", "leagueStart": true, "reward": { "name": "Passive points from Una’s lute", "direction": "Look behind the long hut and carts in Ogham Farmlands, then bring the lute back to Una." } }
     ]
   },
   { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "bosses": ["The Executioner"], "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
@@ -117,21 +117,33 @@
   { "id": "G1_14", "name": "The Manor Ramparts", "act": 1, "objective": "Find a way into Ogham Manor" },
   { "id": "G1_15", "name": "Ogham Manor", "act": 1, "bosses": ["Candlemass, the Living Rite", "Count Geonor"], "objective": "Defeat Count Geonor", "tip": "Bring cold resistance for Geonor. Beira in Clearfell offers a permanent boost.",
     "optional": [
-      { "id": "G1_15:1", "hint": "Defeat Candlemass for maximum life", "leagueStart": true }
+      { "id": "G1_15:1", "hint": "Defeat Candlemass for maximum life", "leagueStart": true, "reward": { "name": "Maximum life from Candlemass", "direction": "Find Candlemass in Ogham Manor and use the reward dropped by the fight." } }
     ]
   },
   { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "bosses": ["Rathbreaker"], "objective": "Defeat Rathbreaker to earn passage",
+    "route": { "cue": "Look for the narrow canyon", "steps": [
+      { "landmark": "Desert entrance", "detail": "Start along the edge on the side the path leans as it leaves town. If it dead-ends, sweep the next outer edge." },
+      { "landmark": "Narrow canyon", "detail": "Take the canyon into Rathbreaker's arena. Return to Zarka after the fight." }
+    ] },
     "shortcut": { "cue": "Portal after Rathbreaker", "detail": "Once Rathbreaker is down, take a town portal and speak to Zarka to move on to the Ardura Caravan." }
   },
   { "id": "G2_town", "name": "The Ardura Caravan", "act": 2, "objective": "Speak with Asala and use the Desert Map",
     "shortcut": { "cue": "For Ancient Vows, leave the Valley last", "detail": "Once the three Horn of the Vastiri branches open, do the Keth and Bone Pits branches before the Valley of the Titans if you’re doing Ancient Vows. Bring both clan relics so you can use the altar on the same visit." }
   },
   { "id": "G2_2", "name": "Traitor's Passage", "act": 2, "bosses": ["Balbala, the Traitor"], "objective": "Take the passage to the Halani Gates",
+    "route": { "cue": "Look for the Six Sisters bridge", "steps": [
+      { "landmark": "Six Sisters", "detail": "Use the curved bridge as a marker and keep exploring away from the entrance toward the Halani Gates. The bridge can appear early." },
+      { "landmark": "Yellow paper seals · Optional", "detail": "At the Decree of Imprisonment junction, follow the marked walls to Balbala's prison for a Djinn Barya." }
+    ] },
     "optional": [
       { "id": "G2_2:1", "hint": "Defeat Balbala to unlock the Sekhemas trial", "leagueStart": true }
     ]
   },
   { "id": "G2_3", "name": "The Halani Gates", "act": 2, "bosses": ["Jamanra, the Risen King"], "objective": "Help Asala open the gates and pursue Jamanra",
+    "route": { "cue": "Follow the bridges through the gates", "steps": [
+      { "landmark": "Locked gates", "detail": "Call Asala where the gates block the path. Continue over the bridges in the direction the passage opens." },
+      { "landmark": "Far end", "detail": "Follow the bridges away from your entrance to reach Jamanra's arena." }
+    ] },
     "optional": [
       { "id": "G2_3:1", "hint": "Defeat L’im the Impaler" }
     ]
@@ -139,52 +151,104 @@
   { "id": "G2_3a", "name": "The Halani Gates", "act": 2, "objective": "Speak to Asala about the closed gates" },
   { "id": "G2_3s", "name": "The Halani Gates", "act": 2, "objective": "Investigate the sandstorm blocking the pursuit" },
   { "id": "G2_4_1", "name": "Keth", "act": 2, "bosses": ["Kabala, Constrictor Queen"], "objective": "Find the entrance to the Lost City",
+    "route": { "cue": "Sweep an edge toward the far corner", "steps": [
+      { "landmark": "Outer edge", "detail": "Follow either perimeter toward the far corner. Activate the Lost City entrance checkpoint when you find it." },
+      { "landmark": "Partly buried round building · Optional", "detail": "Look for the Venom Pit checkpoint beside the round ruin to find Kabala. Fight serpent packs along the way if you still need the clan relic." }
+    ] },
     "optional": [
-      { "id": "G2_4_1:1", "hint": "Defeat Kabala for passive points", "leagueStart": true }
+      { "id": "G2_4_1:1", "hint": "Defeat Kabala for passive points", "leagueStart": true, "reward": { "name": "Passive points from Kabala", "direction": "In Keth, look for the Venom Pit checkpoint beside a partly buried round building." } },
+      { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true }
     ]
   },
   { "id": "G2_4_2", "name": "The Lost City", "act": 2, "objective": "Find the Buried Shrines",
+    "route": { "cue": "Cross the V-shaped bridge", "steps": [
+      { "landmark": "V-shaped bridge", "detail": "Check the corners of the first section to find the bridge. After crossing, sweep the far wall for the wing-shaped approach to the Buried Shrines." },
+      { "landmark": "Serpent packs · Optional", "detail": "Kill Serpent Clan enemies as you pass if you still need the Kabala Clan Relic for Ancient Vows." }
+    ] },
     "optional": [
       { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true }
     ]
   },
   { "id": "G2_4_3", "name": "Buried Shrines", "act": 2, "bosses": ["Azarian, the Forsaken Son"], "objective": "Defeat Azarian and recover the water essence", "tip": "Bring fire resistance for Azarian. The fire offering in the shrine gives you a Ruby Ring.",
+    "route": { "cue": "Cross the bridges to the crown", "steps": [
+      { "landmark": "Bridges", "detail": "Cross into the second section and look for a crown-shaped area on the minimap. It marks Azarian's approach." },
+      { "landmark": "Elemental Offering · Optional", "detail": "A separate room has a checkpoint and lore marker. Choose the fire, water, or lightning offering for a ring of that element." }
+    ] },
     "optional": [
-      { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true },
       { "id": "G2_4_3:2", "hint": "Claim an elemental resistance ring" }
     ]
   },
-  { "id": "G2_5_1", "name": "Mastodon Badlands", "act": 2, "objective": "Find the entrance to the Bone Pits" },
+  { "id": "G2_5_1", "name": "Mastodon Badlands", "act": 2, "objective": "Find the entrance to the Bone Pits",
+    "route": { "cue": "Follow an outer wall to the Bone Pits", "steps": [
+      { "landmark": "Outer wall", "detail": "Start by following the area boundary until you find the Bone Pits entrance." },
+      { "landmark": "Effigy checkpoint · Optional", "detail": "Check the effigy beside its checkpoint if you want an extra uncut gem." }
+    ] }
+  },
   { "id": "G2_5_2", "name": "The Bone Pits", "act": 2, "bosses": ["Ekbab, Ancient Steed"], "objective": "Defeat Iktab and Ekbab for the tusks",
+    "route": { "cue": "Cross the bone arch toward the far wall", "steps": [
+      { "landmark": "Bone arch", "detail": "Keep the direction you took through the starting arch. When you reach the far side, look along the wall for the arena opening." },
+      { "landmark": "Sun Clan packs · Optional", "detail": "Fight scavengers along the route if you need the Sun Clan Relic for Ancient Vows." }
+    ] },
     "optional": [
       { "id": "G2_5_2:1", "hint": "Look for the Sun Clan Relic", "leagueStart": true }
     ]
   },
   { "id": "G2_6", "name": "Valley of the Titans", "act": 2, "objective": "Open the Titan Grotto using the seals",
+    "route": { "cue": "Check the perimeter and central gorge", "steps": [
+      { "landmark": "Sealed grotto entrance", "detail": "Activate the checkpoint by the sealed door so you can return after finding all three Ancient Seals." },
+      { "landmark": "Outer walls and gorge", "detail": "Look for seals by checkpoints around the edge. If one is missing, check the rim of the central gorge." },
+      { "landmark": "Waypoint altar · Optional", "detail": "Place the Kabala and Sun Clan relics at the altar by the waypoint to finish Ancient Vows." }
+    ] },
     "optional": [
-      { "id": "G2_6:1", "hint": "Use both clan relics at the altar", "leagueStart": true }
+      { "id": "G2_6:1", "hint": "Use both clan relics at the altar", "leagueStart": true, "reward": { "name": "Ancient Vows charm bonus", "direction": "Bring the Kabala and Sun Clan relics to the altar by the Valley of the Titans waypoint." } }
     ]
   },
-  { "id": "G2_7", "name": "The Titan Grotto", "act": 2, "bosses": ["Zalmarath, the Colossus"], "objective": "Defeat Zalmarath and recover the Flame Ruby" },
+  { "id": "G2_7", "name": "The Titan Grotto", "act": 2, "bosses": ["Zalmarath, the Colossus"], "objective": "Defeat Zalmarath and recover the Flame Ruby",
+    "route": { "cue": "Find the long stair bridge", "steps": [
+      { "landmark": "Starting passage", "detail": "Use the direction of the starting corridor to orient through the winding rooms toward the far wall." },
+      { "landmark": "Long stair bridge", "detail": "Look along that wall for the long, straight stairway leading to Zalmarath." }
+    ] }
+  },
   { "id": "G2_8", "name": "Deshar", "act": 2, "objective": "Find the Path of Mourning",
+    "route": { "cue": "Cross the ruins to the far edge", "steps": [
+      { "landmark": "Ruined buildings", "detail": "Cross the open ground into the built-up section and search its far boundary for the Path of Mourning." },
+      { "landmark": "Fallen Dekhara · Optional", "detail": "Check around the bases of the buildings for the body with the Final Letter. Bring the letter to Shambrin for passive points." }
+    ] },
     "optional": [
-      { "id": "G2_8:1", "hint": "Retrieve the Final Letter for passive points", "leagueStart": true }
+      { "id": "G2_8:1", "hint": "Retrieve the Final Letter for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Final Letter", "direction": "Search ruined buildings in Deshar for the Fallen Dekhara. Take the letter to Shambrin." } }
     ]
   },
   { "id": "G2_8a", "name": "Deshar", "act": 2, "objective": "Find the Path of Mourning" },
-  { "id": "G2_9_1", "name": "Path of Mourning", "act": 2, "objective": "Continue toward the Spires of Deshar" },
+  { "id": "G2_9_1", "name": "Path of Mourning", "act": 2, "objective": "Continue toward the Spires of Deshar",
+    "route": { "cue": "Cross the bridges between towers", "steps": [
+      { "landmark": "Round platforms", "detail": "Take bridges that carry you farther across the zone. If a branch ends, return to the previous platform and try the next bridge." },
+      { "landmark": "Far edge", "detail": "Look for the exit to the Spires on the side opposite your entrance." }
+    ] }
+  },
   { "id": "G2_9_2", "name": "The Spires of Deshar", "act": 2, "bosses": ["Tor Gul, the Defiler"], "objective": "Defeat Tor Gul",
+    "route": { "cue": "Cross the spires to Tor Gul", "steps": [
+      { "landmark": "Arena checkpoint", "detail": "Cross the connected platforms away from the entrance and activate Tor Gul's checkpoint near the far end." },
+      { "landmark": "Sisters of Garukhan · Optional", "detail": "Look for the shrine on a side platform and touch it for permanent lightning resistance. Mark its checkpoint first if you want to return after the boss." }
+    ] },
     "shortcut": { "cue": "Finish in Deshar before you portal", "detail": "If you want the lightning resistance reward, visit the Sisters of Garukhan before leaving. After Tor Gul, portal to the caravan and speak to Asala to open the Dreadnought route." },
     "optional": [
-      { "id": "G2_9_2:1", "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true }
+      { "id": "G2_9_2:1", "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true, "reward": { "name": "Lightning resistance", "direction": "Find the Sisters of Garukhan shrine on a side platform in the Spires of Deshar and interact with it." } }
     ]
   },
   { "id": "G2_10_1", "name": "Mawdun Quarry", "act": 2, "objective": "Find the entrance to Mawdun Mine",
+    "route": { "cue": "Cross the bridges to the mine", "steps": [
+      { "landmark": "Quarry bridges", "detail": "Use bridges to cross between open quarry sections. If a bridge dead-ends, stay on the edge until you find the next crossing." },
+      { "landmark": "Final bridge and checkpoint", "detail": "The Mine entrance comes after another bridge. Check the Faridun War Cache near a checkpoint if you are looking for the optional loot." }
+    ] },
     "optional": [
       { "id": "G2_10_1:1", "hint": "Recover the Tinker’s Tools" }
     ]
   },
   { "id": "G2_10_2", "name": "Mawdun Mine", "act": 2, "bosses": ["Rudja, the Dread Engineer"], "objective": "Defeat Rudja and free Risu",
+    "route": { "cue": "Follow the mine rails toward Rudja", "steps": [
+      { "landmark": "Rail tracks", "detail": "Use the rails to orient as you cross the mine toward its far end." },
+      { "landmark": "Rudja's arena", "detail": "After defeating Rudja, look for Risu and speak to her before returning to the caravan." }
+    ] },
     "shortcut": { "cue": "Portal after freeing and speaking to Risu", "detail": "Free Risu after Rudja and speak to her before leaving. Portal to the caravan, then speak to Risu and Asala to continue at the Halani Gates." }
   },
   { "id": "ExpeditionSubArea_Kalguur_Act2", "name": "Skull of the Titan", "act": 2,
@@ -192,70 +256,122 @@
       { "id": "ExpeditionSubArea_Kalguur_Act2:1", "hint": "Investigate the runic vault" }
     ]
   },
-  { "id": "G2_11", "name": "The Dreadnought's Wake", "act": 2, "objective": "Cross the Dreadnought to reach Jamanra" },
+  { "id": "G2_11", "name": "The Dreadnought's Wake", "act": 2, "objective": "Cross the Dreadnought to reach Jamanra",
+    "route": { "cue": "Keep crossing the gangways", "steps": [
+      { "landmark": "Connected decks", "detail": "Take the gangways that carry you farther along the convoy. Rejoin the forward route when a side deck ends." },
+      { "landmark": "Far end of the convoy", "detail": "Continue through the linked platforms to the next area for the Jamanra fight." }
+    ] }
+  },
   { "id": "G2_12", "name": "Dreadnought", "act": 2, "bosses": ["Jamanra, the Abomination"], "objective": "Defeat Jamanra, the Abomination", "tip": "Bring lightning resistance for Jamanra. Visit the Sisters of Garukhan in the Spires of Deshar for a permanent boost." },
   { "id": "G2_13", "name": "Trial of the Sekhemas", "act": 2, "tip": "For a first run, aim for character level 26–30. Equip relics with Honour resistance when available.",
     "optional": [
-      { "id": "G2_13:1", "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true }
+      { "id": "G2_13:1", "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true, "reward": { "name": "Sekhemas Ascendancy points", "direction": "Take a qualifying Djinn Barya to the Trial of the Sekhemas and claim the points after the trial." } }
     ]
   },
   { "id": "G3_1", "name": "Sandswept Marsh", "act": 3, "bosses": ["Rootdredge"], "objective": "Cross the marsh to the Ziggurat",
+    "route": { "cue": "Cross the marsh to its far edge", "steps": [
+      { "landmark": "Starting waypoint", "detail": "Use the direction the path leaves the waypoint to cross the marsh. Search the far edge for the encampment entrance." },
+      { "landmark": "Leaf-roofed huts · Optional", "detail": "Check along the edge near the encampment for a checkpoint by the Orok camp. Defeat the guards and search the basket for a Lesser Jeweller's Orb." }
+    ] },
     "optional": [
       { "id": "G3_1:1", "hint": "Search the Orok camp for supplies" }
     ]
   },
   { "id": "G3_town", "name": "Ziggurat Encampment", "act": 3, "objective": "Work with Alva to open the route below" },
   { "id": "G3_3", "name": "Jungle Ruins", "act": 3, "bosses": ["Mighty Silverfist"], "objective": "Find the route into the Infested Barrens",
+    "route": { "cue": "Try the far wall for the Barrens", "steps": [
+      { "landmark": "Outer wall or explorer camp", "detail": "Follow one outer wall toward the far side. If you find Gwendolyn Albright, speak to her for a minimap clue to the Barrens." },
+      { "landmark": "Broken pillars · Optional", "detail": "Look for a clearing ringed by broken pillars to find Mighty Silverfist for passive points. The waypoint is another useful landmark near the Venom Crypts entrance." },
+      { "landmark": "Canal Mechanism", "detail": "Later, bring Zicoatl's Large Soul Core back to the stone mechanism here to open the Matlan Waterways." }
+    ] },
     "optional": [
-      { "id": "G3_3:1", "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true },
+      { "id": "G3_3:1", "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true, "reward": { "name": "Passive points from Mighty Silverfist", "direction": "Find the clearing surrounded by broken pillars in the Jungle Ruins." } },
       { "id": "G3_3:2", "hint": "Detour into the Venom Crypts" }
     ]
   },
   { "id": "G3_4", "name": "The Venom Crypts", "act": 3,
+    "route": { "cue": "Find the Serpent Priestess corpse", "steps": [
+      { "landmark": "Serpent Priestess corpse", "detail": "Check the crypt chambers for the corpse and collect its venom for Servi." },
+      { "landmark": "Second exit", "detail": "Once you have the venom, use the onward exit if it is nearer than backtracking. Turn the venom in on your next visit to the encampment." }
+    ] },
     "optional": [
-      { "id": "G3_4:1", "hint": "Recover the corpse venom for Servi", "leagueStart": true }
+      { "id": "G3_4:1", "hint": "Recover the corpse venom for Servi", "leagueStart": true, "reward": { "name": "Venom Draught", "direction": "Collect the venom from the Serpent Priestess corpse in the crypts and take it to Servi." } }
     ]
   },
-  { "id": "G3_2_1", "name": "Infested Barrens", "act": 3, "objective": "Find the Wetlands and return with a Soul Core" },
+  { "id": "G3_2_1", "name": "Infested Barrens", "act": 3, "objective": "Find the passage to the Chimeral Wetlands",
+    "route": { "cue": "Follow the outer edge to the Wetlands", "steps": [
+      { "landmark": "Alva and the waypoint", "detail": "Activate the waypoint near Alva as a return point. Search the boundary for the Chimeral Wetlands entrance." },
+      { "landmark": "Troubled Camp · Optional", "detail": "If you spot the camp under attack, clear the enemies and check its rewards before continuing." }
+    ] }
+  },
   { "id": "ExpeditionSubArea_Kalguur_Act3", "name": "Mystic Refuge", "act": 3,
     "optional": [
       { "id": "ExpeditionSubArea_Kalguur_Act3:1", "hint": "Investigate the Scrying Pool and vault" }
     ]
   },
-  { "id": "G3_2_2", "name": "The Matlan Waterways", "act": 3, "objective": "Drain the canals using the sluice levers",
-    "shortcut": { "cue": "Open a portal by the final lever", "detail": "At the final sluice lever, open a town portal beside it. Pull the lever, wait for the quest to update, then take the portal to speak to Alva in the encampment." },
+  { "id": "G3_2_2", "name": "The Matlan Waterways", "act": 3, "objective": "Cross the canals using the pressure pads",
+    "route": { "cue": "Step on pads to lower the water", "steps": [
+      { "landmark": "Pressure pads", "detail": "Walk over each pad along the main canal route to lower the water and open the next crossing." },
+      { "landmark": "Azak Bog entrance · Optional", "detail": "Watch for the side exit to the Azak Bog as you cross. Take it to fight Ignagduk for the Spirit reward." }
+    ] },
+    "shortcut": { "cue": "Portal after crossing the canals", "detail": "Once the quest updates, use a town portal to the Ziggurat Encampment and speak to Alva to continue." },
     "optional": [
       { "id": "G3_2_2:1", "hint": "Take the detour to the Azak Bog" }
     ]
   },
   { "id": "G3_5", "name": "Chimeral Wetlands", "act": 3, "bosses": ["Xyclucian, the Chimera"], "objective": "Defeat the Chimera and find the Machinarium", "tip": "The Chimera uses several elements. Balance your elemental resistances before fighting it.",
+    "route": { "cue": "Search the edges for the Chimera", "steps": [
+      { "landmark": "Outer boundary", "detail": "Follow the boundary to find Xyclucian's arena and the entrance to Jiquani's Machinarium." },
+      { "landmark": "Temple of Chaos · Optional", "detail": "Look along the upper edge for the temple and activate its waypoint when you find it. Bring back the Chimera's Ultimatum when ready for the trial." }
+    ] },
     "optional": [
       { "id": "G3_5:1", "hint": "Take its Ultimatum to the Temple of Chaos", "leagueStart": true }
     ]
   },
   { "id": "G3_6_1", "name": "Jiquani's Machinarium", "act": 3, "bosses": ["Blackjaw, the Remnant"], "objective": "Use small Soul Cores to reach the Sanctum",
+    "route": { "cue": "Check side rooms for small cores", "steps": [
+      { "landmark": "Alva's first altar", "detail": "Look down either side of the first room for the Small Soul Core that opens the door beside Alva." },
+      { "landmark": "Central corridor", "detail": "Search side rooms for more cores and follow the main corridor toward the sealed Sanctum door." },
+      { "landmark": "Blackjaw's sealed room · Optional", "detail": "Check the side doors in the second section. Spend spare cores to enter Blackjaw's arena and claim the permanent fire resistance reward." }
+    ] },
     "optional": [
-      { "id": "G3_6_1:1", "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true }
+      { "id": "G3_6_1:1", "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true, "reward": { "name": "Fire resistance", "direction": "Use Small Soul Cores to open Blackjaw’s side room in the second section of the Machinarium. Use the Flame Core after the fight." } }
     ]
   },
   { "id": "G3_6_2", "name": "Jiquani's Sanctum", "act": 3, "bosses": ["Zicoatl, Warden of the Core"], "objective": "Power the generators and defeat Zicoatl",
-    "shortcut": { "cue": "Waypoint back with the Large Soul Core", "detail": "After taking the Large Soul Core from Zicoatl, use the waypoint to return to the Infested Barrens. Take the core to the stone altar to open the Matlan Waterways." },
+    "route": { "cue": "Find a generator in each wing", "steps": [
+      { "landmark": "Twin wings", "detail": "Search each wing for a Medium Soul Core and a generator near the back. Power both, then return toward the central chamber and fight Zicoatl." },
+      { "landmark": "Paquate's Mechanism · Optional", "detail": "If you find the corruption altar, use it only on an item you are willing to corrupt." }
+    ] },
+    "shortcut": { "cue": "Waypoint back with the Large Soul Core", "detail": "After taking the Large Soul Core, use the waypoint to return to the Jungle Ruins and socket it at the Canal Mechanism." },
     "optional": [
       { "id": "G3_6_2:1", "hint": "Find the corruption altar" }
     ]
   },
   { "id": "G3_7", "name": "The Azak Bog", "act": 3, "bosses": ["Ignagduk, the Bog Witch"],
+    "route": { "cue": "Start with the upper-right paths", "steps": [
+      { "landmark": "Upper-right part of the map", "detail": "Start by searching here for Ignagduk. If the paths dead-end, sweep the surrounding walkways." },
+      { "landmark": "Flameskin ritual · Optional", "detail": "If you find the ritual totems, activate them for a temporary fire resistance boost before fighting in the bog." }
+    ] },
     "optional": [
-      { "id": "G3_7:1", "hint": "Defeat Ignagduk for Spirit", "leagueStart": true }
+      { "id": "G3_7:1", "hint": "Defeat Ignagduk for Spirit", "leagueStart": true, "reward": { "name": "Spirit from Ignagduk", "direction": "Take the side exit off the Matlan Waterways to the Azak Bog. Defeat Ignagduk and use the Gemrot Skull." } }
     ]
   },
   { "id": "G3_8", "name": "The Drowned City", "act": 3, "objective": "Cross the ruins to the Apex of Filth",
+    "route": { "cue": "Cross the ambush into the far ruins", "steps": [
+      { "landmark": "Ambush crossing", "detail": "Cross the narrow passage between the two main sets of ruins, then search the far section for the Apex of Filth entrance." },
+      { "landmark": "Molten Vault · Optional", "detail": "Look along the outer edges of the ruins for the vault and call Oswald at the entrance. Recover the hammer inside to unlock the Reforging Bench." }
+    ] },
     "shortcut": { "cue": "Activate the Drowned City waypoint", "detail": "Activate the waypoint on your first visit. After getting the Temple Door Idol in Apex of Filth, travel back here and use the nearby entrance to the encampment." },
     "optional": [
       { "id": "G3_8:1", "hint": "Find the Molten Vault for Oswald" }
     ]
   },
   { "id": "G3_9", "name": "The Molten Vault", "act": 3, "bosses": ["Mektul, the Forgemaster"],
+    "route": { "cue": "Follow the vault to the molten channel", "steps": [
+      { "landmark": "Molten channel", "detail": "Find the checkpoint at the approach to the channel. Follow Mektul away from the advancing lava during the fight and recover the Hammer of Kamasa." },
+      { "landmark": "Frost Core chests · Optional", "detail": "Use Frost Cores on the vault's gold chests if you want the extra loot." }
+    ] },
     "shortcut": { "cue": "Checkpoint back to the vault entrance", "detail": "After taking the Hammer of Kamasa from Mektul, use checkpoint travel to the vault entrance. Return to the Drowned City and continue toward Apex of Filth." },
     "optional": [
       { "id": "G3_9:1", "hint": "Defeat Mektul and recover the forge treasure" }
@@ -268,17 +384,31 @@
   },
   { "id": "G3_10", "name": "The Trial of Chaos", "act": 3, "bosses": ["Uxmal, the Beastlord", "Chetza, the Feathered Plague", "Bahlak, the Sky Seer", "The Trialmaster"], "tip": "For the campaign trial, aim for character level 42–45 and high fire and lightning resistance.",
     "optional": [
-      { "id": "G3_10:1", "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true }
+      { "id": "G3_10:1", "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true, "reward": { "name": "Trial of Chaos Ascendancy points", "direction": "Use the Chimera’s Inscribed Ultimatum at the temple and claim the points at the end of the trial." } }
     ]
   },
   { "id": "G3_11", "name": "Apex of Filth", "act": 3, "bosses": ["The Queen of Filth"], "objective": "Defeat the queen and take the temple idol",
+    "route": { "cue": "Pass the lore platform and arch", "steps": [
+      { "landmark": "Central lore platform", "detail": "Cross the central platform past the lore marker and go under the arch. Continue from the checkpoint across the short bridge to the main ruins." },
+      { "landmark": "Far boundary", "detail": "Search the far boundary of the ruins for the Queen's arena." },
+      { "landmark": "Cauldron Keeper · Optional", "detail": "Bring one mushroom of each colour to the cauldron to receive a flask." }
+    ] },
     "shortcut": { "cue": "Return via the Drowned City waypoint", "detail": "After collecting the Temple Door Idol, use the checkpoint to get back to the waypoint. Travel to the Drowned City and leave through its town entrance to reach Alva quickly." },
     "optional": [
       { "id": "G3_11:1", "hint": "Bring three mushrooms to the Cauldron Keeper" }
     ]
   },
-  { "id": "G3_12", "name": "Temple of Kopec", "act": 3, "bosses": ["Ketzuli, High Priest of the Sun"], "objective": "Defeat Ketzuli and follow Alva through the gateway" },
+  { "id": "G3_12", "name": "Temple of Kopec", "act": 3, "bosses": ["Ketzuli, High Priest of the Sun"], "objective": "Defeat Ketzuli and follow Alva through the gateway",
+    "route": { "cue": "Check the corners for stairs", "steps": [
+      { "landmark": "Triangular floors", "detail": "Check the distant corner of each floor first. If there's no staircase, check the other corners." },
+      { "landmark": "Rift on the second floor", "detail": "If a break in the floor splits the area, start by looking beyond the crossing for the stairs to Ketzuli." }
+    ] }
+  },
   { "id": "G3_14", "name": "Utzaal", "act": 3, "bosses": ["Viper Napuatzi"], "objective": "Defeat Viper Napuatzi and reach Aggorat",
+    "route": { "cue": "Past Viper, look for the stairs", "steps": [
+      { "landmark": "Viper's arena", "detail": "After the fight, follow one side of the arena exit toward Aggorat. If it dead-ends, come back to the arena and take the other side toward the checkpoint and stairs." },
+      { "landmark": "Vaal Goliaths · Optional", "detail": "Clear packs with Vaal Goliaths if you want a Sacrificial Heart to use at the altar in Aggorat." }
+    ] },
     "optional": [
       { "id": "G3_14:1", "hint": "Find the Sacrificial Heart" }
     ]
@@ -289,93 +419,180 @@
     ]
   },
   { "id": "G3_16", "name": "Aggorat", "act": 3, "objective": "Find the entrance to the Black Chambers",
+    "route": { "cue": "Cross the chanting platform", "steps": [
+      { "landmark": "Chanting platform and archway", "detail": "Follow the voices to the worship platform and cross it. Pass through the arch to a checkpoint, then take the open branch toward the long stairs to the Black Chambers." },
+      { "landmark": "Sacrificial Altar · Optional", "detail": "Look for the altar and the Sacrificial Dagger. Use them with the Sacrificial Heart to claim the passive points." }
+    ] },
     "optional": [
-      { "id": "G3_16:1", "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true }
+      { "id": "G3_16:1", "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Sacrificial Heart", "direction": "Bring the heart from a Vaal Goliath pack to Aggorat. Find the Sacrificial Altar and use the dagger there." } }
     ]
   },
-  { "id": "G3_17", "name": "The Black Chambers", "act": 3, "bosses": ["Doryani, Royal Thaumaturge", "Doryani's Triumph"], "objective": "Defeat Doryani and advance the story", "tip": "Prioritize fire and lightning resistance for Doryani. Move away from the back of the machine when its lasers fire." },
-  { "id": "G4_town", "name": "Kingsmarch", "act": 4, "objective": "Arrange passage with Makoru and investigate the islands" },
+  { "id": "G3_17", "name": "The Black Chambers", "act": 3, "bosses": ["Doryani, Royal Thaumaturge", "Doryani's Triumph"], "objective": "Defeat Doryani and advance the story", "tip": "Prioritize fire and lightning resistance for Doryani. Move away from the back of the machine when its lasers fire.",
+    "route": { "cue": "Cross the bridges to Doryani", "steps": [
+      { "landmark": "First bridge", "detail": "Follow the rooms to the first bridge, then continue toward the checkpoint at the next major crossing." },
+      { "landmark": "Bridge platforms", "detail": "Stay near the centre of the route through the forming bridges until you reach the checkpoint at Doryani's arena." }
+    ] }
+  },
+  { "id": "G4_town", "name": "Kingsmarch", "act": 4, "objective": "Arrange passage with Makoru and investigate the islands",
+    "route": { "cue": "Meet Makoru aboard the ship", "steps": [
+      { "landmark": "Makoru's ship", "detail": "Head down to the docks and board the ship to choose an island. Use your quests to decide where to sail for the weapon fragments and Matiki. Their locations can vary by league." },
+      { "landmark": "Treasure map · Optional", "detail": "Collect four Torn Map Pieces from the islands and turn them in at Kingsmarch to open the voyage to Plunder's Point." }
+    ] }
+  },
   { "id": "G4_1_1", "name": "Isle of Kin", "act": 4, "bosses": ["The Blind Beast"], "objective": "Find the way into the Volcanic Warrens",
+    "route": { "cue": "Cross from the dock to the far wall", "steps": [
+      { "landmark": "Dock and far boundary", "detail": "Head inland from the dock. When you reach the far boundary, follow it to find the Volcanic Warrens." },
+      { "landmark": "Wrecked shore · Optional", "detail": "Search the wreckage and the Flayed Sailor near the shore for the Torn Map Piece." },
+      { "landmark": "Primal Arena · Optional", "detail": "If you come across the arena, defeat the Blind Beast for a Greater Blank Rune." }
+    ] },
     "optional": [
       { "id": "G4_1_1:1", "hint": "Defeat the Blind Beast" },
       { "id": "G4_1_1:2", "hint": "Recover a torn map piece" }
     ]
   },
-  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "bosses": ["Krutog, Lord of Kin"], "objective": "Defeat Krutog and release Matiki",
-    "shortcut": { "cue": "Return to the ship after freeing Matiki", "detail": "After defeating Krutog and speaking to Matiki, take the return route to the ship. Ask Makoru to sail to your next island if you have no town turn-ins." }
+  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "bosses": ["Krutog, Lord of Kin"], "objective": "Defeat Krutog and check the throne room",
+    "route": { "cue": "Cross to the far side for Krutog", "steps": [
+      { "landmark": "Tyrant Throne", "detail": "Work through the tunnels toward the opposite side of the zone for Krutog's throne. Collect the quest item or free Matiki if your league places either here." },
+      { "landmark": "Volcanic Nest checkpoint · Optional", "detail": "If you find the side room with the Magma Twins, defeat both for a rare resistance ring." }
+    ] },
+    "shortcut": { "cue": "Return to the ship after Krutog", "detail": "After collecting the quest item or checking for Matiki, take the return route to the ship. Ask Makoru to sail to your next island if you have no town turn-ins." }
   },
   { "id": "G4_2_1", "name": "Kedge Bay", "act": 4, "objective": "Continue along the coast to Journey’s End",
+    "route": { "cue": "Follow the coast to Journey's End", "steps": [
+      { "landmark": "Coastal path", "detail": "Keep following the main shoreline path through the bay to the Journey's End entrance." },
+      { "landmark": "Smuggler's Stash · Optional", "detail": "Check the side paths marked by checkpoints for the stash with the Torn Map Piece." }
+    ] },
     "optional": [
       { "id": "G4_2_1:1", "hint": "Recover a torn map piece" }
     ]
   },
   { "id": "G4_2_2", "name": "Journey's End", "act": 4, "bosses": ["Captain Hartlin"], "objective": "Defeat Captain Hartlin and recover Verisium",
+    "route": { "cue": "Find the wreck with the captain's chair", "steps": [
+      { "landmark": "Captain's Chair", "detail": "Follow the coastline toward the far side. Look for the stranded ship with a large chair on its upper deck and defeat Captain Hartlin for the ingots." },
+      { "landmark": "Freya's ring of totems · Optional", "detail": "Have Dannig turn the ingots into spikes, then return to the totems near the entrance. Free Freya and finish the Omniphobia encounter for passive points." }
+    ] },
     "optional": [
-      { "id": "G4_2_2:1", "hint": "Defeat Omniphobia for passive points", "leagueStart": true }
+      { "id": "G4_2_2:1", "hint": "Defeat Omniphobia for passive points", "leagueStart": true, "reward": { "name": "Passive points from Dark Mists", "direction": "Have Dannig turn Hartlin’s ingots into spikes, then free Freya at the ring of totems near the entrance. Finish the Omniphobia encounter." } }
     ]
   },
   { "id": "G4_3_1", "name": "Whakapanu Island", "act": 4, "bosses": ["Great White One"], "objective": "Find the Singing Caverns",
+    "route": { "cue": "Look for the Singing Caverns entrance", "steps": [
+      { "landmark": "Island boundary", "detail": "Use the shore and the outer edge to keep your bearings while looking for the entrance to the Singing Caverns." },
+      { "landmark": "Shark Pit · Optional", "detail": "Defeat the Great White One for the fin to bring to Kaimana. Look for the Petrified Pirate along the coast if you also want the Torn Map Piece." }
+    ] },
     "optional": [
       { "id": "G4_3_1:1", "hint": "Defeat the Great White One for its fin", "leagueStart": true },
       { "id": "G4_3_1:2", "hint": "Recover a torn map piece" }
     ]
   },
   { "id": "G4_3_2", "name": "Singing Caverns", "act": 4, "bosses": ["Diamora, Song of Death"], "objective": "Confront Diamora",
+    "route": { "cue": "Sweep the far half for Diamora", "steps": [
+      { "landmark": "Cavern loop", "detail": "Work toward the far half of the cave. If one branch ends, take the other side of the loop toward Diamora's arena. Check the cage after the fight if Matiki is held here." },
+      { "landmark": "Beckoning Clam · Optional", "detail": "Look for the clam along the way and take the Humming Pearl for Rog." }
+    ] },
     "shortcut": { "cue": "Return to the ship after Diamora", "detail": "After defeating Diamora, talk to the Hooded One and take the return route to the ship. You can save the Humming Pearl turn-in for your next planned town stop." },
     "optional": [
       { "id": "G4_3_2:1", "hint": "Recover the pearl from the clam" }
     ]
   },
   { "id": "G4_4_1", "name": "Eye of Hinekora", "act": 4,
+    "route": { "cue": "Look for the fork after the third test", "steps": [
+      { "landmark": "Well and challenge rooms", "detail": "Meet Matiki at the well after freeing them. Follow the path through the three challenges, then take the branch toward the Halls of the Dead." },
+      { "landmark": "Silent Hall · Optional", "detail": "Take the other branch after the third challenge. Pay your respects and speak to Navali for the permanent maximum mana bonus." }
+    ] },
     "optional": [
       { "id": "G4_4_1:1", "hint": "Pass Hinekora’s trials" },
-      { "id": "G4_4_1:2", "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true }
+      { "id": "G4_4_1:2", "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true, "reward": { "name": "Maximum mana from the Silent Hall", "direction": "Take the side branch after Hinekora’s third test. Pay your respects and speak to Navali in the Silent Hall." } }
     ]
   },
   { "id": "G4_4_2", "name": "Halls of the Dead", "act": 4, "bosses": ["Yama The White"],
+    "route": { "cue": "Follow the outer wall toward Yama", "steps": [
+      { "landmark": "Hinekora Totems · Optional", "detail": "Sweep the outer paths for the three totems. Complete their tests for the tattoo choice." },
+      { "landmark": "Yama's arena", "detail": "Continue around the outer route beyond the totems. Defeat Yama to reach the Trial of the Ancestors." }
+    ] },
     "optional": [
       { "id": "G4_4_2:1", "hint": "Defeat Yama to reach the trial", "leagueStart": true },
-      { "id": "G4_4_2:2", "hint": "Complete the three tattoo tests", "leagueStart": true }
+      { "id": "G4_4_2:2", "hint": "Complete the three tattoo tests", "leagueStart": true, "reward": { "name": "Hinekora tattoo bonus", "direction": "Follow the outer paths in the Halls of the Dead to find the three totems. Complete the tests and choose a tattoo." } }
     ]
   },
   { "id": "G4_4_3", "name": "Trial of the Ancestors", "act": 4,
+    "route": { "cue": "Find Navali beyond Yama", "steps": [
+      { "landmark": "Trial meeting area", "detail": "Go through the entrance past Yama and speak to Navali and Hinekora to claim your passive points before leaving." }
+    ] },
     "optional": [
-      { "id": "G4_4_3:1", "hint": "Speak with Navali for passive points", "leagueStart": true }
+      { "id": "G4_4_3:1", "hint": "Speak with Navali for passive points", "leagueStart": true, "reward": { "name": "Trial of the Ancestors passive points", "direction": "After defeating Yama, enter the Trial of the Ancestors and speak to Navali and Hinekora." } }
     ]
   },
   { "id": "G4_5_1", "name": "Abandoned Prison", "act": 4, "objective": "Find the way into Solitary Confinement",
+    "route": { "cue": "Use cell-block checkpoints to orient", "steps": [
+      { "landmark": "Prison corridors", "detail": "Follow the main corridors and activate checkpoints as you go. If a block dead-ends, return to its last junction and try the next passage for Solitary Confinement." },
+      { "landmark": "Locked chapel · Optional", "detail": "Enemies can drop the Chapel Key. Use it on the chapel door, defeat Forael, and choose a permanent life or mana flask recovery bonus at the Goddess of Justice." }
+    ] },
     "optional": [
-      { "id": "G4_5_1:1", "hint": "Choose a flask bonus at the chapel", "leagueStart": true }
+      { "id": "G4_5_1:1", "hint": "Choose a flask bonus at the chapel", "leagueStart": true, "reward": { "name": "Permanent flask recovery bonus", "direction": "Use the Chapel Key in Abandoned Prison, defeat Forael, and choose a bonus at the Goddess of Justice." } }
     ]
   },
   { "id": "G4_5_2", "name": "Solitary Confinement", "act": 4, "bosses": ["The Prisoner"], "objective": "Defeat the Prisoner using the ballistae",
+    "route": { "cue": "Follow the wall hit by waves", "steps": [
+      { "landmark": "Wave-battered wall", "detail": "Follow the wall where the waves break to reach the Prisoner's arena." },
+      { "landmark": "Arena ballistae", "detail": "Use the ballistae during the fight. Check the cage afterwards if Matiki is held on this island." }
+    ] },
     "shortcut": { "cue": "Return to the ship after the Prisoner", "detail": "After the fight, speak to the Hooded One. Take the return route to the ship and talk to Makoru if you’re ready to sail to another island." }
   },
   { "id": "G4_7", "name": "Shrike Island", "act": 4, "bosses": ["Scourge of the Skies"], "objective": "Defeat the Scourge of the Skies",
+    "route": { "cue": "Follow the winding road to the end", "steps": [
+      { "landmark": "Main road", "detail": "Follow the winding path to the Scourge's arena. Check the cage after the fight if Matiki is held here." },
+      { "landmark": "Corpse Nest · Optional", "detail": "Look for a checkpoint beside the nest and search the Impaled Karui for the Torn Map Piece." }
+    ] },
     "optional": [
       { "id": "G4_7:1", "hint": "Recover a torn map piece" }
     ]
   },
   { "id": "G4_8a", "name": "Arastas", "act": 4, "objective": "Speak to Lorandis and investigate Arastas" },
   { "id": "G4_8b", "name": "Arastas", "act": 4, "bosses": ["Torvian, Hand of the Saviour"], "objective": "Defeat Torvian and reach the Excavation",
+    "route": { "cue": "Cross the coastal ridge past town", "steps": [
+      { "landmark": "Coastal ridge", "detail": "Leave the built-up section and cross the open ridge. Stay on the main path toward Torvian and the Excavation." },
+      { "landmark": "Golden bells · Optional", "detail": "Check the edges of the ridge for the bell checkpoints. When you find the first bell, look across the ridge at roughly the same point for the second." }
+    ] },
     "optional": [
       { "id": "G4_8b:1", "hint": "Find the two golden bells" }
     ]
   },
   { "id": "G4_9_", "name": "Isle of Decay", "act": 4 },
-  { "id": "G4_10", "name": "The Excavation", "act": 4, "bosses": ["Benedictus, First Herald of Utopia"], "objective": "Defeat Benedictus and follow Tavakai" },
-  { "id": "G4_11_1a", "name": "Ngakanu", "act": 4, "objective": "Find the Heart of the Tribe",
+  { "id": "G4_10", "name": "The Excavation", "act": 4, "bosses": ["Benedictus, First Herald of Utopia"], "objective": "Defeat Benedictus and follow Tavakai",
+    "route": { "cue": "Go past the connecting checkpoint", "steps": [
+      { "landmark": "Connecting chamber", "detail": "Leave the first set of rooms and pass the checkpoint at the chamber that links the two parts of the excavation." },
+      { "landmark": "Far edges", "detail": "Sweep the far edges of the second set of rooms for the entrance to Benedictus's arena." }
+    ] }
+  },
+  { "id": "G4_11_1a", "name": "Ngakanu", "act": 4, "objective": "Visit the settlement",
+    "route": { "cue": "Start at the Ngakanu settlement", "steps": [
+      { "landmark": "Settlement · Optional", "detail": "Find Kaimana while the settlement is still accessible and hand in the shark fin if you have it." }
+    ] },
     "optional": [
-      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
+      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." } }
     ]
   },
   { "id": "G4_11_1b", "name": "Ngakanu", "act": 4, "objective": "Find the Heart of the Tribe",
+    "route": { "cue": "Go through the fence and follow the edge", "steps": [
+      { "landmark": "Starting building and fence", "detail": "Pass through the building near the landing and look for an opening in the fence." },
+      { "landmark": "Outer boundary", "detail": "Once through the fence, follow the boundary inland to reach the Heart of the Tribe." }
+    ] },
     "optional": [
-      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
+      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." } }
     ]
   },
-  { "id": "G4_11_2", "name": "Heart of the Tribe", "act": 4, "bosses": ["Tavakai, the Chieftain"], "objective": "Defeat Tavakai and return to Kingsmarch", "tip": "Tavakai uses fire, cold, and lightning across his phases. Prepare all three elemental resistances." },
+  { "id": "G4_11_2", "name": "Heart of the Tribe", "act": 4, "bosses": ["Tavakai, the Chieftain"], "objective": "Defeat Tavakai and return to Kingsmarch", "tip": "Tavakai uses fire, cold, and lightning across his phases. Prepare all three elemental resistances.",
+    "route": { "cue": "Head toward the far end for Tavakai", "steps": [
+      { "landmark": "Inland path", "detail": "Work away from the landing toward the upper end of the map. If a branch stops at a checkpoint, try the passage across from it." },
+      { "landmark": "Tavakai's arena", "detail": "Continue through the inland paths to Tavakai. After the fight, return to Kingsmarch for the hand-ins." }
+    ] }
+  },
   { "id": "G4_13", "name": "Plunder's Point", "act": 4,
+    "route": { "cue": "Find Dannig and the Deserted Post", "steps": [
+      { "landmark": "Dannig's Expedition", "detail": "Speak to Dannig and set the explosives. Include the entrance to the Deserted Post in the blast chain." },
+      { "landmark": "Deserted Post", "detail": "Enter the post and follow Farrow's quest prompts to unlock the Verisium Anvil." }
+    ] },
     "optional": [
       { "id": "G4_13:1", "hint": "Use the completed map to explore with Dannig" },
       { "id": "G4_13:2", "hint": "Complete the Runeseeker for the Verisium Anvil", "leagueStart": true }

@@ -43,6 +43,10 @@ public static class OverlayCheck {
         keybd_event(0x12, 0, down ? 0u : 2u, UIntPtr.Zero);
     }
 
+    public static void Key(byte key, bool down) {
+        keybd_event(key, 0, down ? 0u : 2u, UIntPtr.Zero);
+    }
+
     public static void PrimaryButton(bool down) {
         bool swapped = GetSystemMetrics(23) != 0; // SM_SWAPBUTTON
         uint flags = swapped ? 8u : 2u; // MOUSEEVENTF_RIGHTDOWN or LEFTDOWN
@@ -98,6 +102,19 @@ function Invoke-AltHeaderClick($Hwnd) {
     } finally {
         [OverlayCheck]::Alt($false)
         [void][OverlayCheck]::SetCursorPos($cursor.X, $cursor.Y)
+    }
+}
+
+function Invoke-RewardShortcut([byte]$Key) {
+    try {
+        [OverlayCheck]::Alt($true)
+        [OverlayCheck]::Key(0x10, $true)
+        [OverlayCheck]::Key($Key, $true)
+        Start-Sleep -Milliseconds 70
+    } finally {
+        [OverlayCheck]::Key($Key, $false)
+        [OverlayCheck]::Key(0x10, $false)
+        [OverlayCheck]::Alt($false)
     }
 }
 
@@ -209,6 +226,24 @@ try {
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details expanded
             if ($LASTEXITCODE -ne 0) { throw 'Expanded overlay details failed.' }
+            Invoke-RewardShortcut 0x52 # R
+            node $check $profile $log rewards opened
+            if ($LASTEXITCODE -ne 0) { throw 'Reward recap shortcut failed.' }
+            Invoke-RewardShortcut 0x4E # N
+            node $check $profile $log rewards selected
+            if ($LASTEXITCODE -ne 0) { throw 'Reward selection shortcut failed.' }
+            Invoke-RewardShortcut 0x44 # D
+            node $check $profile $log rewards completed
+            if ($LASTEXITCODE -ne 0) { throw 'Reward completion shortcut failed.' }
+            if ('G1_11:1' -notin (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
+                throw 'Reward completion was not saved.'
+            }
+            Invoke-RewardShortcut 0x55 # U
+            node $check $profile $log rewards undone
+            if ($LASTEXITCODE -ne 0) { throw 'Reward undo shortcut failed.' }
+            if ('G1_11:1' -in (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
+                throw 'Undo did not restore the saved reward.'
+            }
             Assert-PassiveOverlay $hwnd
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details collapsed

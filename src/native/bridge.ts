@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
-import { channel, type Snapshot, type Placement } from './contract'
+import { channel, rewardChannel, type RewardAction, type Snapshot, type Placement } from './contract'
 
 export const native = {
   listen: (accept: (s: Snapshot) => void) => listen<Snapshot>(channel, e => accept(e.payload)),
@@ -10,8 +10,9 @@ export const native = {
   position: (placement: Placement) => invoke<void>('set_placement', { placement }),
   leagueStart: (enabled: boolean) => invoke<void>('set_league_start', { enabled }),
   campaignProfile: (character: string, league: string) => invoke<void>('set_campaign_profile', { character, league }),
-  completeObjective: (profile: number, objective: string, completed: boolean) =>
-    invoke<void>('set_objective_completed', { profile, objective, completed }),
+  completeObjective: (profile: number | null, objective: string, completed: boolean) =>
+    invoke<boolean>('set_objective_completed', { profile, objective, completed }),
+  listenRewards: (accept: (action: RewardAction) => void) => listen<RewardAction>(rewardChannel, e => accept(e.payload)),
   toggle: () => invoke<void>('toggle_overlay'),
   overlayHeight: (height: number) => invoke<void>('set_overlay_height', { height }),
   replay: (enabled: boolean) => invoke<void>('replay_fixture', { enabled }),

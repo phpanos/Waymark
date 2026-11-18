@@ -1,4 +1,6 @@
 export const channel = 'waymark://state-v1'
+export const rewardChannel = 'waymark://reward-action'
+export type RewardAction = 'next' | 'done' | 'undo'
 export type Corner = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 export type Placement = { corner: Corner; insetX: number; insetY: number; followGame: boolean }
 export type Zone = { areaId: string | null; name: string | null; level: number | null }
@@ -14,6 +16,7 @@ export interface Snapshot {
     leagueStart: boolean
     profiles: CampaignProfile[]
     activeProfile: number | null
+    defaultCompleted: string[]
   }
   activePath: string | null
   status: Status
@@ -21,6 +24,7 @@ export interface Snapshot {
   characterLevel: number | null
   visible: boolean
   detailsExpanded: boolean
+  rewardRecap: boolean
   anchored: boolean
   logError: string | null
   windowError: string | null

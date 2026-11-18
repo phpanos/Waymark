@@ -14,12 +14,25 @@ use std::{
     },
 };
 use tauri::{
-    menu::MenuBuilder, tray::TrayIconBuilder, AppHandle, Emitter, Manager, State, WebviewWindow,
+    menu::{MenuBuilder, SubmenuBuilder},
+    tray::TrayIconBuilder,
+    AppHandle, Emitter, Manager, State, WebviewWindow,
 };
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use waymark_log::parser::Zone;
 
 const CHANNEL: &str = "waymark://state-v1";
+const REWARD_ACTION: &str = "waymark://reward-action";
+const REWARD_SHORTCUTS: [(&str, &str, &str); 4] = [
+    (
+        "Alt+Shift+R",
+        "recap",
+        "Switch between directions and rewards",
+    ),
+    ("Alt+Shift+N", "next", "Select next reward"),
+    ("Alt+Shift+D", "done", "Mark selected reward done"),
+    ("Alt+Shift+U", "undo", "Undo last reward completion"),
+];
 
 #[derive(Clone, Copy, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
@@ -53,6 +66,7 @@ struct Snapshot {
     character_level: Option<u8>,
     visible: bool,
     details_expanded: bool,
+    reward_recap: bool,
     anchored: bool,
     log_error: Option<String>,
     window_error: Option<String>,
@@ -82,10 +96,24 @@ impl Runtime {
         }
     }
     fn edit(&self, app: &AppHandle, f: impl FnOnce(&mut Settings)) -> Result<(), String> {
-        let mut result = Ok(());
+        self.try_edit(app, |settings| {
+            f(settings);
+            Ok(())
+        })
+        .map(|_| ())
+    }
+    fn try_edit(
+        &self,
+        app: &AppHandle,
+        f: impl FnOnce(&mut Settings) -> Result<(), String>,
+    ) -> Result<bool, String> {
+        let mut result = Ok(false);
         self.mutate(app, Kind::Snapshot, |s| {
             let mut next = s.settings.clone();
-            f(&mut next);
+            if let Err(error) = f(&mut next) {
+                result = Err(error);
+                return false;
+            }
             if next == s.settings {
                 return false;
             }
@@ -99,6 +127,7 @@ impl Runtime {
                 s.character_level = None;
             }
             s.settings = next;
+            result = Ok(true);
             true
         });
         result
@@ -165,6 +194,7 @@ fn toggle_details(app: &AppHandle) {
             return false;
         }
         state.details_expanded = !state.details_expanded;
+        state.reward_recap = false;
         true
     });
 }
@@ -181,7 +211,7 @@ fn save_drag_position(app: &AppHandle, hwnd: isize) -> Result<(), String> {
     state.edit(app, |settings| settings.placement = placement)
 }
 
-fn report_drag_problem(app: &AppHandle, message: String) {
+fn report_notice(app: &AppHandle, message: String) {
     app.state::<Runtime>().mutate(app, Kind::Snapshot, |state| {
         if state.notices.contains(&message) {
             return false;
@@ -267,10 +297,10 @@ fn set_campaign_profile(
 fn set_objective_completed(
     app: AppHandle,
     state: State<'_, Runtime>,
-    profile: usize,
+    profile: Option<usize>,
     objective: String,
     completed: bool,
-) -> Result<(), String> {
+) -> Result<bool, String> {
     if objective.is_empty()
         || objective.len() > 96
         || !objective
@@ -279,18 +309,38 @@ fn set_objective_completed(
     {
         return Err("Invalid objective ID.".into());
     }
-    if state.read().settings.active_profile != Some(profile) {
-        return Err("Choose a campaign character before marking objectives.".into());
-    }
-    state.edit(&app, |settings| {
-        if let Some(progress) = settings.profiles.get_mut(profile) {
-            if completed {
-                progress.completed.insert(objective);
-            } else {
-                progress.completed.remove(&objective);
-            }
+    state.try_edit(&app, |settings| {
+        let progress = settings
+            .completed_for(profile)
+            .ok_or("The active campaign profile changed.")?;
+        if completed {
+            progress.insert(objective);
+        } else {
+            progress.remove(&objective);
         }
+        Ok(())
     })
+}
+
+fn send_reward_action(app: &AppHandle, action: &str) {
+    let runtime = app.state::<Runtime>();
+    if action == "recap" {
+        runtime.mutate(app, Kind::Snapshot, |state| {
+            if !state.visible {
+                return false;
+            }
+            state.reward_recap = !state.details_expanded || !state.reward_recap;
+            state.details_expanded = true;
+            true
+        });
+        return;
+    }
+    let state = runtime.read();
+    if state.visible && state.details_expanded {
+        if let Err(error) = app.emit(REWARD_ACTION, action) {
+            eprintln!("Reward shortcut delivery failed: {error}");
+        }
+    }
 }
 
 #[tauri::command]
@@ -361,19 +411,41 @@ pub fn run() {
                         true
                     });
             }
+            for (shortcut, action, _) in REWARD_SHORTCUTS {
+                if let Err(error) =
+                    app.global_shortcut()
+                        .on_shortcut(shortcut, move |app, _, event| {
+                            if event.state == ShortcutState::Pressed {
+                                send_reward_action(app, action);
+                            }
+                        })
+                {
+                    report_notice(
+                        app.handle(),
+                        format!(
+                            "{shortcut} unavailable ({error}). Use the Campaign rewards tray menu."
+                        ),
+                    );
+                }
+            }
             let overlay = app.get_webview_window("overlay").unwrap();
             let hwnd = overlay.hwnd()?.0 as isize;
             window::enable_click_through(hwnd)?;
             if let Err(e) = drag::install(app.handle().clone(), hwnd) {
-                report_drag_problem(
+                report_notice(
                     app.handle(),
                     format!("Alt-drag unavailable ({e}). Use the Position settings."),
                 );
+            }
+            let mut rewards = SubmenuBuilder::new(app, "Campaign rewards");
+            for (_, action, label) in REWARD_SHORTCUTS {
+                rewards = rewards.text(action, label);
             }
             let menu = MenuBuilder::new(app)
                 .text("settings", "Open settings…")
                 .text("toggle", "Show / hide overlay")
                 .text("details", "Expand / collapse overlay details")
+                .item(&rewards.build()?)
                 .separator()
                 .text("quit", "Quit Waymark")
                 .build()?;
@@ -390,6 +462,9 @@ pub fn run() {
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
+                    action @ ("recap" | "next" | "done" | "undo") => {
+                        send_reward_action(app, action)
+                    }
                     "quit" => app.exit(0),
                     _ => {}
                 })
@@ -434,6 +509,7 @@ pub fn run() {
             character_level: None,
             visible: true,
             details_expanded: false,
+            reward_recap: false,
             anchored: false,
             log_error: None,
             notices: notice.into_iter().collect(),

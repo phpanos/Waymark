@@ -1,7 +1,12 @@
 import areas from '../data/areas.json'
 import type { Snapshot, Status, Zone } from '../native/contract'
 
-type OptionalObjective = { id: string; hint: string; leagueStart?: boolean }
+type OptionalObjective = {
+  id: string
+  hint: string
+  leagueStart?: boolean
+  reward?: { name: string; direction: string }
+}
 export type Route = { cue: string; steps: readonly { landmark: string; detail: string }[] }
 type AreaReference = {
   id: string
@@ -28,7 +33,8 @@ function searchKey(value: string) {
 
 const searchIndex = campaignAreas.map(area => ({ area, terms: searchKey([
   area.name, area.id, area.objective, ...(area.bosses ?? []), area.tip,
-  area.shortcut?.cue, area.shortcut?.detail, ...(area.optional?.map(objective => objective.hint) ?? []),
+  area.shortcut?.cue, area.shortcut?.detail,
+  ...(area.optional?.flatMap(objective => [objective.hint, objective.reward?.name]) ?? []),
   ...(area.route?.steps.map(step => `${step.landmark} ${step.detail}`) ?? []),
 ].join(' ')) }))
 
@@ -41,6 +47,10 @@ export function searchCampaign(query: string) {
 
 export function activeProfile(settings: Snapshot['settings']) {
   return settings.activeProfile == null ? undefined : settings.profiles[settings.activeProfile]
+}
+
+export function completedObjectives(settings: Snapshot['settings']) {
+  return activeProfile(settings)?.completed ?? settings.defaultCompleted
 }
 
 export const statusText: Record<Status, string> = {

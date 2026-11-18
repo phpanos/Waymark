@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Snapshot, Status } from '../native/contract'
-import { activeProfile, describeZone, statusText, type Route } from '../state/presentation'
+import { completedObjectives, describeZone, statusText, type Route } from '../state/presentation'
+import { RewardRecap, useRewardRecap } from './RewardRecap'
 
 export function StatusLight({ status }: { status: Status }) {
   return <span className={'status ' + status}><i aria-hidden="true" />{statusText[status]}</span>
@@ -31,7 +32,7 @@ export function Compact({ state }: { state: Snapshot }) {
   }, [])
 
   const zone = describeZone(state.zone)
-  const completed = activeProfile(state.settings)?.completed ?? []
+  const completed = completedObjectives(state.settings)
   const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
   const showRecommendations = state.settings.leagueStart
   const recommended = showRecommendations ? remaining.find(objective => objective.leagueStart) : undefined
@@ -41,14 +42,19 @@ export function Compact({ state }: { state: Snapshot }) {
   const shortcut = stale ? null : zone.shortcut
   const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
   const tip = stale ? null : zone.tip
-  const hasDetails = !!(route || shortcut || tip || remaining.length)
+  const hasDirections = !!(route || shortcut || tip || remaining.length)
+  const recap = useRewardRecap(state, zone.act, zone.areaId, hasDirections)
+  const hasDetails = hasDirections || recap.available
   const expanded = state.detailsExpanded && hasDetails
   return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}`}>
     <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></header>
     <div className="zone-block">
       <div className="zone-meta">
         <div className="eyebrow">{context}{zone.act && <span className="act">Act {zone.act}</span>}</div>
-        {hasDetails && <span className="details-gesture">Alt+click header {expanded ? '−' : '+'}</span>}
+        <div className="zone-actions">
+          {recap.catalog.length > 0 && <span className="reward-count">{recap.remaining.length} {recap.remaining.length === 1 ? 'reward' : 'rewards'} left</span>}
+          {hasDetails && <span className="details-gesture">Alt+click header {expanded ? '−' : '+'}</span>}
+        </div>
       </div>
       <h1 title={zone.title}>{zone.title}</h1>
     </div>
@@ -74,15 +80,20 @@ export function Compact({ state }: { state: Snapshot }) {
         {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
       </div>}
       {expanded && <section className="overlay-details" aria-label="Objective details">
-        {route && <RouteLandmarks route={route}/>}
-        {shortcut && <div><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
-        {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
-        {remaining.length > 0 && <div><h2>Optional objectives</h2>
-          <ul>{remaining.map(objective => <li key={objective.id}>
-            {objective.hint}
-            {showRecommendations && objective.leagueStart && <span className="recommended"> · Recommended</span>}
-          </li>)}</ul>
-        </div>}
+        {recap.available && hasDirections && <p className="reward-keys">
+          <span><kbd>Alt+Shift+R</kbd> {recap.showRecap ? 'Directions' : 'Rewards'}</span>
+        </p>}
+        {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>
+          {route && <RouteLandmarks route={route}/>}
+          {shortcut && <div><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
+          {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
+          {remaining.length > 0 && <div className="zone-optional"><h2>Optional objectives</h2>
+            <ul>{remaining.map(objective => <li key={objective.id}>
+              {objective.hint}
+              {showRecommendations && objective.leagueStart && <span className="recommended"> · Recommended</span>}
+            </li>)}</ul>
+          </div>}
+        </>}
       </section>}
     </footer>
   </main>

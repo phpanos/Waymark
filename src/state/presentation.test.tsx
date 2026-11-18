@@ -3,12 +3,13 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
 import { campaignAreas, describeZone, searchCampaign } from './presentation'
+import { permanentRewards, selectedReward } from './rewards'
 import { useSession } from './session'
 
 const snapshot: Snapshot = {
   version: 1, revision: 0, kind: 'snapshot', status: 'watching', zone: null,
-  activePath: null, characterLevel: null, visible: true, detailsExpanded: false, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
-  settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null },
+  activePath: null, characterLevel: null, visible: true, detailsExpanded: false, rewardRecap: false, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
+  settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null, defaultCompleted: [] },
 }
 
 describe('zone presentation', () => {
@@ -56,11 +57,11 @@ describe('zone presentation', () => {
   it('shows an area’s shortcut alongside its objectives and hides it if the log goes missing', () => {
     const state = { ...snapshot, zone: { areaId: 'G3_2_2', name: null, level: 39 } }
     const html = renderToStaticMarkup(<Compact state={state}/>)
-    expect(html).toContain('Drain the canals using the sluice levers')
-    expect(html).toContain('Open a portal by the final lever')
+    expect(html).toContain('Cross the canals using the pressure pads')
+    expect(html).toContain('Portal after crossing the canals')
     expect(html).toContain('Take the detour to the Azak Bog')
     expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Shortcut')
-    expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('wait for the quest to update')
+    expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('Once the quest updates')
     expect(describeZone({ areaId: 'G1_1', name: null, level: 1 }).shortcut).toBeNull()
   })
   it('escapes unknown identifiers and leaves the act unknown', () => {
@@ -83,9 +84,11 @@ describe('zone presentation', () => {
     expect(describeZone({ ...scene, areaId: 'G2_3s' }).objective).toContain('sandstorm')
     expect(describeZone({ ...scene, areaId: 'G2_3a' }).objective).toContain('closed gates')
     expect(describeZone({ name: 'Ngakanu', areaId: null, level: null })).toMatchObject({
-      act: 4, areaId: null, objective: 'Find the Heart of the Tribe',
+      act: 4, areaId: null, objective: null, route: null,
       optional: [{ id: 'tribal-medicine:shark-fin' }],
     })
+    expect(describeZone({ name: 'Ngakanu', areaId: 'G4_11_1a', level: null }).route?.steps[0].landmark).toContain('Settlement')
+    expect(describeZone({ name: 'Ngakanu', areaId: 'G4_11_1b', level: null }).route?.steps[0].landmark).toContain('fence')
   })
   it('searches area names, bosses and rewards without relying on matching punctuation', () => {
     expect(searchCampaign('traitor’s passage')[0]?.id).toBe('G2_2')
@@ -117,6 +120,19 @@ describe('zone presentation', () => {
     expect(expanded).toContain('Defeat the Brambleghast')
     expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: null, detailsExpanded: true }}/>)).not.toContain('Objective details')
   })
+  it.each([
+    ['G2_2', 'Look for the Six Sisters bridge', 'Yellow paper seals · Optional'],
+    ['G3_2_2', 'Step on pads to lower the water', 'Azak Bog entrance · Optional'],
+    ['G4_4_1', 'Look for the fork after the third test', 'Silent Hall · Optional'],
+  ])('keeps the route cue visible with the details collapsed or expanded in %s', (areaId, cue, detour) => {
+    const state = { ...snapshot, zone: { areaId, name: null, level: null } }
+    const collapsed = renderToStaticMarkup(<Compact state={state}/>)
+    const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
+    expect(collapsed).toContain(cue)
+    expect(collapsed).not.toContain(detour)
+    expect(expanded).toContain(cue)
+    expect(expanded).toContain(detour)
+  })
   it('hides completed recommendations for the active character and league only', () => {
     const state = {
       ...snapshot, zone: { areaId: 'G1_2', name: null, level: 2 },
@@ -127,6 +143,40 @@ describe('zone presentation', () => {
     }
     expect(renderToStaticMarkup(<Compact state={state}/>)).not.toContain('Defeat Beira')
     expect(renderToStaticMarkup(<Compact state={{ ...state, settings: { ...state.settings, activeProfile: 1 } }}/>)).toContain('Recommended')
+  })
+})
+
+describe('permanent reward recap', () => {
+  it('counts the reward once even when multiple variants share the objective', () => {
+    expect([1, 2, 3, 4].map(act => permanentRewards(act).length)).toEqual([5, 5, 6, 6])
+    expect(permanentRewards(4).find(reward => reward.id === 'tribal-medicine:shark-fin')?.areas.map(area => area.id))
+      .toEqual(['G4_11_1a', 'G4_11_1b'])
+    expect(permanentRewards(2).map(reward => reward.id)).not.toContain('ancient-vows:kabala-relic')
+  })
+
+  it('highlights a nearby reward until the player chooses another', () => {
+    const rewards = permanentRewards(1)
+    expect(selectedReward(rewards, undefined, 'G1_12')?.id).toBe('G1_12:1')
+    expect(selectedReward(rewards, 'G1_11:1', 'G1_12')?.id).toBe('G1_11:1')
+    expect(selectedReward(rewards, 'missing', 'G1_12')?.id).toBe('G1_12:1')
+  })
+
+  it('uses the saved default checklist separately from named characters', () => {
+    const state: Snapshot = {
+      ...snapshot,
+      zone: { areaId: 'G1_town', name: null, level: null },
+      detailsExpanded: true,
+      settings: { ...snapshot.settings, defaultCompleted: ['G1_2:1'], profiles: [
+        { character: 'Exile', league: 'One', completed: [] },
+      ] },
+    }
+    const fallback = renderToStaticMarkup(<Compact state={state}/>)
+    expect(fallback).toContain('4 rewards left')
+    expect(fallback).not.toContain('Cold resistance')
+    expect(fallback).toContain('bloody tracks')
+    const named = renderToStaticMarkup(<Compact state={{ ...state, settings: { ...state.settings, activeProfile: 0 } }}/>)
+    expect(named).toContain('5 rewards left')
+    expect(named).toContain('Frostblood Ritual')
   })
 })
 
