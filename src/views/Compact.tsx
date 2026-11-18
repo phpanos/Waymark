@@ -34,7 +34,8 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     return () => resize.disconnect()
   }, [])
 
-  const zone = describeZone(state.zone, describeZone(previousZone).areaId)
+  const previousAreaId = previousZone?.areaId ?? describeZone(previousZone).areaId
+  const zone = describeZone(state.zone, previousAreaId)
   const milestone = useBuildMilestone(state)
   const completed = completedObjectives(state.settings)
   const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
@@ -50,7 +51,8 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const recap = useRewardRecap(state, zone.act, zone.areaId)
   const hasDetails = hasDirections || recap.showRecap || !!milestone
   const expanded = state.detailsExpanded && hasDetails
-  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}${zone.questReward ? ' with-quest-reward' : ''}`}>
+  const optionalLoot = !expanded && !zone.objective ? featuredOptional?.loot : undefined
+  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}${zone.questReward || optionalLoot ? ' with-quest-reward' : ''}`}>
     <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></header>
     <div className="zone-block">
       <div className="zone-meta">
@@ -71,8 +73,10 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         </p>
       </>}
       {zone.questReward && <p className="quest-reward">
-        <span className="optional-label">Reward</span>
-        <strong>{zone.questReward}</strong>
+        <span className="optional-label">{zone.arrivalReward?.optional ? 'Optional reward' : 'Reward'}</span>
+        <span><strong>{zone.questReward}</strong>
+          {zone.arrivalReward?.claim && <span className="reward-claim">{zone.arrivalReward.claim}</span>}
+        </span>
       </p>}
       {route && <p className="route-preview direction" title={route.cue}>
         <span className="optional-label">Route</span>
@@ -88,6 +92,10 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         {recommended && <span className="recommended">Recommended</span>}
         {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
       </div>}
+      {optionalLoot && <p className="quest-reward">
+        <span className="optional-label">Reward</span>
+        <strong>{optionalLoot}</strong>
+      </p>}
       {milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
       {expanded && (hasDirections || recap.showRecap || recap.available) && <section className="overlay-details" aria-label="Objective details">
         {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>

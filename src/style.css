@@ -24,7 +24,12 @@ button:disabled { opacity: .55; cursor: default }
   padding: 0 16px; user-select: none;
 }
 .compact.with-build { --build-height: 22px }
-.compact.with-quest-reward { --quest-reward-height: 18px }
+.compact.with-quest-reward:not(.expanded) {
+  --quest-reward-height: 18px;
+  height: auto;
+  min-height: calc(168px + var(--build-height, 0px) + var(--quest-reward-height));
+  padding-bottom: 7px;
+}
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--heading); letter-spacing: .19em; text-transform: uppercase; color: #dfc99d }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
@@ -58,8 +63,9 @@ button:disabled { opacity: .55; cursor: default }
 .route-preview.direction .optional-hint { font-weight: 600 }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
-.quest-reward { display: flex; align-items: baseline; gap: 6px; min-height: 17px; color: #dfc99d; font-size: 12px; line-height: 1.35 }
+.quest-reward { display: flex; align-items: baseline; gap: 6px; min-height: 17px; color: #dfc99d; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere }
 .quest-reward .optional-label { flex-shrink: 0 }
+.reward-claim { display: block; color: var(--muted); font-weight: 400 }
 .objective-loot { display: block; color: #dfc99d; font-size: 12px }
 .build-milestone { margin-top: 3px; border-top: 1px solid var(--line); padding-top: 2px; color: #a9c6bf; font-size: 11px }
 .build-milestone-row { display: flex; align-items: baseline; gap: 6px; line-height: 15px }

@@ -42,7 +42,7 @@ Settings are saved on change under `%APPDATA%\app.waymark.overlay\settings-v1.js
 
 ## Campaign objectives
 
-The compact overlay puts the current objective and its known quest reward first. After entering Clearfell Encampment from the Riverbank, it points you to Renly for a Level 1 Uncut Skill Gem. **Settings → Objectives** follows the detected zone by default. Search by area, boss, or reward, or use the act and area menus. Select **Use current zone** to resume following the game. [Reaching Clearfell](https://poe2db.tw/us/Reaching_Clearfell)
+The compact overlay puts the current objective and its known quest reward first. In Acts 1–4, returning to town directly from a quest area can show the reward, who to talk to, and what you need to bring or complete. Optional rewards are labeled. These reminders use the detected area transition. **Settings → Objectives** follows the detected zone by default. Search by area, boss, or reward, or use the act and area menus. Select **Use current zone** to resume following the game. [Campaign quest rewards](https://poe2db.tw/us/QuestRewards)
 
 Choose a character and optionally name the league to save an independent reward checklist. Tick an optional objective to remove it from that character's compact overlay. Enable **League-start recommendations** to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks.
 

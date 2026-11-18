@@ -293,6 +293,25 @@ try {
     await waitFor('the last build milestone to clear', () => evaluate('!document.querySelector(".build-milestone")'))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
     await expectText('Once the quest updates, use a town portal to the Ziggurat Encampment and speak to Alva to continue.', '.zone-shortcut p')
+    await appendFile(log, 'Generating level 40 area "G3_7"\r\n')
+    await expectText('Level 10 Uncut Spirit Gem from Ignagduk. Bring her Ghastly Spear to Servi in town for a charm.', '.objective-loot')
+    for (const [area, name, town, reward, claim] of [
+      ['G1_3', 'Mud Burrow', 'G1_town', 'Uncut Support Gem', 'Speak to Renly if you defeated the Devourer.'],
+      ['G2_4_3', 'Buried Shrines', 'G2_town', 'Uncut Support Gem', 'Bring the Essence of Water to Zarka.'],
+      ['G3_9', 'The Molten Vault', 'G3_town', 'Level 11 Uncut Skill Gem and Reforging Bench', 'Bring the Hammer of Kamasa to Oswald if you recovered it.'],
+      ['G4_2_2', "Journey's End", 'G4_town', 'Level 13 Uncut Skill Gem and passive points', 'Talk to Tujen after defeating Omniphobia. If you only have the Verisium, take it to Dannig first.'],
+    ]) {
+      await appendFile(log, `Generating level 40 area "${area}"\r\n`)
+      await expectText(name, '.zone-block h1')
+      await appendFile(log, `Generating level 40 area "${town}"\r\n`)
+      await expectText(reward, '.quest-reward strong')
+      await expectText(claim, '.quest-reward .reward-claim')
+      await waitFor('the town reward to fit in the overlay without opening the permanent reward list', () => evaluate(`(() => {
+        const card = document.querySelector('.compact').getBoundingClientRect()
+        const claim = document.querySelector('.reward-claim').getBoundingClientRect()
+        return claim.bottom < card.bottom && card.bottom <= innerHeight && !document.querySelector('.reward-list')
+      })()`))
+    }
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
     await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')

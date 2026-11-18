@@ -195,6 +195,26 @@ describe('permanent reward recap', () => {
     const revisit = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'G1_2', name: null, level: 2 }}/>)
     expect(revisit).not.toContain('Level 1 Uncut Skill Gem')
     expect(renderToStaticMarkup(<Compact state={state}/>)).toContain('Level 1 Uncut Skill Gem after defeating the Miller')
+    expect(renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'UnknownHideout', name: null, level: null }}/>))
+      .not.toContain('Level 1 Uncut Skill Gem')
+  })
+
+  it.each([
+    ['G1_town', 'G1_3', 'Speak with Renly and Una', 'Uncut Support Gem', 'Speak to Renly', true],
+    ['G2_town', 'G2_4_3', 'Speak with Asala and use the Desert Map', 'Uncut Support Gem', 'Essence of Water to Zarka', false],
+    ['G3_town', 'G3_9', 'Work with Alva to open the route below', 'Level 11 Uncut Skill Gem', 'Hammer of Kamasa to Oswald', true],
+    ['G4_town', 'G4_2_2', 'Arrange passage with Makoru and investigate the islands', 'Level 13 Uncut Skill Gem', 'Talk to Tujen after defeating Omniphobia', true],
+  ] as const)('shows the relevant reward on arrival in %s while keeping the main task first', (town, from, objective, reward, claim, optional) => {
+    const state: Snapshot = { ...snapshot, detailsExpanded: false, zone: { areaId: town, name: null, level: null } }
+    const markup = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: from, name: null, level: null }}/>)
+    expect(markup).toContain(objective)
+    expect(markup).toContain(reward)
+    expect(markup).toContain(claim)
+    expect(markup.indexOf(objective)).toBeLessThan(markup.indexOf(reward))
+    expect(markup.includes('Optional reward')).toBe(optional)
+    expect(markup).not.toContain('reward-list')
+    expect(renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'Unrelated', name: null, level: null }}/>))
+      .not.toContain(claim)
   })
 })
 
