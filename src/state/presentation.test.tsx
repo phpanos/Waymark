@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
-import { campaignAreas, describeZone, searchCampaign, townRewards } from './presentation'
+import { adjacentStoryObjectives, campaignAreas, describeZone, searchCampaign, townRewards } from './presentation'
 import { permanentRewards, selectedReward } from './rewards'
 import { useSession } from './session'
 
@@ -45,7 +45,7 @@ describe('zone presentation', () => {
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Optional')
     expect(html).toContain('Defeat the Devourer for Finn')
-    expect(html).not.toContain('Story objective')
+    expect(html).not.toContain('class="story-objective"')
   })
   it('resolves encounter tips without treating area level as a recommendation', () => {
     const trial = describeZone({ areaId: 'G2_13', name: null, level: 22 })
@@ -248,6 +248,7 @@ describe('permanent reward recap', () => {
     const intro = renderToStaticMarkup(<Compact state={state} previousZone={riverbank}/>)
     expect(intro).toContain('Speak to Renly to claim the Miller reward')
     expect(intro).toContain('Level 1 Uncut Skill Gem')
+    expect(intro).toContain('data-reward-target="town:claim:bloated-miller"')
     expect(intro).not.toContain('Act 1 permanent rewards')
     expect(intro).not.toContain('<kbd>')
     expect(renderToStaticMarkup(<Compact state={{ ...state, rewardRecap: true }} previousZone={riverbank}/>))
@@ -257,6 +258,45 @@ describe('permanent reward recap', () => {
     expect(renderToStaticMarkup(<Compact state={state}/>)).toContain('Level 1 Uncut Skill Gem after defeating the Miller')
     expect(renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'UnknownHideout', name: null, level: null }}/>))
       .not.toContain('Level 1 Uncut Skill Gem')
+  })
+
+  it('advances Clearfell for the character who claimed the Miller reward, including after restart', () => {
+    const state: Snapshot = {
+      ...snapshot,
+      zone: { areaId: null, name: 'Clearfell Encampment', level: null },
+      settings: { ...snapshot.settings, activeProfile: 0, profiles: [
+        { character: 'Exile', league: 'One', completed: [], townRewards: { 'bloated-miller': 'claimed' } },
+        { character: 'New Exile', league: 'One', completed: [] },
+      ] },
+    }
+    for (const previousZone of [null, { areaId: 'G1_1', name: null, level: 1 }, { areaId: 'G1_2', name: null, level: 2 }]) {
+      const markup = renderToStaticMarkup(<Compact state={state} previousZone={previousZone}/>)
+      expect(markup).toContain('Leave the encampment and enter Clearfell')
+      expect(markup).toContain('Head toward the east side of town')
+      expect(markup).not.toContain('Uncut Skill Gem')
+      expect(markup).not.toContain('Mark claimed')
+    }
+    const fresh = { ...state, settings: { ...state.settings, activeProfile: 1 } }
+    expect(renderToStaticMarkup(<Compact state={fresh}/>)).toContain('Mark claimed')
+    expect(renderToStaticMarkup(<Compact state={{ ...fresh, status: 'replaying', replaySession: 1 }}/>)).not.toContain('Mark claimed')
+  })
+
+  it('advances Clearfell after reaching the next area even with no gem claim saved', () => {
+    const town = { areaId: 'G1_town', name: null, level: null }
+    const state = { ...snapshot, zone: town, settings: { ...snapshot.settings, defaultReachedClearfell: true } }
+    const markup = renderToStaticMarkup(<Compact state={state}/>)
+    expect(markup).toContain('Leave the encampment and enter Clearfell')
+    expect(markup).not.toContain('Mark claimed')
+    expect(markup).toContain('Previous story objective')
+    expect(markup).toContain('Next story objective')
+  })
+
+  it('browses adjacent story objectives in guide order and skips optional-only zones', () => {
+    expect(adjacentStoryObjectives('G1_2').previous?.id).toBe('G1_town')
+    expect(adjacentStoryObjectives('G1_2').next?.id).toBe('G1_4')
+    expect(adjacentStoryObjectives('G1_3').next?.id).toBe('G1_4')
+    expect(adjacentStoryObjectives('G1_1').previous).toBeUndefined()
+    expect(adjacentStoryObjectives('Unknown').next).toBeUndefined()
   })
 
   it.each([

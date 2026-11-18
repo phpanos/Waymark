@@ -14,6 +14,7 @@ pub struct CampaignProfile {
     pub league: String,
     pub completed: BTreeSet<String>,
     pub town_rewards: BTreeMap<String, TownRewardStatus>,
+    pub reached_clearfell: bool,
     pub(super) act_timing: ActTiming,
 }
 
@@ -72,12 +73,29 @@ pub struct Settings {
     pub active_profile: Option<usize>,
     pub default_completed: BTreeSet<String>,
     pub default_town_rewards: BTreeMap<String, TownRewardStatus>,
+    pub default_reached_clearfell: bool,
     pub(super) default_act_timing: ActTiming,
 }
 
 impl Settings {
     pub fn campaign_profile(&self) -> Option<&CampaignProfile> {
         self.profiles.get(self.active_profile?)
+    }
+
+    pub fn reached_clearfell(&self) -> bool {
+        self.campaign_profile()
+            .map_or(self.default_reached_clearfell, |profile| profile.reached_clearfell)
+    }
+
+    pub fn record_clearfell(&mut self) {
+        match self.active_profile {
+            Some(index) => {
+                if let Some(profile) = self.profiles.get_mut(index) {
+                    profile.reached_clearfell = true;
+                }
+            }
+            None => self.default_reached_clearfell = true,
+        }
     }
 
     pub(super) fn act_timing(&self) -> &ActTiming {

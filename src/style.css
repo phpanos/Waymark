@@ -58,6 +58,9 @@ button:disabled { opacity: .55; cursor: default }
 .zone-block { padding: 7px 0 4px; height: 58px }
 .zone-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 5px }
 .zone-actions { display: flex; gap: 8px; align-items: baseline }
+.guide-navigation { display: flex; gap: 3px; margin: 0; padding: 0; border: 0 }
+.guide-navigation button { min-width: 24px; min-height: 22px; padding: 0 5px; font-size: 14px; line-height: 1 }
+.guide-navigation button[data-reward-target="guide:live"] { font-size: 11px }
 .details-gesture { color: var(--muted); font: 11px/14px Barlow, sans-serif; white-space: nowrap }
 .details-gesture [aria-hidden] { color: var(--gold); margin-left: 2px }
 .control-guide kbd, .act-timer-card kbd { font: inherit; padding: 1px 4px; border: 1px solid #5a5e53; border-radius: 3px; background: #262d26; color: var(--paper); white-space: nowrap }
@@ -175,8 +178,10 @@ button:disabled { opacity: .55; cursor: default }
 .reward-list span { font-size: 11px; line-height: 1.25 }
 .reward-direction { margin: 2px 0; color: var(--paper); font-size: 12px }
 .reward-feedback { color: var(--gold) }
-.reward-undo { justify-self: start; border-radius: 3px; padding: 1px 7px; font-size: 11px }
+.reward-undo, .reward-claim-button { justify-self: start; border-radius: 3px; padding: 2px 7px; font-size: 11px }
+.reward-claim-button { flex-shrink: 0; margin-left: auto }
 .town-reward-actions, .town-reward-source { margin: 3px 0 }
+.town-reward-actions { display: flex; align-items: center; justify-content: space-between; gap: 6px }
 .town-reward-source { color: var(--muted); font-size: 11px }
 .town-reward-actions .reward-feedback { font-size: 12px }
 .campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
@@ -209,12 +214,12 @@ summary { color: var(--gold); cursor: pointer }
 .settings h1 { font: 500 28px/1.2 var(--heading); letter-spacing: -.04em }
 .readout { border: 1px solid #5e5b48; border-left: 2px solid #b79b67; padding: 14px 17px; background: linear-gradient(110deg,#2b322b,#202623) }
 .readout h2 { font: 500 21px/1.4 var(--heading); margin-top: 5px; overflow-wrap: anywhere }
-nav { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); column-gap: 13px; margin: 17px 0 20px }
+.settings nav { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); column-gap: 13px; margin: 17px 0 20px }
 button { padding: 8px 13px; border: 1px solid #575b50; border-radius: 3px; background: #272e29; color: var(--paper); font-size: 14px; font-weight: 600 }
 button:hover:enabled { background: #343d35; border-color: #a2987e }
-nav button { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 9px 0; color: var(--muted) }
-nav button[aria-current] { color: #e2cda5; border-bottom-color: #cab07c }
-nav button:hover:enabled { background: transparent; color: var(--paper) }
+.settings nav button { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 9px 0; color: var(--muted) }
+.settings nav button[aria-current] { color: #e2cda5; border-bottom-color: #cab07c }
+.settings nav button:hover:enabled { background: transparent; color: var(--paper) }
 .pane, .corner-group { border: 0; min-width: 0; padding: 0; margin: 0 }
 .field .eyebrow, .corner-group legend { margin-bottom: 8px }
 .field, .hint, .check { margin-bottom: 13px }

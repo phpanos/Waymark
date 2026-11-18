@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { native } from '../native/bridge'
 import type { RewardAction, RewardClick, Snapshot } from '../native/contract'
 import { completedObjectives } from '../state/presentation'
@@ -6,7 +6,7 @@ import { permanentRewards, selectedReward, type PermanentReward } from '../state
 
 type Completion = { profile: number | null; id: string; name: string }
 
-export function useRewardRecap(state: Snapshot, act: number | null, areaId: string | null) {
+export function useRewardRecap(state: Snapshot, act: number | null, areaId: string | null, preview: boolean) {
   const profile = state.settings.activeProfile
   const scope = JSON.stringify([profile, act, areaId])
   const catalog = permanentRewards(act)
@@ -20,11 +20,11 @@ export function useRewardRecap(state: Snapshot, act: number | null, areaId: stri
   const click = useRef<(event: RewardClick) => void>(() => {})
   const selected = selectedReward(remaining, selection?.scope === scope ? selection.id : undefined, areaId)
   const undo = lastDone?.profile === profile && completed.includes(lastDone.id) ? lastDone : null
-  const canEdit = state.visible && state.status === 'watching' && state.replaySession === 0
+  const canEdit = state.visible && state.status === 'watching' && state.replaySession === 0 && !preview
   const canMark = canEdit && !!selected
   const message = feedback?.profile === profile ? feedback.message : ''
   const available = !!(catalog.length || undo || message)
-  const showRecap = available && state.rewardRecap
+  const showRecap = available && state.rewardRecap && !preview
 
   function mark(reward: PermanentReward) {
     if (!canEdit || pending.current || completed.includes(reward.id)) return
@@ -89,40 +89,12 @@ export function useRewardRecap(state: Snapshot, act: number | null, areaId: stri
   return { catalog, remaining, selected, canEdit, mark, restore, undo, message, available, showRecap }
 }
 
-export function RewardRecap({ act, revision, recap }: {
+export function RewardRecap({ act, recap }: {
   act: number | null
-  revision: number
   recap: ReturnType<typeof useRewardRecap>
 }) {
   const { catalog, remaining, selected, canEdit, mark, restore, undo, message } = recap
-  const panel = useRef<HTMLElement>(null)
-  useLayoutEffect(() => {
-    const section = panel.current
-    if (!canEdit || !section) return
-    const card = section.closest('.compact') ?? section
-    let sent = ''
-    const measure = () => {
-      const boxes = [...section.querySelectorAll<HTMLElement>('[data-reward-target]:enabled')].map(element => {
-        const { left, top, right, bottom } = element.getBoundingClientRect()
-        return { id: element.dataset.rewardTarget || null, left, top, right, bottom }
-      })
-      const height = Math.ceil(card.getBoundingClientRect().height) + 4
-      const key = JSON.stringify([height, boxes])
-      if (key === sent) return
-      sent = key
-      void native.setRewardTargets(revision, height, boxes).catch(console.error)
-    }
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(card)
-    observer.observe(section)
-    window.addEventListener('resize', measure)
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', measure)
-    }
-  }, [canEdit, revision, undo])
-  return <section ref={panel} className="reward-recap" aria-label="Permanent rewards">
+  return <section className="reward-recap" aria-label="Permanent rewards">
     <div className="reward-recap-heading">
       <h2>{catalog.length ? `Act ${act} permanent rewards` : 'Permanent rewards'}</h2>
       {catalog.length > 0 && <span className="reward-count">{remaining.length} {remaining.length === 1 ? 'reward' : 'rewards'} left</span>}

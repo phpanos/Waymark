@@ -12,7 +12,7 @@ export const native = {
   campaignProfile: (character: string, league: string) => invoke<void>('set_campaign_profile', { character, league }),
   completeObjective: (profile: number | null, objective: string, completed: boolean) =>
     invoke<boolean>('set_objective_completed', { profile, objective, completed }),
-  setTownReward: (profile: number | null, reward: string, expected: TownRewardStatus | null, status: TownRewardStatus) =>
+  setTownReward: (profile: number | null, reward: string, expected: TownRewardStatus | null, status: TownRewardStatus | null) =>
     invoke<boolean>('set_town_reward', { profile, reward, expected, status }),
   listenRewards: (accept: (action: RewardAction) => void) => listen<RewardAction>(rewardChannel, e => accept(e.payload)),
   listenRewardClicks: (accept: (click: RewardClick) => void) => listen<RewardClick>(rewardClickChannel, e => accept(e.payload)),

@@ -168,6 +168,7 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                     && status == Status::Watching
                     && v.settings.active_profile == tracked_profile
                 {
+                    state.record_story_progress(v, &z);
                     state.advance_act_timer(v, &z);
                 }
                 v.zone = Some(z);

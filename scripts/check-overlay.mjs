@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = ['overlay', 'details', 'rewards', 'town', 'diagram', 'timer', 'quick-route'].includes(view) ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards', 'town', 'miller', 'guide', 'diagram', 'timer', 'quick-route'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -80,8 +80,18 @@ try {
     button.click()
     return true
   })()`))
+  async function rewardControlPoint(selector) {
+    const point = await waitFor('the visible reward control', () => evaluate(`(() => {
+      const bounds = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect()
+      const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
+      if (!bounds || bounds.bottom > innerHeight || Math.abs(innerHeight - height) > 1) return null
+      return [Math.round((bounds.left + bounds.width / 2) * devicePixelRatio),
+              Math.round((bounds.top + bounds.height / 2) * devicePixelRatio)]
+    })()`))
+    console.log('Reward control point ' + point.join(' '))
+  }
   await expectText('Connected')
-  if (view === 'settings' || view === 'overlay') await expectText('Awaiting zone')
+  if (view === 'settings' || (view === 'overlay' && argument !== '1')) await expectText('Awaiting zone')
   if (view === 'timer') {
     const ready = argument === 'ready-one'
     const running = !ready && argument !== 'stopped-two'
@@ -174,6 +184,36 @@ try {
         `))
       }
     }
+  } else if (view === 'guide') {
+    if (argument.endsWith('-point')) {
+      await rewardControlPoint(`[data-reward-target="guide:${argument.replace('-point', '')}"]:enabled`)
+    } else {
+      await expectText(argument === 'previous' ? 'The Riverbank' : 'Clearfell Encampment', '.zone-block h1')
+      if (argument === 'live') {
+        await waitFor('live tracking to resume', () => evaluate('!document.querySelector("[data-reward-target=\\"guide:live\\"]")'))
+      } else {
+        await waitFor('a read-only story preview', () => evaluate(`
+          !!document.querySelector('[data-reward-target="guide:live"]') && !document.querySelector('.reward-claim-button')
+        `))
+      }
+    }
+  } else if (view === 'miller') {
+    if (argument === 'enter') {
+      await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
+      await expectText('The Riverbank', '.zone-block h1')
+      await appendFile(log, 'Generating level 1 area "G1_town"\r\n')
+      await expectText('Speak to Renly to claim the Miller reward', '.story-objective')
+    } else if (argument === 'claim-point') {
+      await rewardControlPoint('.reward-claim-button:enabled')
+    } else if (argument === 'undo-point') {
+      await rewardControlPoint('.town-reward-actions .reward-undo:enabled')
+    } else if (argument === 'claimed') {
+      await expectText('Leave the encampment and enter Clearfell', '.story-objective')
+      await waitFor('the Miller reward to disappear', () => evaluate('!document.querySelector(".quest-reward")'))
+    } else if (argument === 'restored') {
+      await expectText('Speak to Renly to claim the Miller reward', '.story-objective')
+      await expectText('Level 1 Uncut Skill Gem', '.quest-reward strong')
+    }
   } else if (view === 'town') {
     const reward = 'Level 11 Uncut Skill Gem and Reforging Bench'
     const claim = 'Bring the Hammer of Kamasa to Oswald if you recovered it.'
@@ -215,14 +255,7 @@ try {
       await expectText('Marked done · Passive points from the Crowbell', '.reward-feedback')
     } else if (argument === 'checkbox-point' || argument === 'undo-point') {
       const selector = argument === 'checkbox-point' ? '.reward-list li[aria-current] input:enabled' : '.reward-undo:enabled'
-      const point = await waitFor('the visible reward control', () => evaluate(`(() => {
-        const bounds = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect()
-        const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
-        if (!bounds || bounds.bottom > innerHeight || Math.abs(innerHeight - height) > 1) return null
-        return [Math.round((bounds.left + bounds.width / 2) * devicePixelRatio),
-                Math.round((bounds.top + bounds.height / 2) * devicePixelRatio)]
-      })()`))
-      console.log('Reward control point ' + point.join(' '))
+      await rewardControlPoint(selector)
     } else {
       await expectText('5 rewards left', '.reward-count')
       await expectText('Restored · Passive points from the Crowbell', '.reward-feedback')
@@ -396,14 +429,19 @@ try {
     await expectText('Smoke test crossing')
     await appendFile(log, 'Generating level 1 area "G1_town"\r\n')
     await expectText('Clearfell Encampment')
-    await expectText('Speak to Renly to claim the Miller reward', '.story-objective')
-    await expectText('Level 1 Uncut Skill Gem', '.quest-reward strong')
+    if (Number(argument) > 1) {
+      await expectText('Leave the encampment and enter Clearfell', '.story-objective')
+      await waitFor('the Miller reward reminder to stay hidden after restart', () => evaluate('!document.querySelector(".quest-reward")'))
+    } else {
+      await expectText('Speak to Renly to claim the Miller reward', '.story-objective')
+      await expectText('Level 1 Uncut Skill Gem', '.quest-reward strong')
+    }
     await waitFor('the quest reward without the permanent reward list', () => evaluate('!document.querySelector(".reward-list")'))
     await appendFile(log, 'Generating level 2 area "G1_2"\r\n')
     await expectText('Find the path into the Grelwood')
     await expectText('Defeat Beira for cold resistance · Recommended', '.zone-optional li')
     await appendFile(log, 'Generating level 1 area "G1_town"\r\n')
-    await expectText('Speak with Renly and Una', '.story-objective')
+    await expectText('Leave the encampment and enter Clearfell', '.story-objective')
     await waitFor('the first-visit reward to stay hidden on a return visit', () => evaluate('!document.querySelector(".quest-reward")'))
     await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
     await expectText('Glowing roots lead to the tree', '.direction .optional-hint')

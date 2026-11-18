@@ -99,8 +99,6 @@ impl Runtime {
     ) -> Option<RewardClick> {
         let state = self.snapshot.try_lock().ok()?;
         if !state.visible
-            || !state.details_expanded
-            || !state.reward_recap
             || state.status != Status::Watching
             || state.replay_session != 0
         {
@@ -177,6 +175,24 @@ impl Runtime {
         state.settings = next;
         Ok(())
     }
+    fn record_story_progress(&self, state: &mut Snapshot, zone: &Zone) {
+        let is_clearfell = match zone.area_id.as_deref() {
+            Some(id) => id == "G1_2",
+            None => zone
+                .name
+                .as_deref()
+                .is_some_and(|name| name.eq_ignore_ascii_case("Clearfell")),
+        };
+        if !is_clearfell || state.settings.reached_clearfell() {
+            return;
+        }
+        let mut next = state.settings.clone();
+        next.record_clearfell();
+        if let Err(error) = self.store_settings(state, next) {
+            eprintln!("Could not save Clearfell story progress: {error}");
+        }
+    }
+
     fn advance_act_timer(&self, state: &mut Snapshot, zone: &Zone) {
         let Some(clock) = &state.settings.act_timing().current else {
             return;
@@ -434,7 +450,7 @@ fn set_town_reward(
     profile: Option<usize>,
     reward: String,
     expected: Option<TownRewardStatus>,
-    status: TownRewardStatus,
+    status: Option<TownRewardStatus>,
 ) -> Result<bool, String> {
     if reward.is_empty()
         || reward.len() > 96
@@ -449,7 +465,11 @@ fn set_town_reward(
             .town_rewards_for(profile)
             .ok_or("The active campaign profile changed.")?;
         if rewards.get(&reward).copied() == expected {
-            rewards.insert(reward, status);
+            if let Some(status) = status {
+                rewards.insert(reward, status);
+            } else {
+                rewards.remove(&reward);
+            }
         }
         Ok(())
     })

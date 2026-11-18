@@ -12,7 +12,7 @@ export type Corner = 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight'
 export type Placement = { corner: Corner; insetX: number; insetY: number; followGame: boolean }
 export type Zone = { areaId: string | null; name: string | null; level: number | null }
 export type Status = 'searching' | 'watching' | 'missing' | 'readError' | 'replaying' | 'replayComplete'
-export type CampaignProfile = { character: string; league: string; completed: string[]; townRewards?: TownRewardProgress; actTiming?: ActTiming }
+export type CampaignProfile = { character: string; league: string; completed: string[]; townRewards?: TownRewardProgress; reachedClearfell?: boolean; actTiming?: ActTiming }
 export interface Snapshot {
   version: 1
   revision: number
@@ -25,6 +25,7 @@ export interface Snapshot {
     activeProfile: number | null
     defaultCompleted: string[]
     defaultTownRewards?: TownRewardProgress
+    defaultReachedClearfell?: boolean
     defaultActTiming?: ActTiming
   }
   activePath: string | null

@@ -8,7 +8,7 @@
   },
   { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una",
     "arrivalRewards": [
-      { "from": ["G1_1"], "objective": "Speak to Renly to claim the Miller reward", "reward": "Level 1 Uncut Skill Gem", "fallback": "Level 1 Uncut Skill Gem after defeating the Miller. Speak to Renly." },
+      { "id": "bloated-miller", "from": ["G1_1"], "objective": "Speak to Renly to claim the Miller reward", "reward": "Level 1 Uncut Skill Gem", "claim": "Speak to Renly.", "fallback": "Level 1 Uncut Skill Gem after defeating the Miller", "objectiveAfterClaim": "Leave the encampment and enter Clearfell" },
       { "id": "treacherous-ground", "from": ["G1_3"], "reward": "Uncut Support Gem", "claim": "Speak to Renly if you defeated the Devourer.", "optional": true },
       { "from": ["G1_5"], "reward": "Runed Spikes", "claim": "Bring the Rust King’s girdles to Renly." },
       { "from": ["G1_13_1"], "reward": "Passive skill points", "claim": "Bring the lute to Una if you found it.", "optional": true },

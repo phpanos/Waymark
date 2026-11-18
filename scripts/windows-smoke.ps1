@@ -118,8 +118,8 @@ function Invoke-RewardShortcut([byte]$Key) {
     }
 }
 
-function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target) {
-    $output = node $Check $Profile $Log rewards $Target
+function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View = 'rewards') {
+    $output = node $Check $Profile $Log $View $Target
     if ($LASTEXITCODE -ne 0) { throw "Could not locate the reward control $Target." }
     $point = $output | Where-Object { $_ -match '^Reward control point \d+ \d+$' } | Select-Object -Last 1
     if (!$point) { throw "Missing coordinates for $Target." }
@@ -243,12 +243,31 @@ try {
             node $check $profile $log timer stopped-two
             if ($LASTEXITCODE -ne 0) { throw 'The stopped act timer did not survive restart.' }
         }
+        if ($launch -eq 1) {
+            node $check $profile $log miller enter
+            if ($LASTEXITCODE -ne 0) { throw 'The Miller reward did not appear on arrival.' }
+            Invoke-RewardControlClick $hwnd $check $profile $log 'claim-point' 'miller'
+            node $check $profile $log miller claimed
+            if ($LASTEXITCODE -ne 0) { throw 'Claiming the Miller reward did not advance the objective.' }
+            Invoke-RewardControlClick $hwnd $check $profile $log 'undo-point' 'miller'
+            node $check $profile $log miller restored
+            if ($LASTEXITCODE -ne 0) { throw 'Undo did not restore the Miller objective.' }
+            foreach ($action in 'previous', 'next', 'live') {
+                Invoke-RewardControlClick $hwnd $check $profile $log "$action-point" 'guide'
+                node $check $profile $log guide $action
+                if ($LASTEXITCODE -ne 0) { throw "Guide navigation failed for $action." }
+            }
+        }
         # The recap shortcut expands the panel, and switching back leaves directions expanded.
         Invoke-RewardShortcut 0x52 # R
         Invoke-RewardShortcut 0x52 # R
-        node $check $profile $log overlay
+        node $check $profile $log overlay $launch
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
+            $campaign = (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0]
+            if (!$campaign.reachedClearfell -or $campaign.townRewards.'bloated-miller') {
+                throw 'Entering Clearfell should save story progress without marking the Miller gem claimed.'
+            }
             [IO.File]::AppendAllText($log, "Generating level 4 area `"G1_4`"`r`n", $utf8)
             node $check $profile $log details expanded
             if ($LASTEXITCODE -ne 0) { throw 'The overlay did not open with objective details expanded.' }

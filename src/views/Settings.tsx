@@ -25,7 +25,7 @@ const controls = [
   { title: 'Rewards', actions: [
     ['Alt+Shift+R', 'Open or close permanent rewards'],
     ['Alt+Shift+N', 'Select the next reward or town pin'],
-    ['Alt+Shift+D', 'Mark a reward done or a town pin claimed'],
+    ['Alt+Shift+D', 'Mark a permanent reward done or a town reward claimed'],
     ['Alt+Shift+U', 'Undo the last reward action'],
     ['Alt+Shift+P', 'Pin a town reward from its quest area'],
     ['Alt+Shift+X', 'Dismiss the selected town pin'],
