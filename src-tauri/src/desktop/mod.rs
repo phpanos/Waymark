@@ -508,7 +508,7 @@ pub fn run() {
             zone: None,
             character_level: None,
             visible: true,
-            details_expanded: false,
+            details_expanded: true,
             reward_recap: false,
             anchored: false,
             log_error: None,

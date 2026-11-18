@@ -6,7 +6,7 @@ import { permanentRewards, selectedReward, type PermanentReward } from '../state
 
 type Completion = { profile: number | null; id: string; name: string }
 
-export function useRewardRecap(state: Snapshot, act: number | null, areaId: string | null, hasDirections: boolean) {
+export function useRewardRecap(state: Snapshot, act: number | null, areaId: string | null) {
   const profile = state.settings.activeProfile
   const scope = JSON.stringify([profile, act, areaId])
   const catalog = permanentRewards(act)
@@ -22,7 +22,7 @@ export function useRewardRecap(state: Snapshot, act: number | null, areaId: stri
   const canMark = state.status === 'watching' && !!selected
   const message = feedback?.profile === profile ? feedback.message : ''
   const available = !!(catalog.length || undo || message)
-  const showRecap = available && (state.rewardRecap || !hasDirections)
+  const showRecap = available && state.rewardRecap
 
   useEffect(() => {
     receive.current = action => {

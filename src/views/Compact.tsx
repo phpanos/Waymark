@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useRef } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
-import type { Snapshot, Status } from '../native/contract'
+import type { Snapshot, Status, Zone } from '../native/contract'
 import { completedObjectives, describeZone, statusText, type Route } from '../state/presentation'
 import { useBuildMilestone } from '../state/use-build-milestone'
 import { RewardRecap, useRewardRecap } from './RewardRecap'
@@ -18,7 +18,7 @@ export function RouteLandmarks({ route }: { route: Route }) {
   </ol>
 }
 
-export function Compact({ state }: { state: Snapshot }) {
+export function Compact({ state, previousZone = null }: { state: Snapshot; previousZone?: Zone | null }) {
   const panel = useRef<HTMLElement>(null)
   useEffect(() => {
     const card = panel.current
@@ -34,7 +34,7 @@ export function Compact({ state }: { state: Snapshot }) {
     return () => resize.disconnect()
   }, [])
 
-  const zone = describeZone(state.zone)
+  const zone = describeZone(state.zone, describeZone(previousZone).areaId)
   const milestone = useBuildMilestone(state)
   const completed = completedObjectives(state.settings)
   const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
@@ -47,10 +47,10 @@ export function Compact({ state }: { state: Snapshot }) {
   const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
   const tip = stale ? null : zone.tip
   const hasDirections = !!(route || shortcut || tip || remaining.length)
-  const recap = useRewardRecap(state, zone.act, zone.areaId, hasDirections)
-  const hasDetails = hasDirections || recap.available || !!milestone
+  const recap = useRewardRecap(state, zone.act, zone.areaId)
+  const hasDetails = hasDirections || recap.showRecap || !!milestone
   const expanded = state.detailsExpanded && hasDetails
-  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}`}>
+  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}${zone.questReward ? ' with-quest-reward' : ''}`}>
     <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></header>
     <div className="zone-block">
       <div className="zone-meta">
@@ -58,6 +58,7 @@ export function Compact({ state }: { state: Snapshot }) {
         <div className="zone-actions">
           {recap.catalog.length > 0 && <span className="reward-count">{recap.remaining.length} {recap.remaining.length === 1 ? 'reward' : 'rewards'} left</span>}
           {hasDetails && <span className="details-gesture">Alt+click header {expanded ? '−' : '+'}</span>}
+          {!hasDetails && recap.available && <span className="details-gesture">Alt+Shift+R</span>}
         </div>
       </div>
       <h1 title={zone.title}>{zone.title}</h1>
@@ -69,6 +70,10 @@ export function Compact({ state }: { state: Snapshot }) {
           {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
         </p>
       </>}
+      {zone.questReward && <p className="quest-reward">
+        <span className="optional-label">Reward</span>
+        <strong>{zone.questReward}</strong>
+      </p>}
       {route && <p className="route-preview direction" title={route.cue}>
         <span className="optional-label">Route</span>
         <span className="optional-hint">{route.cue}</span>
@@ -84,21 +89,22 @@ export function Compact({ state }: { state: Snapshot }) {
         {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
       </div>}
       {milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
-      {expanded && (hasDirections || recap.available) && <section className="overlay-details" aria-label="Objective details">
-        {recap.available && hasDirections && <p className="reward-keys">
-          <span><kbd>Alt+Shift+R</kbd> {recap.showRecap ? 'Directions' : 'Rewards'}</span>
-        </p>}
+      {expanded && (hasDirections || recap.showRecap || recap.available) && <section className="overlay-details" aria-label="Objective details">
         {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>
           {route && <RouteLandmarks route={route}/>}
-          {shortcut && <div><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
+          {shortcut && <div className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
           {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
           {remaining.length > 0 && <div className="zone-optional"><h2>Optional objectives</h2>
             <ul>{remaining.map(objective => <li key={objective.id}>
               {objective.hint}
               {showRecommendations && objective.leagueStart && <span className="recommended"> · Recommended</span>}
+              {objective.loot && <span className="objective-loot">{objective.loot}</span>}
             </li>)}</ul>
           </div>}
         </>}
+        {recap.available && <p className="reward-keys">
+          <span><kbd>Alt+Shift+R</kbd> {recap.showRecap ? 'Return to current objective' : 'Permanent rewards'}</span>
+        </p>}
       </section>}
     </footer>
   </main>

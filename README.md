@@ -42,7 +42,7 @@ Settings are saved on change under `%APPDATA%\app.waymark.overlay\settings-v1.js
 
 ## Campaign objectives
 
-The compact overlay shows the area's story hint and a muted optional hint when available. **Settings → Objectives** follows the detected zone by default. Search by area, boss, or reward, or use the act and area menus. Select **Use current zone** to resume following the game.
+The compact overlay puts the current objective and its known quest reward first. After entering Clearfell Encampment from the Riverbank, it points you to Renly for a Level 1 Uncut Skill Gem. **Settings → Objectives** follows the detected zone by default. Search by area, boss, or reward, or use the act and area menus. Select **Use current zone** to resume following the game. [Reaching Clearfell](https://poe2db.tw/us/Reaching_Clearfell)
 
 Choose a character and optionally name the league to save an independent reward checklist. Tick an optional objective to remove it from that character's compact overlay. Enable **League-start recommendations** to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks.
 
@@ -52,11 +52,11 @@ The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](
 
 The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Objectives** for the full steps, including when to use a town portal, activate a waypoint, backtrack via a checkpoint, or return to the ship. [Act 1 route](https://mobalytics.gg/poe-2/guides/act-1-guide-guythatdies), [checkpoint routes for Act 1](https://www.definitivguide.com/docs/PoE2/Act%201/overview), [Act 2 route](https://www.definitivguide.com/docs/PoE2/Act%202/overview), [Act 3 route](https://www.definitivguide.com/docs/PoE2/Act%203/overview), [Act 4 route](https://www.definitivguide.com/docs/PoE2/Act%204/overview).
 
-Selected zones in Acts 1–4 show a **Route** cue. Hold **Alt** and click the Waymark header to expand or collapse the overlay's objective details. The expanded panel shows route landmarks, optional detours, shortcuts, encounter tips and remaining optional objectives when available. Orient yourself from the entrance, the world map, or the named landmarks as each instance can vary. [Act 1 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-1), [Act 2 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-2), [Act 3 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-3), [Act 4 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-4).
+Selected zones in Acts 1–4 show a **Route** cue. The overlay starts expanded and shows route landmarks, optional detours, shortcuts, encounter tips and remaining optional objectives when available. Hold **Alt** and click the Waymark header to collapse or reopen the details. Orient yourself from the entrance, the world map, or the named landmarks as each instance can vary. [Act 1 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-1), [Act 2 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-2), [Act 3 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-3), [Act 4 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-4).
 
 The Waterways and island directions also use the [0.5.5 campaign walkthrough](https://pathofexile.gg/campaign/), the [0.5.5 Act 3 route](https://worstguidesever.com/poe2-act-3-campaign-guide/), and the [0.5.5 Act 4 guide](https://domistae.github.io/poe2-leveling/poe2_act4_guide.html).
 
-The overlay shows how many permanent rewards remain in the current act. Use **Alt+Shift+R** to open the reward recap or switch back to directions. The recap shows the rewards, their zones, and directions to the highlighted reward. Use **Alt+Shift+N** to select the next reward, **Alt+Shift+D** to mark it done, and **Alt+Shift+U** to undo the last overlay completion in the current session. The **Campaign rewards** tray menu offers the same actions.
+The overlay shows how many permanent rewards remain in the current act. Use **Alt+Shift+R** to open the recap or return to the current objective. The recap shows the rewards, their zones, and directions to the highlighted reward. Use **Alt+Shift+N** to select the next reward, **Alt+Shift+D** to mark it done, and **Alt+Shift+U** to undo the last overlay completion in the current session. The **Campaign rewards** tray menu offers the same actions.
 
 Quick completion updates the same checklist as Settings. It uses the selected character and league, or saves to a separate default checklist when no character is selected.
 

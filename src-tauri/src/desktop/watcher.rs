@@ -161,6 +161,9 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 if v.replay_session != session || v.settings.log_path != requested {
                     return false;
                 }
+                if matches!(kind, Kind::ZoneChanged) {
+                    v.reward_recap = false;
+                }
                 v.zone = Some(z);
                 v.status = status;
                 v.active_path.clone_from(&path);

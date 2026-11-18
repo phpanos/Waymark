@@ -1,11 +1,14 @@
 [
   { "id": "G1_1", "name": "The Riverbank", "act": 1, "bosses": ["The Bloated Miller"], "objective": "Reach Clearfell",
+    "questReward": "Level 1 Uncut Skill Gem from Renly in town",
     "route": { "cue": "Town is past the Miller", "steps": [
       { "landmark": "Starting shore", "detail": "Pick up your weapon and skill gem, then follow the path inland." },
       { "landmark": "The Bloated Miller", "detail": "Defeat the Miller to open the way into Clearfell Encampment." }
     ] }
   },
-  { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una" },
+  { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una",
+    "arrivalQuest": { "from": "G1_1", "objective": "Speak to Renly to claim the Miller reward", "reward": "Level 1 Uncut Skill Gem", "condition": "after defeating the Miller" }
+  },
   { "id": "G1_2", "name": "Clearfell", "act": 1, "bosses": ["Beira of the Rotten Pack"], "objective": "Find the path into the Grelwood",
     "route": { "cue": "Use the world map to find the exit side", "steps": [
       { "landmark": "World map", "detail": "Open the world map and check which side of Clearfell The Grelwood is on. Search that side of the zone for the exit." },
@@ -17,7 +20,7 @@
   },
   { "id": "G1_3", "name": "Mud Burrow", "act": 1, "bosses": ["The Devourer"],
     "optional": [
-      { "id": "G1_3:1", "hint": "Defeat the Devourer for Finn" }
+      { "id": "G1_3:1", "hint": "Defeat the Devourer for Finn", "loot": "Level 2 Uncut Skill Gem from the Devourer and an Uncut Support Gem from Renly" }
     ]
   },
   { "id": "G1_4", "name": "The Grelwood", "act": 1, "bosses": ["The Brambleghast"], "objective": "Investigate the Tree of Souls",
@@ -37,6 +40,7 @@
     ]
   },
   { "id": "G1_5", "name": "The Red Vale", "act": 1, "bosses": ["The Rust King"], "objective": "Recover the girdles from the rust obelisks",
+    "questReward": "Runed Spikes from Renly in town",
     "route": { "cue": "Sweep for three rust obelisks", "steps": [
       { "landmark": "Rust obelisks", "detail": "Sweep around the zone for the three obelisks. Check the ground near the blood river if you still need one." },
       { "landmark": "Third obelisk", "detail": "The last activation brings out the Rust King. Defeat him and collect the final quest piece." }
@@ -105,6 +109,7 @@
     ]
   },
   { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "bosses": ["The Executioner"], "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
+    "questReward": "Level 5 Uncut Skill Gem from Leitis in town",
     "route": { "cue": "Keep the wall on your right", "steps": [
       { "landmark": "Right-hand wall", "detail": "From the entrance, keep the wall on your right and follow it north toward the Executioner's arena." },
       { "landmark": "Workshop checkpoint · Optional", "detail": "Look off the northern wall for a checkpoint beside the room with Renly's tools. If you reach the waypoint first, check back along the west side." }

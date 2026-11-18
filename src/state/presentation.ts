@@ -6,6 +6,7 @@ type OptionalObjective = {
   hint: string
   leagueStart?: boolean
   reward?: { name: string; direction: string }
+  loot?: string
 }
 export type Route = { cue: string; steps: readonly { landmark: string; detail: string }[] }
 type AreaReference = {
@@ -13,6 +14,8 @@ type AreaReference = {
   name: string
   act: number
   objective?: string
+  questReward?: string
+  arrivalQuest?: { from: string; objective: string; reward: string; condition: string }
   bosses?: readonly string[]
   optional?: readonly OptionalObjective[]
   tip?: string
@@ -32,9 +35,10 @@ function searchKey(value: string) {
 }
 
 const searchIndex = campaignAreas.map(area => ({ area, terms: searchKey([
-  area.name, area.id, area.objective, ...(area.bosses ?? []), area.tip,
+  area.name, area.id, area.objective, area.questReward, area.arrivalQuest?.reward,
+  ...(area.bosses ?? []), area.tip,
   area.shortcut?.cue, area.shortcut?.detail,
-  ...(area.optional?.flatMap(objective => [objective.hint, objective.reward?.name]) ?? []),
+  ...(area.optional?.flatMap(objective => [objective.hint, objective.reward?.name, objective.loot]) ?? []),
   ...(area.route?.steps.map(step => `${step.landmark} ${step.detail}`) ?? []),
 ].join(' ')) }))
 
@@ -58,20 +62,26 @@ export const statusText: Record<Status, string> = {
   replaying: 'Replaying', replayComplete: 'Replay complete',
 }
 
-export function describeZone(zone: Zone | null) {
-  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, optional: [], tip: null, shortcut: null, route: null }
+export function describeZone(zone: Zone | null, previousAreaId: string | null = null) {
+  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, questReward: null, optional: [], tip: null, shortcut: null, route: null }
   const scene = zone.name ? sceneKey(zone.name) : ''
   const matchingScenes = !zone.areaId && scene ? campaignAreas.filter(area => sceneKey(area.name) === scene) : []
   // A scene-only label cannot distinguish campaign stages which share a name and have different routes.
   const known = zone.areaId ? byId.get(zone.areaId) : matchingScenes.length === 1 ? matchingScenes[0] : undefined
   const reference = matchingScenes[0]
+  const arrival = known?.arrivalQuest
+  const fromQuestArea = arrival && arrival.from === previousAreaId
+  const questReward = fromQuestArea ? arrival.reward
+    : known?.questReward ?? (arrival && previousAreaId === null ? `${arrival.reward} ${arrival.condition}` : null)
   const sharedOptional = reference?.optional?.filter(objective =>
     matchingScenes.every(area => area.optional?.some(other => other.id === objective.id)))
   return {
     title: zone.name || known?.name || zone.areaId || 'Unknown zone',
     areaId: known?.id ?? null,
     act: known?.act ?? (reference && matchingScenes.every(area => area.act === reference.act) ? reference.act : null),
-    objective: known?.objective ?? (reference && matchingScenes.every(area => area.objective === reference.objective) ? reference.objective ?? null : null),
+    objective: (fromQuestArea ? arrival.objective : known?.objective) ??
+      (reference && matchingScenes.every(area => area.objective === reference.objective) ? reference.objective ?? null : null),
+    questReward,
     optional: known?.optional ?? sharedOptional ?? [],
     tip: known?.tip ?? null,
     shortcut: known?.shortcut ?? null,

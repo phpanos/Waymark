@@ -15,6 +15,7 @@ document.body.className = settingsView ? 'settings-window' : 'overlay-window'
 
 function App() {
   const state = useSession(s => s.current)
+  const previousZone = useSession(s => s.previousZone)
   const [error, setError] = useState('')
   useEffect(() => {
     if (!isTauri()) { setError('Launch Waymark with the Tauri desktop app.'); return }
@@ -31,7 +32,7 @@ function App() {
   }, [])
   if (error) return <main className="startup" role="alert">{error}</main>
   if (!state) return null
-  return settingsView ? <Settings state={state}/> : <Compact state={state}/>
+  return settingsView ? <Settings state={state}/> : <Compact state={state} previousZone={previousZone}/>
 }
 
 createRoot(document.getElementById('root')!).render(<App/>)

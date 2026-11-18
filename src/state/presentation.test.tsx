@@ -166,6 +166,7 @@ describe('permanent reward recap', () => {
       ...snapshot,
       zone: { areaId: 'G1_town', name: null, level: null },
       detailsExpanded: true,
+      rewardRecap: true,
       settings: { ...snapshot.settings, defaultCompleted: ['G1_2:1'], profiles: [
         { character: 'Exile', league: 'One', completed: [] },
       ] },
@@ -178,10 +179,27 @@ describe('permanent reward recap', () => {
     expect(named).toContain('5 rewards left')
     expect(named).toContain('Frostblood Ritual')
   })
+
+  it('prioritizes Renly’s skill gem after the Riverbank and keeps the act-wide list on demand', () => {
+    const riverbank = { areaId: 'G1_1', name: null, level: 1 }
+    const state: Snapshot = {
+      ...snapshot, detailsExpanded: true, zone: { areaId: 'G1_town', name: null, level: null },
+    }
+    const intro = renderToStaticMarkup(<Compact state={state} previousZone={riverbank}/>)
+    expect(intro).toContain('Speak to Renly to claim the Miller reward')
+    expect(intro).toContain('Level 1 Uncut Skill Gem')
+    expect(intro).not.toContain('Act 1 permanent rewards')
+    expect(intro).toContain('Alt+Shift+R')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, rewardRecap: true }} previousZone={riverbank}/>))
+      .toContain('Act 1 permanent rewards')
+    const revisit = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: 'G1_2', name: null, level: 2 }}/>)
+    expect(revisit).not.toContain('Level 1 Uncut Skill Gem')
+    expect(renderToStaticMarkup(<Compact state={state}/>)).toContain('Level 1 Uncut Skill Gem after defeating the Miller')
+  })
 })
 
 describe('snapshot handoff', () => {
-  beforeEach(() => useSession.setState({current:null}))
+  beforeEach(() => useSession.setState({current:null, previousZone:null}))
   it('keeps a newer live event when the initial command returns late', () => {
     const {accept} = useSession.getState()
     accept({...snapshot, revision:2, kind:'zoneChanged'})
@@ -194,5 +212,16 @@ describe('snapshot handoff', () => {
     expect(useSession.getState().current).toBeNull()
     accept(snapshot)
     expect(useSession.getState().current).toEqual(snapshot)
+  })
+  it('keeps the previous area as a transition is refined and clears it when the log changes', () => {
+    const {accept} = useSession.getState()
+    const riverbank = { areaId: 'G1_1', name: null, level: 1 }
+    const town = { areaId: 'G1_town', name: null, level: 1 }
+    accept({ ...snapshot, zone: riverbank })
+    accept({ ...snapshot, revision: 1, kind: 'zoneChanged', zone: town })
+    accept({ ...snapshot, revision: 2, kind: 'zoneUpdated', zone: { ...town, name: 'Clearfell Encampment' } })
+    expect(useSession.getState().previousZone).toEqual(riverbank)
+    accept({ ...snapshot, revision: 3, activePath: 'Other Client.txt', zone: town })
+    expect(useSession.getState().previousZone).toBeNull()
   })
 })

@@ -222,12 +222,15 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
             [IO.File]::AppendAllText($log, "Generating level 4 area `"G1_4`"`r`n", $utf8)
+            node $check $profile $log details expanded
+            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not open with objective details expanded.' }
+            Invoke-AltHeaderClick $hwnd
             node $check $profile $log details collapsed
-            if ($LASTEXITCODE -ne 0) { throw 'The compact Grelwood overlay did not settle before expansion.' }
+            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not collapse after Alt-click.' }
             $collapsed = [OverlayCheck]::WindowBounds($hwnd)
             Invoke-AltHeaderClick $hwnd
-            node $check $profile $log details expanded
-            if ($LASTEXITCODE -ne 0) { throw 'Expanded overlay details failed.' }
+            node $check $profile $log details reopened
+            if ($LASTEXITCODE -ne 0) { throw 'The overlay did not expand again after Alt-click.' }
             Invoke-RewardShortcut 0x52 # R
             node $check $profile $log rewards opened
             if ($LASTEXITCODE -ne 0) { throw 'Reward recap shortcut failed.' }

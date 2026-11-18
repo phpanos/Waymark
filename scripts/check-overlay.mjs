@@ -101,7 +101,7 @@ try {
     }
   } else if (view === 'details') {
     await expectText('The Grelwood')
-    if (argument === 'expanded') {
+    if (argument === 'expanded' || argument === 'reopened') {
       await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
       await expectText('Defeat the Brambleghast', '.zone-optional ul li')
       const expectDetailsToFit = () => waitFor('all objective details to fit', () => evaluate(`(() => {
@@ -111,18 +111,20 @@ try {
           cue?.scrollWidth <= cue?.clientWidth
       })()`))
       await expectDetailsToFit()
-      for (const [level, id, cue, detour] of [
-        [17, 'G2_2', 'Look for the Six Sisters bridge', 'Yellow paper seals · Optional'],
-        [39, 'G3_2_2', 'Step on pads to lower the water', 'Azak Bog entrance · Optional'],
-        [46, 'G4_4_1', 'Look for the fork after the third test', 'Silent Hall · Optional'],
-      ]) {
-        await appendFile(log, `Generating level ${level} area "${id}"\r\n`)
-        await expectText(cue, '.direction .optional-hint')
-        await expectText(detour, '.overlay-details .route-landmarks li:last-child strong')
-        await expectDetailsToFit()
+      if (argument === 'expanded') {
+        for (const [level, id, cue, detour] of [
+          [17, 'G2_2', 'Look for the Six Sisters bridge', 'Yellow paper seals · Optional'],
+          [39, 'G3_2_2', 'Step on pads to lower the water', 'Azak Bog entrance · Optional'],
+          [46, 'G4_4_1', 'Look for the fork after the third test', 'Silent Hall · Optional'],
+        ]) {
+          await appendFile(log, `Generating level ${level} area "${id}"\r\n`)
+          await expectText(cue, '.direction .optional-hint')
+          await expectText(detour, '.overlay-details .route-landmarks li:last-child strong')
+          await expectDetailsToFit()
+        }
+        await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
+        await expectText('The Grelwood')
       }
-      await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
-      await expectText('The Grelwood')
     } else {
       await expectText('Alt+click header +', '.details-gesture')
       await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
@@ -254,23 +256,32 @@ try {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')
     await expectText('Reach Clearfell')
+    await expectText('The Bloated Miller', '.overlay-details .route-landmarks li:last-child strong')
     await appendFile(log, '[SCENE] Set Source [Smoke test crossing]\r\n')
     await expectText('Smoke test crossing')
+    await appendFile(log, 'Generating level 1 area "G1_town"\r\n')
+    await expectText('Clearfell Encampment')
+    await expectText('Speak to Renly to claim the Miller reward', '.story-objective')
+    await expectText('Level 1 Uncut Skill Gem', '.quest-reward strong')
+    await waitFor('the quest reward without the permanent reward list', () => evaluate('!document.querySelector(".reward-list")'))
     await appendFile(log, 'Generating level 2 area "G1_2"\r\n')
     await expectText('Find the path into the Grelwood')
-    await expectText('Defeat Beira for cold resistance', '.optional-preview .optional-hint')
-    await expectText('Recommended', '.optional-preview .recommended')
+    await expectText('Defeat Beira for cold resistance · Recommended', '.zone-optional li')
+    await appendFile(log, 'Generating level 1 area "G1_town"\r\n')
+    await expectText('Speak with Renly and Una', '.story-objective')
+    await waitFor('the first-visit reward to stay hidden on a return visit', () => evaluate('!document.querySelector(".quest-reward")'))
     await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
     await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
-    await expectText('Tag the Grim Tangle waypoint early', '.route-preview:not(.direction) .optional-hint')
+    await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
+    await expectText('SHORTCUT', '.zone-shortcut h2')
     await expectText('Gem · Rolling Slam', '.build-milestone-change')
     await expectText('BUILD LV 14', '.build-milestone-row .optional-label')
     await waitFor('all Grelwood hints fit inside the overlay', () => evaluate(`(() => {
       const card = document.querySelector('.compact').getBoundingClientRect()
-      const optional = document.querySelector('.optional-preview')
       const cue = document.querySelector('.direction .optional-hint')
       const milestone = document.querySelector('.build-milestone')
-      return optional && milestone?.getBoundingClientRect().bottom <= card.bottom - 1 && cue?.scrollWidth <= cue?.clientWidth
+      return card.bottom <= innerHeight - 1 && milestone?.getBoundingClientRect().bottom <= card.bottom - 1 &&
+        cue?.scrollWidth <= cue?.clientWidth
     })()`))
     await appendFile(log, '[INFO Client 42] : OtherCharacter (Warrior) is now level 99.\r\n')
     await expectText('Gem · Rolling Slam', '.build-milestone-change')
@@ -281,7 +292,7 @@ try {
     await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 20.\r\n')
     await waitFor('the last build milestone to clear', () => evaluate('!document.querySelector(".build-milestone")'))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
-    await expectText('Portal after crossing the canals', '.route-preview:not(.direction) .optional-hint')
+    await expectText('Once the quest updates, use a town portal to the Ziggurat Encampment and speak to Alva to continue.', '.zone-shortcut p')
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
     await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')
