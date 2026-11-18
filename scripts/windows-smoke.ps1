@@ -222,6 +222,8 @@ try {
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
             [IO.File]::AppendAllText($log, "Generating level 4 area `"G1_4`"`r`n", $utf8)
+            node $check $profile $log details collapsed
+            if ($LASTEXITCODE -ne 0) { throw 'The compact Grelwood overlay did not settle before expansion.' }
             $collapsed = [OverlayCheck]::WindowBounds($hwnd)
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details expanded

@@ -126,6 +126,11 @@ try {
     } else {
       await expectText('Alt+click header +', '.details-gesture')
       await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
+      await waitFor('native window to match the compact overlay height', () => evaluate(`(() => {
+        const panel = document.querySelector('.compact')
+        const expectedHeight = Math.ceil(panel.getBoundingClientRect().height) + 4
+        return Math.abs(innerHeight - expectedHeight) <= 1
+      })()`))
     }
   } else if (view === 'update') {
     const installer = argument
