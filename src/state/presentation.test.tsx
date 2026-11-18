@@ -78,14 +78,33 @@ describe('zone presentation', () => {
     expect(renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true, status: 'missing' }}/>))
       .not.toContain('route-diagram')
   })
-  it('provides exits and an expanded diagram for every cataloged area', () => {
+  it('provides exits and an expanded overview for every cataloged area', () => {
     for (const area of campaignAreas) {
       const zone = { areaId: area.id, name: null, level: null }
       const { navigation } = describeZone(zone)
       expect(navigation?.exits.length, area.id).toBeGreaterThan(0)
       expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>), area.id)
-        .toContain('aria-label="Area diagram"')
+        .toContain('aria-label="Objectives and exits"')
     }
+  })
+  it('shows how to move in the Riverbank, town, and Clearfell apart from the objective list', () => {
+    for (const [areaId, cue] of [
+      ['G1_1', 'Follow the path inland'], ['G1_town', 'Head toward the east side of town'],
+      ['G1_2', 'If the Grelwood icon is above'],
+    ]) {
+      const state: Snapshot = { ...snapshot, zone: { areaId, name: null, level: 1 } }
+      const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
+      expect(expanded).toContain('aria-label="Directions diagram"')
+      expect(expanded).toContain(cue)
+      expect(expanded).toContain('aria-label="Objectives and exits"')
+      expect(renderToStaticMarkup(<Compact state={state}/>)).not.toContain('aria-label="Directions diagram"')
+    }
+  })
+  it('keeps the objective and exit overview available when an area has no sourced direction', () => {
+    const zone = { areaId: 'G3_15', name: null, level: null }
+    const markup = renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>)
+    expect(markup).toContain('aria-label="Objectives and exits"')
+    expect(markup).not.toContain('aria-label="Directions diagram"')
   })
   it('distinguishes waypoint availability, side-area returns and shared scene data', () => {
     const navigation = (areaId: string) => describeZone({ areaId, name: null, level: null }).navigation

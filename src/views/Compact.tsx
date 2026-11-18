@@ -1,11 +1,13 @@
 import { lazy, Suspense, useEffect, useRef, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
+import { directionsByArea } from '../data/directions'
 import { native } from '../native/bridge'
 import type { Snapshot, Status, Zone } from '../native/contract'
 import { completedObjectives, describeZone, statusText, type Route, type ZoneNavigation } from '../state/presentation'
 import { useBuildMilestone } from '../state/use-build-milestone'
 import { useTownRewards } from '../state/use-town-rewards'
 import { OverlayActTimer } from './ActTimer'
+import { DirectionDiagram } from './DirectionDiagram'
 import { RewardRecap, useRewardRecap } from './RewardRecap'
 
 const BuildMilestoneRow = lazy(() => import('./BuildMilestone'))
@@ -34,12 +36,13 @@ function RouteDiagram({ diagram }: { diagram: NonNullable<Route['diagram']> }) {
   </figure>
 }
 
-function AreaDiagram({ navigation, objective, fork, children }: {
-  navigation: ZoneNavigation; objective: string | null; fork?: Route['diagram']; children?: ReactNode
+function AreaOverview({ navigation, fork, children }: {
+  navigation: ZoneNavigation; fork?: Route['diagram']; children?: ReactNode
 }) {
-  return <figure className="area-diagram" aria-label="Area diagram">
+  return <section className="area-diagram" aria-label="Objectives and exits">
+    <h2>Objectives and exits</h2>
     {navigation.waypoint && <p className="area-diagram-waypoint">Waypoint</p>}
-    {fork ? <RouteDiagram diagram={fork}/> : objective && <p className="area-diagram-objective">{objective}</p>}
+    {fork && <RouteDiagram diagram={fork}/>}
     {children}
     {navigation.exits.length > 0 && <div className="area-diagram-exits">
       <h2>{navigation.label}</h2>
@@ -47,7 +50,7 @@ function AreaDiagram({ navigation, objective, fork, children }: {
         <strong>{exit.landmark}</strong>{exit.detail && <span>{exit.detail}</span>}
       </li>)}</ul>
     </div>}
-  </figure>
+  </section>
 }
 
 export function Compact({ state, previousZone = null }: { state: Snapshot; previousZone?: Zone | null }) {
@@ -79,9 +82,10 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const shortcut = stale ? null : zone.shortcut
   const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
   const navigation = stale ? null : zone.navigation
+  const direction = !stale && zone.areaId ? directionsByArea[zone.areaId] : undefined
   const tip = stale ? null : zone.tip
   const hasDiagram = navigation && (navigation.waypoint || navigation.exits.length || zone.objective || remaining.length)
-  const hasDirections = !!(route || hasDiagram || shortcut || tip || remaining.length)
+  const hasDirections = !!(direction || route || hasDiagram || shortcut || tip || remaining.length)
   const recap = useRewardRecap(state, zone.act, zone.areaId)
   const town = useTownRewards(state, zone.areaId, zone.arrivalReward?.id, recap.showRecap)
   const reward = town.selected?.reward ?? (town.hideDirect ? null : zone.questReward)
@@ -164,10 +168,11 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
       {milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
       {expanded && (hasDirections || recap.showRecap || recap.available) && <section className="overlay-details" aria-label="Objective details">
         {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>
-          {hasDiagram && navigation ? <AreaDiagram navigation={navigation} objective={zone.objective} fork={route?.diagram}>
+          {direction && <DirectionDiagram guide={direction}/>}
+          {hasDiagram && navigation ? <AreaOverview navigation={navigation} fork={route?.diagram}>
             {optionalObjectives}
-          </AreaDiagram> : optionalObjectives}
-          {route && <RouteLandmarks route={route}/>}
+          </AreaOverview> : optionalObjectives}
+          {route && (!route.diagram || !direction) && <RouteLandmarks route={route}/>}
           {shortcut && <div className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></div>}
           {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
         </>}

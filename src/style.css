@@ -98,22 +98,42 @@ button:disabled { opacity: .55; cursor: default }
 .route-landmarks p { color: var(--muted); font-size: 14px }
 .compact.expanded { height: auto; min-height: 168px; padding-bottom: 12px }
 .compact.expanded .story-objective { white-space: normal }
-.overlay-details { display: grid; gap: 9px; margin-top: 7px; font-size: 13px }
+.overlay-details { display: grid; gap: 6px; margin-top: 7px; font-size: 12px; line-height: 1.25 }
+.overlay-details .route-landmarks li { padding-left: 10px; padding-bottom: 5px }
+.overlay-details .route-landmarks li:last-child { padding-bottom: 0 }
 .overlay-details .route-landmarks p { font-size: inherit }
 .overlay-details h2 { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--gold) }
 .overlay-details ul { padding-left: 16px; margin: 0; color: var(--muted) }
-.area-diagram { display: grid; gap: 7px; margin: 0; padding-left: 11px; border-left: 1px solid #71664f; font-size: 12px; line-height: 1.3 }
-.area-diagram > :is(.area-diagram-waypoint, .area-diagram-objective, .area-diagram-exits, .zone-optional) { position: relative }
-.area-diagram > :is(.area-diagram-waypoint, .area-diagram-objective, .area-diagram-exits, .zone-optional)::before {
+.direction-diagram { margin: 0; padding: 6px 7px; border: 1px solid #62726a; border-radius: 4px; background: #151e1d; font-size: 12px; line-height: 1.2 }
+.direction-diagram figcaption { color: #b9d1c5; font-size: 10px; letter-spacing: .12em; text-transform: uppercase }
+.direction-origin { margin: 2px 0 4px; color: var(--gold); font-weight: 600 }
+.direction-diagram .direction-legs { display: grid; gap: 4px; padding: 0; list-style: none }
+.direction-legs li { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 4px; min-width: 0; padding: 3px 5px; border: 1px solid #45554c; border-radius: 3px; background: #202b28 }
+.direction-diagram[data-layout="path"] li + li { position: relative }
+.direction-diagram[data-layout="path"] li + li::before { content: ""; position: absolute; top: -5px; left: 17px; height: 5px; border-left: 1px solid #718579 }
+.direction-legs strong { color: var(--paper); margin-right: 5px }
+.direction-arrow { text-align: center; color: #b9d1c5; font: 600 18px/1 "Segoe UI Symbol", sans-serif }
+.direction-diagram[data-layout="worldMap"] { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; text-align: center }
+.direction-diagram[data-layout="worldMap"] figcaption { grid-area: 1 / 1 / 2 / -1; text-align: left }
+.direction-diagram[data-layout="worldMap"] .direction-origin { grid-area: 3 / 2; align-self: center; padding: 4px; border: 1px dashed #718579; border-radius: 3px }
+.direction-diagram[data-layout="worldMap"] .direction-legs { display: contents }
+.direction-diagram[data-layout="worldMap"] li { display: block }
+.direction-diagram[data-layout="worldMap"] strong { display: block; margin: 0 }
+.direction-diagram[data-layout="worldMap"] .direction-arrow { display: block; margin-bottom: 3px }
+.direction-diagram[data-layout="worldMap"] [data-motion="screen-up"] { grid-area: 2 / 2 }
+.direction-diagram[data-layout="worldMap"] [data-motion="screen-left"] { grid-area: 3 / 1 }
+.direction-diagram[data-layout="worldMap"] [data-motion="screen-right"] { grid-area: 3 / 3 }
+.area-diagram { display: grid; gap: 4px; margin: 0; padding-left: 11px; border-left: 1px solid #71664f; font-size: 12px; line-height: 1.25 }
+.area-diagram > :is(.area-diagram-waypoint, .area-diagram-exits, .zone-optional) { position: relative }
+.area-diagram > :is(.area-diagram-waypoint, .area-diagram-exits, .zone-optional)::before {
   content: ""; position: absolute; top: 5px; left: -14px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold);
 }
 .area-diagram-waypoint { color: var(--gold); font-weight: 600 }
-.area-diagram-objective { color: var(--paper); font-weight: 600 }
 .area-diagram-exits ul { display: grid; gap: 2px; padding: 0; list-style: none }
 .area-diagram-exits strong { color: var(--paper) }
 .area-diagram-exits li span { display: inline-block; margin-left: 6px }
 .route-diagram { margin: 0; text-align: center; font-size: 12px; line-height: 1.3 }
-.route-diagram figcaption { margin-bottom: 5px; color: var(--muted) }
+.route-diagram figcaption { margin-bottom: 4px; color: var(--muted) }
 .route-diagram .route-diagram-branches {
   position: relative; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0; list-style: none;
 }

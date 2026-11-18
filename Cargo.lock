@@ -4548,7 +4548,7 @@ dependencies = [
 
 [[package]]
 name = "waymark"
-version = "0.1.21"
+version = "0.1.22"
 dependencies = [
  "keyvalues-parser",
  "rfd",

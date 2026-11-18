@@ -106,7 +106,7 @@ try {
       await expectText('Alt+click header +', '.details-gesture')
       await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
         const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
-        return !document.querySelector('.route-diagram') && Math.abs(innerHeight - height) <= 1
+        return !document.querySelector('.route-diagram, .direction-diagram') && Math.abs(innerHeight - height) <= 1
       })()`))
     } else {
       await expectText('Clear either tomb first', '.route-diagram figcaption')
@@ -125,6 +125,8 @@ try {
       if (argument === 'expanded') {
         for (const [area, title, next, waypoint] of [
           ['G1_1', 'The Riverbank', 'Clearfell Encampment', false],
+          ['G1_town', 'Clearfell Encampment', 'Clearfell', true],
+          ['G1_2', 'Clearfell', 'The Grelwood', true],
           ['G2_town', 'The Ardura Caravan', 'The Halani Gates', true],
           ['G3_9', 'The Molten Vault', 'The Drowned City', true],
           ['G4_town', 'Kingsmarch', 'Isle of Kin', true],
@@ -138,6 +140,22 @@ try {
             return !!diagram.querySelector('.area-diagram-waypoint') === ${waypoint} &&
               diagram.getBoundingClientRect().bottom < panel.bottom && panel.bottom <= innerHeight - 1
           })()`))
+          if (area === 'G1_1') {
+            await expectText('Follow the path inland', '.direction-diagram [data-motion="forward"] p span')
+          } else if (area === 'G1_town') {
+            await expectText('Clearfell', '.direction-diagram [data-motion="screen-right"] strong')
+          } else if (area === 'G1_2') {
+            await expectText('Search the left edge', '.direction-diagram [data-motion="screen-left"] strong')
+            await expectText('Search the right edge', '.direction-diagram [data-motion="screen-right"] strong')
+            await waitFor('the Clearfell options to surround the world-map origin', () => evaluate(`(() => {
+              const diagram = document.querySelector('.direction-diagram')
+              const bounds = selector => diagram.querySelector(selector).getBoundingClientRect()
+              const center = bounds('.direction-origin')
+              return bounds('[data-motion="screen-left"]').right < center.left &&
+                bounds('[data-motion="screen-right"]').left > center.right &&
+                bounds('[data-motion="screen-up"]').bottom < center.top
+            })()`))
+          }
         }
         await appendFile(log, 'Generating level 9 area "G1_7"\r\n')
         await expectText('Clear either tomb first', '.route-diagram figcaption')
