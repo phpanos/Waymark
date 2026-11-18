@@ -4,7 +4,7 @@ import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
 import { activeProfile, campaignAreas, describeZone, searchCampaign } from '../state/presentation'
 import { CharacterProfile } from './CharacterProfile'
-import { StatusLight } from './Compact'
+import { RouteLandmarks, StatusLight } from './Compact'
 import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
@@ -75,6 +75,7 @@ function Objectives({ zone, settings, run }: { zone: Snapshot['zone']; settings:
     {!selected?.objective && optional.length === 0 && <p className="hint">
       {browse && !areaId ? 'Choose an area to see its objectives.' : 'No objective assigned'}
     </p>}
+    {selected?.route && <Field label="Route landmarks"><RouteLandmarks route={selected.route}/></Field>}
     {selected?.shortcut && <Field label="Route shortcut"><p>{selected.shortcut.detail}</p></Field>}
     {selected?.tip && <Field label="Encounter tip">
       {!browse && zone?.level != null && <p className="encounter-level">Area level {zone.level}</p>}
@@ -111,6 +112,7 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
     <label className="check"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)}/>Follow the game window</label>
     <p className="hint">Current anchor · {anchored ? 'Game client area' : 'Primary display work area'}</p>
     <p className="hint">Hold Alt and drag the Waymark header to move it. Release the mouse to save.</p>
+    <p className="hint">Alt+click the header to expand or collapse objective details.</p>
     <button className="primary" disabled={!dirty}>Save position</button>
   </form>
 }

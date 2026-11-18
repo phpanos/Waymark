@@ -2,6 +2,7 @@ import areas from '../data/areas.json'
 import type { Snapshot, Status, Zone } from '../native/contract'
 
 type OptionalObjective = { id: string; hint: string; leagueStart?: boolean }
+export type Route = { cue: string; steps: readonly { landmark: string; detail: string }[] }
 type AreaReference = {
   id: string
   name: string
@@ -11,6 +12,7 @@ type AreaReference = {
   optional?: readonly OptionalObjective[]
   tip?: string
   shortcut?: { cue: string; detail: string }
+  route?: Route
 }
 export const campaignAreas: readonly AreaReference[] = areas
 
@@ -27,6 +29,7 @@ function searchKey(value: string) {
 const searchIndex = campaignAreas.map(area => ({ area, terms: searchKey([
   area.name, area.id, area.objective, ...(area.bosses ?? []), area.tip,
   area.shortcut?.cue, area.shortcut?.detail, ...(area.optional?.map(objective => objective.hint) ?? []),
+  ...(area.route?.steps.map(step => `${step.landmark} ${step.detail}`) ?? []),
 ].join(' ')) }))
 
 export function searchCampaign(query: string) {
@@ -46,7 +49,7 @@ export const statusText: Record<Status, string> = {
 }
 
 export function describeZone(zone: Zone | null) {
-  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, optional: [], tip: null, shortcut: null }
+  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, optional: [], tip: null, shortcut: null, route: null }
   const scene = zone.name ? sceneKey(zone.name) : ''
   const matchingScenes = !zone.areaId && scene ? campaignAreas.filter(area => sceneKey(area.name) === scene) : []
   // A scene-only label cannot distinguish campaign stages which share a name and have different routes.
@@ -62,5 +65,6 @@ export function describeZone(zone: Zone | null) {
     optional: known?.optional ?? sharedOptional ?? [],
     tip: known?.tip ?? null,
     shortcut: known?.shortcut ?? null,
+    route: known?.route ?? null,
   }
 }

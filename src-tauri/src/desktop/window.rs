@@ -11,6 +11,8 @@ use windows_sys::Win32::{
     },
 };
 
+pub(super) const COMPACT_HEIGHT: u16 = 172;
+
 pub fn enable_click_through(hwnd: isize) -> io::Result<()> {
     // Keep the overlay layered and leave its visibility under Tracker's control.
     // Tao's cursor-ignore setter rewrites both window styles and can hide the overlay.
@@ -36,6 +38,7 @@ pub fn enable_click_through(hwnd: isize) -> io::Result<()> {
 #[derive(Default)]
 pub struct Tracker {
     game: isize,
+    height: Option<u16>,
 }
 
 unsafe fn game_bounds(hwnd: HWND) -> Option<(RECT, u32)> {
@@ -124,7 +127,7 @@ impl Anchor {
 }
 
 impl Tracker {
-    fn anchor(&mut self, follow_game: bool) -> io::Result<Anchor> {
+    fn anchor(&mut self, follow_game: bool, height: u16) -> io::Result<Anchor> {
         // HWNDs are borrowed OS identifiers; failed/stale lookups fall back to the work area.
         unsafe {
             let mut bounds = None;
@@ -147,14 +150,14 @@ impl Tracker {
                 rect,
                 dpi,
                 width: ((328 * dpi + 48) / 96).min(rect.right - rect.left),
-                height: ((172 * dpi + 48) / 96).min(rect.bottom - rect.top),
+                height: ((i32::from(height) * dpi + 48) / 96).min(rect.bottom - rect.top),
                 game,
             })
         }
     }
 
     pub fn capture(&mut self, hwnd: isize, saved: Placement) -> io::Result<Placement> {
-        let anchor = self.anchor(saved.follow_game)?;
+        let anchor = self.anchor(saved.follow_game, self.height.unwrap_or(COMPACT_HEIGHT))?;
         let mut actual = RECT::default();
         if unsafe { GetWindowRect(hwnd as HWND, &mut actual) } == 0 {
             return Err(io::Error::last_os_error());
@@ -182,8 +185,14 @@ impl Tracker {
     }
 
     /// All coordinates are physical desktop pixels. The webview layout and insets use DIPs.
-    pub fn apply(&mut self, hwnd: isize, p: Placement, visible: bool) -> io::Result<bool> {
-        let anchor = self.anchor(p.follow_game)?;
+    pub fn apply(
+        &mut self,
+        hwnd: isize,
+        p: Placement,
+        visible: bool,
+        height: u16,
+    ) -> io::Result<bool> {
+        let anchor = self.anchor(p.follow_game, height)?;
         let (w, h) = (anchor.width, anchor.height);
         let (x, y) = anchor.origin(p);
         unsafe {
@@ -206,6 +215,7 @@ impl Tracker {
                     return Err(io::Error::last_os_error());
                 }
             }
+            self.height = Some(height);
             Ok(anchor.game)
         }
     }

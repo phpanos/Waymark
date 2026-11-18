@@ -6,8 +6,16 @@ mod window;
 
 use serde::Serialize;
 use settings::{CampaignProfile, Placement, Settings};
-use std::{path::PathBuf, sync::Mutex};
-use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, AppHandle, Emitter, Manager, State};
+use std::{
+    path::PathBuf,
+    sync::{
+        atomic::{AtomicU16, Ordering},
+        Mutex,
+    },
+};
+use tauri::{
+    menu::MenuBuilder, tray::TrayIconBuilder, AppHandle, Emitter, Manager, State, WebviewWindow,
+};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use waymark_log::parser::Zone;
 
@@ -44,6 +52,7 @@ struct Snapshot {
     zone: Option<Zone>,
     character_level: Option<u8>,
     visible: bool,
+    details_expanded: bool,
     anchored: bool,
     log_error: Option<String>,
     window_error: Option<String>,
@@ -53,6 +62,7 @@ struct Snapshot {
 
 struct Runtime {
     snapshot: Mutex<Snapshot>,
+    overlay_height: AtomicU16,
     file: PathBuf,
 }
 impl Runtime {
@@ -124,6 +134,7 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
         hwnd,
         s.settings.placement,
         s.visible,
+        state.overlay_height.load(Ordering::Relaxed),
     );
     let (anchored, error) = match result {
         Ok(anchored) => (anchored, None),
@@ -135,6 +146,25 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
         }
         s.anchored = anchored;
         s.window_error = error;
+        true
+    });
+}
+
+#[tauri::command]
+fn set_overlay_height(window: WebviewWindow, state: State<'_, Runtime>, height: u16) {
+    if window.label() == "overlay" {
+        state
+            .overlay_height
+            .store(height.clamp(window::COMPACT_HEIGHT, 720), Ordering::Relaxed);
+    }
+}
+
+fn toggle_details(app: &AppHandle) {
+    app.state::<Runtime>().mutate(app, Kind::Snapshot, |state| {
+        if !state.visible {
+            return false;
+        }
+        state.details_expanded = !state.details_expanded;
         true
     });
 }
@@ -313,6 +343,7 @@ pub fn run() {
             set_campaign_profile,
             set_objective_completed,
             replay_fixture,
+            set_overlay_height,
             toggle_overlay,
             close_settings
         ])
@@ -342,6 +373,7 @@ pub fn run() {
             let menu = MenuBuilder::new(app)
                 .text("settings", "Open settings…")
                 .text("toggle", "Show / hide overlay")
+                .text("details", "Expand / collapse overlay details")
                 .separator()
                 .text("quit", "Quit Waymark")
                 .build()?;
@@ -357,6 +389,7 @@ pub fn run() {
                         let _ = w.set_focus();
                     }
                     "toggle" => toggle(app),
+                    "details" => toggle_details(app),
                     "quit" => app.exit(0),
                     _ => {}
                 })
@@ -389,6 +422,7 @@ pub fn run() {
     app.manage(Mutex::new(window::Tracker::default()));
     app.manage(Runtime {
         file,
+        overlay_height: AtomicU16::new(window::COMPACT_HEIGHT),
         snapshot: Mutex::new(Snapshot {
             version: 1,
             revision: 0,
@@ -399,6 +433,7 @@ pub fn run() {
             zone: None,
             character_level: None,
             visible: true,
+            details_expanded: false,
             anchored: false,
             log_error: None,
             notices: notice.into_iter().collect(),

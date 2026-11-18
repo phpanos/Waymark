@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = view === 'overlay' ? 'overlay' : 'settings'
+const pageView = view === 'overlay' || view === 'details' ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -81,8 +81,21 @@ try {
     return true
   })()`))
   await expectText('Connected')
-  await expectText('Awaiting zone')
-  if (view === 'update') {
+  if (view !== 'details') await expectText('Awaiting zone')
+  if (view === 'details') {
+    await expectText('The Grelwood')
+    if (argument === 'expanded') {
+      await expectText('Orange mushrooms', '.overlay-details .route-landmarks li:last-child strong')
+      await expectText('Defeat the Brambleghast', '.overlay-details ul li')
+      await waitFor('all objective details to fit', () => evaluate(`(() => {
+        const panel = document.querySelector('.compact')
+        return panel?.classList.contains('expanded') && panel.getBoundingClientRect().bottom <= innerHeight - 1
+      })()`))
+    } else {
+      await expectText('Alt+click header +', '.details-gesture')
+      await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
+    }
+  } else if (view === 'update') {
     const installer = argument
     const exe = await readFile(installer)
     const signature = (await readFile(installer + '.sig', 'utf8')).trim()
@@ -159,6 +172,7 @@ try {
     await fill('input[type=search]', 'bloated miller')
     await click('The Riverbank · Act 1')
     await expectText('Reach Clearfell')
+    await expectText('The Bloated Miller', '.route-landmarks li:last-child strong')
     if (firstLaunch) {
       await fill('input[name=character]', 'WaymarkSmoke')
       await fill('input[name=league]', 'Smoke league')
@@ -200,8 +214,17 @@ try {
     await expectText('Smoke test crossing')
     await appendFile(log, 'Generating level 2 area "G1_2"\r\n')
     await expectText('Find the path into the Grelwood')
-    await expectText('Defeat Beira for cold resistance', '.optional-hint')
+    await expectText('Defeat Beira for cold resistance', '.optional-preview .optional-hint')
     await expectText('Recommended', '.optional-preview .recommended')
+    await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
+    await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
+    await expectText('Tag the Grim Tangle waypoint early', '.route-preview:not(.direction) .optional-hint')
+    await waitFor('all Grelwood hints fit inside the overlay', () => evaluate(`(() => {
+      const card = document.querySelector('.compact').getBoundingClientRect()
+      const optional = document.querySelector('.optional-preview')
+      const cue = document.querySelector('.direction .optional-hint')
+      return optional?.getBoundingClientRect().bottom <= card.bottom - 1 && cue?.scrollWidth <= cue?.clientWidth
+    })()`))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
     await expectText('Open a portal by the final lever', '.route-preview .optional-hint')
     await rename(log, log + '.' + process.pid + '.old')

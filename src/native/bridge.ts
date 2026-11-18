@@ -13,6 +13,7 @@ export const native = {
   completeObjective: (profile: number, objective: string, completed: boolean) =>
     invoke<void>('set_objective_completed', { profile, objective, completed }),
   toggle: () => invoke<void>('toggle_overlay'),
+  overlayHeight: (height: number) => invoke<void>('set_overlay_height', { height }),
   replay: (enabled: boolean) => invoke<void>('replay_fixture', { enabled }),
   close: () => invoke<void>('close_settings'),
 }

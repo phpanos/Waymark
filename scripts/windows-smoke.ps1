@@ -83,6 +83,24 @@ function Assert-PassiveOverlay($Hwnd) {
     if ([OverlayCheck]::GetForegroundWindow() -eq $Hwnd) { throw 'Compact window has foreground focus.' }
 }
 
+function Invoke-AltHeaderClick($Hwnd) {
+    $bounds = [OverlayCheck]::WindowBounds($Hwnd)
+    $cursor = New-Object OverlayCheck+Point
+    if (![OverlayCheck]::GetCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
+    if (![OverlayCheck]::SetCursorPos(($bounds.Left + 110), ($bounds.Top + 20))) { throw 'Could not position the pointer over the header.' }
+    try {
+        [OverlayCheck]::Alt($true)
+        Start-Sleep -Milliseconds 70
+        [OverlayCheck]::PrimaryButton($true)
+        Start-Sleep -Milliseconds 70
+        [OverlayCheck]::PrimaryButton($false)
+        Start-Sleep -Milliseconds 100
+    } finally {
+        [OverlayCheck]::Alt($false)
+        [void][OverlayCheck]::SetCursorPos($cursor.X, $cursor.Y)
+    }
+}
+
 function Test-AltDrag($Hwnd) {
     $origin = [OverlayCheck]::WindowBounds($Hwnd)
     $cursor = New-Object OverlayCheck+Point
@@ -185,6 +203,21 @@ try {
         }
         node $check $profile $log overlay
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
+        if ($launch -eq 1) {
+            [IO.File]::AppendAllText($log, "Generating level 4 area `"G1_4`"`r`n", $utf8)
+            $collapsed = [OverlayCheck]::WindowBounds($hwnd)
+            Invoke-AltHeaderClick $hwnd
+            node $check $profile $log details expanded
+            if ($LASTEXITCODE -ne 0) { throw 'Expanded overlay details failed.' }
+            Assert-PassiveOverlay $hwnd
+            Invoke-AltHeaderClick $hwnd
+            node $check $profile $log details collapsed
+            if ($LASTEXITCODE -ne 0) { throw 'Collapsing overlay details failed.' }
+            [void](Wait-For 'the collapsed overlay bounds' {
+                $bounds = [OverlayCheck]::WindowBounds($hwnd)
+                $bounds.Top -eq $collapsed.Top -and $bounds.Bottom -eq $collapsed.Bottom
+            })
+        }
         $process.Kill()
         $process.WaitForExit()
     }

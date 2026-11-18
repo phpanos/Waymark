@@ -20,6 +20,7 @@ export interface Snapshot {
   zone: Zone | null
   characterLevel: number | null
   visible: boolean
+  detailsExpanded: boolean
   anchored: boolean
   logError: string | null
   windowError: string | null

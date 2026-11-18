@@ -7,7 +7,7 @@ import { useSession } from './session'
 
 const snapshot: Snapshot = {
   version: 1, revision: 0, kind: 'snapshot', status: 'watching', zone: null,
-  activePath: null, characterLevel: null, visible: true, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
+  activePath: null, characterLevel: null, visible: true, detailsExpanded: false, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
   settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null },
 }
 
@@ -92,8 +92,30 @@ describe('zone presentation', () => {
     expect(searchCampaign('bloated miller').map(area => area.id)).toContain('G1_1')
     expect(searchCampaign('Beira cold resistance').map(area => area.id)).toContain('G1_2')
     expect(searchCampaign('g4_5_2')[0]?.id).toBe('G4_5_2')
+    expect(searchCampaign('orange mushrooms').map(area => area.id)).toContain('G1_4')
     expect(searchCampaign('no such reward')).toEqual([])
     expect(new Set(campaignAreas.map(area => area.id)).size).toBe(campaignAreas.length)
+  })
+  it('shows route guidance with story, shortcut and optional hints and hides it on a stale zone', () => {
+    const state = { ...snapshot, zone: { areaId: 'G1_4', name: null, level: 4 } }
+    const html = renderToStaticMarkup(<Compact state={state}/>)
+    expect(html).toContain('Investigate the Tree of Souls')
+    expect(html).toContain('Glowing roots lead to the tree')
+    expect(html).toContain('Tag the Grim Tangle waypoint early')
+    expect(html).toContain('Defeat the Brambleghast')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('Glowing roots')
+    expect(describeZone({ areaId: null, name: 'The Riverbank', level: null }).route?.steps).toHaveLength(2)
+    expect(describeZone({ areaId: 'UNKNOWN', name: 'The Riverbank', level: null }).route).toBeNull()
+  })
+  it('expands full route directions and shortcut text in the overlay', () => {
+    const zone = { areaId: 'G1_4', name: null, level: 4 }
+    const collapsed = renderToStaticMarkup(<Compact state={{ ...snapshot, zone }}/>)
+    const expanded = renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>)
+    expect(collapsed).not.toContain('Orange mushrooms')
+    expect(expanded).toContain('Orange mushrooms')
+    expect(expanded).toContain('step inside to activate its waypoint')
+    expect(expanded).toContain('Defeat the Brambleghast')
+    expect(renderToStaticMarkup(<Compact state={{ ...snapshot, zone: null, detailsExpanded: true }}/>)).not.toContain('Objective details')
   })
   it('hides completed recommendations for the active character and league only', () => {
     const state = {

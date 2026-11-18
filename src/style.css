@@ -33,16 +33,25 @@ button:disabled { opacity: .55; cursor: default }
 .status.replaying, .status.replayComplete { color: #c3b1de }
 .status.readError { color: #e9a78c }
 .zone-block { padding: 7px 0 4px; height: 58px }
+.zone-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 5px }
+.details-gesture { color: var(--muted); font: 11px/14px Barlow, sans-serif; white-space: nowrap }
 .eyebrow, .act { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .15em; text-transform: uppercase; color: #b5ad96 }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
 .zone-block h1 { font: 500 24px/1.5 var(--heading); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.035em }
-.with-shortcut .zone-block { height: 50px; padding: 5px 0 2px }
-.with-shortcut .zone-block h1 { line-height: 1.2 }
+.with-shortcut .zone-block, .with-route .zone-block { height: 50px; padding: 5px 0 2px }
+.with-shortcut .zone-block h1, .with-route .zone-block h1 { line-height: 1.2 }
+.with-route.with-shortcut .zone-block { height: 42px; padding: 2px 0 0 }
+.with-route.with-shortcut .zone-block h1 { font-size: 20px }
+.with-route.with-shortcut .objective { padding-top: 3px }
+.with-route.with-shortcut :is(.route-preview, .optional-preview) { line-height: 14px }
+.with-route.with-shortcut .story-objective { line-height: 18px }
+.with-route.with-shortcut .optional-label { line-height: 1.1 }
 .objective { border-top: 1px solid var(--line); padding-top: 5px }
 .story-objective { color: var(--paper); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 .optional-preview, .route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
 .route-preview { color: var(--gold) }
+.route-preview.direction .optional-hint { font-weight: 600 }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
 .optional-list { margin: 0; padding-left: 18px; color: var(--muted) }
@@ -54,6 +63,17 @@ button:disabled { opacity: .55; cursor: default }
 .campaign-picker select:focus-visible, .settings-field :is(input, select):focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
 .campaign-picker select:disabled { opacity: .6 }
 .campaign-reset { margin-bottom: 13px }
+.route-landmarks { list-style: none; padding: 0; margin: 0 }
+.route-landmarks li { position: relative; padding: 0 0 10px 14px; margin-left: 4px; border-left: 1px solid #71664f }
+.route-landmarks li:last-child { padding-bottom: 0; border-left-color: transparent }
+.route-landmarks li::before { content: ""; position: absolute; top: 8px; left: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold) }
+.route-landmarks p { color: var(--muted); font-size: 14px }
+.compact.expanded { height: auto; min-height: 168px; padding-bottom: 12px }
+.compact.expanded .story-objective { white-space: normal }
+.overlay-details { display: grid; gap: 9px; margin-top: 7px; font-size: 13px }
+.overlay-details .route-landmarks p { font-size: inherit }
+.overlay-details h2 { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--gold) }
+.overlay-details ul { padding-left: 16px; margin: 0; color: var(--muted) }
 .campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
 .campaign-results button { display: block; width: 100%; text-align: left; margin-bottom: 3px }
 .optional-list label { display: flex; align-items: baseline; gap: 6px; cursor: pointer }

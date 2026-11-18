@@ -1,7 +1,16 @@
 [
-  { "id": "G1_1", "name": "The Riverbank", "act": 1, "bosses": ["The Bloated Miller"], "objective": "Reach Clearfell" },
+  { "id": "G1_1", "name": "The Riverbank", "act": 1, "bosses": ["The Bloated Miller"], "objective": "Reach Clearfell",
+    "route": { "cue": "Town is past the Miller", "steps": [
+      { "landmark": "Starting shore", "detail": "Pick up your weapon and skill gem, then follow the path inland." },
+      { "landmark": "The Bloated Miller", "detail": "Defeat the Miller to open the way into Clearfell Encampment." }
+    ] }
+  },
   { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una" },
   { "id": "G1_2", "name": "Clearfell", "act": 1, "bosses": ["Beira of the Rotten Pack"], "objective": "Find the path into the Grelwood",
+    "route": { "cue": "Use the world map to find the exit side", "steps": [
+      { "landmark": "World map", "detail": "Open the world map and check which side of Clearfell The Grelwood is on. Search that side of the zone for the exit." },
+      { "landmark": "Frozen logs · Optional", "detail": "Look for frozen logs around the Frostblood Ritual to find Beira and her permanent cold resistance reward." }
+    ] },
     "optional": [
       { "id": "G1_2:1", "hint": "Defeat Beira for cold resistance", "leagueStart": true }
     ]
@@ -12,6 +21,11 @@
     ]
   },
   { "id": "G1_4", "name": "The Grelwood", "act": 1, "bosses": ["The Brambleghast"], "objective": "Investigate the Tree of Souls",
+    "route": { "cue": "Glowing roots lead to the tree", "steps": [
+      { "landmark": "Glowing roots", "detail": "Follow the roots to the Tree of Souls and activate the nearby waypoint." },
+      { "landmark": "River", "detail": "Follow the river when you're looking for the Red Vale entrance." },
+      { "landmark": "Orange mushrooms", "detail": "After freeing the Hooded One and reporting back to Una, use the mushrooms to find the Grim Tangle entrance." }
+    ] },
     "shortcut": { "cue": "Tag the Grim Tangle waypoint early", "detail": "If you reach the Grim Tangle entrance while exploring the Grelwood, step inside to activate its waypoint. After finishing Una’s turn-in in town, use that waypoint to resume the route." },
     "optional": [
       { "id": "G1_4:1", "hint": "Defeat the Brambleghast" }
@@ -23,15 +37,27 @@
     ]
   },
   { "id": "G1_5", "name": "The Red Vale", "act": 1, "bosses": ["The Rust King"], "objective": "Recover the girdles from the rust obelisks",
+    "route": { "cue": "Sweep for three rust obelisks", "steps": [
+      { "landmark": "Rust obelisks", "detail": "Sweep around the zone for the three obelisks. Check the ground near the blood river if you still need one." },
+      { "landmark": "Third obelisk", "detail": "The last activation brings out the Rust King. Defeat him and collect the final quest piece." }
+    ] },
     "shortcut": { "cue": "Portal after collecting all three pieces", "detail": "After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls." }
   },
   { "id": "G1_6", "name": "The Grim Tangle", "act": 1, "bosses": ["The Rotten Druid"], "objective": "Cross to the Cemetery of the Eternals",
+    "route": { "cue": "Past the roots, cross to the far edge", "steps": [
+      { "landmark": "Root barrier", "detail": "Call Una at the roots and pass through the opening." },
+      { "landmark": "Far side", "detail": "Start by crossing the zone away from the entrance. Check the far edge for the cemetery exit." }
+    ] },
     "shortcut": { "cue": "Continue when Una’s roots open", "detail": "Summon Una by the roots. Once the path is open, head through toward the cemetery while she finishes singing." },
     "optional": [
       { "id": "G1_6:1", "hint": "Defeat the Rotten Druid" }
     ]
   },
   { "id": "G1_7", "name": "Cemetery of the Eternals", "act": 1, "bosses": ["Lachlann of Endless Lament"], "objective": "Recover both keys and confront Lachlann",
+    "route": { "cue": "Sweep the edges for both tomb doors", "steps": [
+      { "landmark": "Cemetery edges", "detail": "Look for the Mausoleum of the Praetor and the Tomb of the Consort along the perimeter. You can clear them in either order." },
+      { "landmark": "Memorial Gate", "detail": "After you have both key pieces, return to Lachlann to open the gate." }
+    ] },
     "shortcut": { "cue": "Activate both tomb entrance checkpoints", "detail": "Locate and activate the checkpoints at both tomb entrances before clearing the tombs. Use the cemetery's checkpoint travel to get to the other entrance when you return with a key piece." }
   },
   { "id": "G1_8", "name": "Mausoleum of the Praetor", "act": 1, "bosses": ["Draven, the Eternal Praetor"], "objective": "Defeat Draven and take his key piece",
@@ -50,23 +76,39 @@
     ]
   },
   { "id": "G1_11", "name": "Hunting Grounds", "act": 1, "bosses": ["The Crowbell"], "objective": "Find the route to Ogham Farmlands",
+    "route": { "cue": "Follow the signpost to the farmlands", "steps": [
+      { "landmark": "Signpost", "detail": "Look around the edges for a signpost pointing toward Ogham Farmlands." },
+      { "landmark": "Bloody tracks · Optional", "detail": "Follow the tracks through a narrow passage to find the Crowbell for passive points." }
+    ] },
     "optional": [
       { "id": "G1_11:1", "hint": "Defeat Crowbell for passive points", "leagueStart": true },
       { "id": "G1_11:2", "hint": "Take the side path to Freythorn", "leagueStart": true }
     ]
   },
   { "id": "G1_12", "name": "Freythorn", "act": 1,
+    "route": { "cue": "Locusts point toward the next ritual", "steps": [
+      { "landmark": "Ritual sites", "detail": "Watch where the locusts fly after a ritual and follow them toward another site." },
+      { "landmark": "Boss ritual", "detail": "After three rituals, activate the ritual in the boss arena to fight the King in the Mists." }
+    ] },
     "optional": [
       { "id": "G1_12:1", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true }
     ]
   },
   { "id": "G1_13_1", "name": "Ogham Farmlands", "act": 1, "objective": "Continue to Ogham Village",
+    "route": { "cue": "Cross to the wall opposite the entrance", "steps": [
+      { "landmark": "Long hut and carts · Optional", "detail": "Go around the hut and the carts blocking the path to reach Una's hut and pick up her lute." },
+      { "landmark": "Opposite wall", "detail": "Cross away from the entrance. If the village door is out of sight, follow the far wall until you reach it." }
+    ] },
     "shortcut": { "cue": "Turn in the lute on your next town trip", "detail": "Pick up Una’s lute on the way to Ogham Village. If you’re stopping in town for Renly’s tools, turn in the lute on the same visit." },
     "optional": [
       { "id": "G1_13_1:1", "hint": "Recover Una’s lute for passive points", "leagueStart": true }
     ]
   },
   { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "bosses": ["The Executioner"], "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
+    "route": { "cue": "Keep the wall on your right", "steps": [
+      { "landmark": "Right-hand wall", "detail": "From the entrance, keep the wall on your right and follow it north toward the Executioner's arena." },
+      { "landmark": "Workshop checkpoint · Optional", "detail": "Look off the northern wall for a checkpoint beside the room with Renly's tools. If you reach the waypoint first, check back along the west side." }
+    ] },
     "shortcut": { "cue": "Portal to turn in Renly’s tools", "detail": "If you pick up Renly’s Smithing Tools before the Executioner, portal to town to unlock the Salvage Bench. Make any vendor upgrades on the same trip, then use the portal to return to the village." },
     "optional": [
       { "id": "G1_13_2:1", "hint": "Recover Renly’s tools for the Salvage Bench" }

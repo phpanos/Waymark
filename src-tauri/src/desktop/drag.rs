@@ -199,7 +199,13 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
     let Some((app, hwnd, gesture, cursor)) = frame else {
         return;
     };
-    if gesture.cancelled || (cursor == gesture.start && gesture.preview == gesture.start) {
+    if gesture.cancelled {
+        return;
+    }
+    if cursor == gesture.start && gesture.preview == gesture.start {
+        if gesture.released_at.is_some() {
+            super::toggle_details(&app);
+        }
         return;
     }
     let x = gesture.origin.0 + (cursor.0 - gesture.start.0);
