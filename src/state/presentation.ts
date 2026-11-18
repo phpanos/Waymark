@@ -9,6 +9,7 @@ type AreaReference = {
   objective?: string
   optional?: readonly OptionalObjective[]
   tip?: string
+  shortcut?: { cue: string; detail: string }
 }
 export const campaignAreas: readonly AreaReference[] = areas
 
@@ -18,7 +19,7 @@ export const statusText: Record<Status, string> = {
 }
 
 export function describeZone(zone: Zone | null) {
-  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, optional: [], tip: null }
+  if (!zone) return { title: 'Awaiting zone', areaId: null, act: null, objective: null, optional: [], tip: null, shortcut: null }
   const known = campaignAreas.find(a => zone.areaId ? a.id === zone.areaId : a.name === zone.name)
   return {
     title: zone.name || known?.name || zone.areaId || 'Unknown zone',
@@ -27,5 +28,6 @@ export function describeZone(zone: Zone | null) {
     objective: known?.objective ?? null,
     optional: known?.optional ?? [],
     tip: known?.tip ?? null,
+    shortcut: known?.shortcut ?? null,
   }
 }

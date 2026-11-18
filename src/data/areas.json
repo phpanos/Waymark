@@ -12,6 +12,7 @@
     ]
   },
   { "id": "G1_4", "name": "The Grelwood", "act": 1, "objective": "Investigate the Tree of Souls",
+    "shortcut": { "cue": "Tag the Grim Tangle waypoint early", "detail": "If you reach the Grim Tangle entrance while exploring the Grelwood, step inside to activate its waypoint. After finishing Una’s turn-in in town, use that waypoint to resume the route." },
     "optional": [
       { "hint": "Defeat the Brambleghast" }
     ]
@@ -21,7 +22,9 @@
       { "hint": "Investigate the Starlit Rite and runic vault" }
     ]
   },
-  { "id": "G1_5", "name": "The Red Vale", "act": 1, "objective": "Recover the girdles from the rust obelisks" },
+  { "id": "G1_5", "name": "The Red Vale", "act": 1, "objective": "Recover the girdles from the rust obelisks",
+    "shortcut": { "cue": "Portal after collecting all three pieces", "detail": "After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls." }
+  },
   { "id": "G1_6", "name": "The Grim Tangle", "act": 1, "objective": "Cross to the Cemetery of the Eternals",
     "optional": [
       { "hint": "Defeat the Rotten Druid" }
@@ -60,6 +63,7 @@
     ]
   },
   { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
+    "shortcut": { "cue": "Portal to turn in Renly’s tools", "detail": "If you pick up Renly’s Smithing Tools before the Executioner, portal to town to unlock the Salvage Bench. Make any vendor upgrades on the same trip, then use the portal to return to the village." },
     "optional": [
       { "hint": "Recover Renly’s tools for the Salvage Bench" }
     ]
@@ -70,8 +74,12 @@
       { "hint": "Defeat Candlemass for maximum life", "leagueStart": true }
     ]
   },
-  { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "objective": "Defeat Rathbreaker to earn passage" },
-  { "id": "G2_town", "name": "The Ardura Caravan", "act": 2, "objective": "Speak with Asala and use the Desert Map" },
+  { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "objective": "Defeat Rathbreaker to earn passage",
+    "shortcut": { "cue": "Portal after Rathbreaker", "detail": "Once Rathbreaker is down, take a town portal and speak to Zarka to move on to the Ardura Caravan." }
+  },
+  { "id": "G2_town", "name": "The Ardura Caravan", "act": 2, "objective": "Speak with Asala and use the Desert Map",
+    "shortcut": { "cue": "For Ancient Vows, leave the Valley last", "detail": "Once the three Horn of the Vastiri branches open, do the Keth and Bone Pits branches before the Valley of the Titans if you’re doing Ancient Vows. Bring both clan relics so you can use the altar on the same visit." }
+  },
   { "id": "G2_2", "name": "Traitor's Passage", "act": 2, "objective": "Take the passage to the Halani Gates",
     "optional": [
       { "hint": "Defeat Balbala to unlock the Sekhemas trial", "leagueStart": true }
@@ -166,6 +174,7 @@
     ]
   },
   { "id": "G3_2_2", "name": "The Matlan Waterways", "act": 3, "objective": "Drain the canals using the sluice levers",
+    "shortcut": { "cue": "Open a portal by the final lever", "detail": "At the final sluice lever, open a town portal beside it. Pull the lever, wait for the quest to update, then take the portal to speak to Alva in the encampment." },
     "optional": [
       { "hint": "Take the detour to the Azak Bog" }
     ]
@@ -181,6 +190,7 @@
     ]
   },
   { "id": "G3_6_2", "name": "Jiquani's Sanctum", "act": 3, "objective": "Power the generators and defeat Zicoatl",
+    "shortcut": { "cue": "Waypoint back with the Large Soul Core", "detail": "After taking the Large Soul Core from Zicoatl, use the waypoint to return to the Infested Barrens. Take the core to the stone altar to open the Matlan Waterways." },
     "optional": [
       { "hint": "Find the corruption altar" }
     ]
@@ -211,6 +221,7 @@
     ]
   },
   { "id": "G3_11", "name": "Apex of Filth", "act": 3, "objective": "Defeat the queen and take the temple idol",
+    "shortcut": { "cue": "Return via the Drowned City waypoint", "detail": "After collecting the Temple Door Idol, use the checkpoint to get back to the waypoint. Travel to the Drowned City and leave through its town entrance to reach Alva quickly." },
     "optional": [
       { "hint": "Bring three mushrooms to the Cauldron Keeper" }
     ]
@@ -239,7 +250,9 @@
       { "hint": "Recover a torn map piece" }
     ]
   },
-  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "objective": "Defeat Krutog and release Matiki" },
+  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "objective": "Defeat Krutog and release Matiki",
+    "shortcut": { "cue": "Return to the ship after freeing Matiki", "detail": "After defeating Krutog and speaking to Matiki, take the return route to the ship. Ask Makoru to sail to your next island if you have no town turn-ins." }
+  },
   { "id": "G4_2_1", "name": "Kedge Bay", "act": 4, "objective": "Continue along the coast to Journey’s End",
     "optional": [
       { "hint": "Recover a torn map piece" }
@@ -257,6 +270,7 @@
     ]
   },
   { "id": "G4_3_2", "name": "Singing Caverns", "act": 4, "objective": "Confront Diamora",
+    "shortcut": { "cue": "Return to the ship after Diamora", "detail": "After defeating Diamora, talk to the Hooded One and take the return route to the ship. You can save the Humming Pearl turn-in for your next planned town stop." },
     "optional": [
       { "hint": "Recover the pearl from the clam" }
     ]

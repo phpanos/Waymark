@@ -54,6 +54,16 @@ describe('zone presentation', () => {
     expect(describeZone({ areaId: null, name: 'Ogham Manor', level: null }).tip).toContain('cold resistance')
     expect(describeZone({ areaId: 'UNKNOWN', name: null, level: 22 }).tip).toBeNull()
   })
+  it('shows an area’s shortcut alongside its objectives and hides it if the log goes missing', () => {
+    const state = { ...snapshot, zone: { areaId: 'G3_2_2', name: null, level: 39 } }
+    const html = renderToStaticMarkup(<Compact state={state}/>)
+    expect(html).toContain('Drain the canals using the sluice levers')
+    expect(html).toContain('Open a portal by the final lever')
+    expect(html).toContain('Take the detour to the Azak Bog')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Shortcut')
+    expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('wait for the quest to update')
+    expect(describeZone({ areaId: 'G1_1', name: null, level: 1 }).shortcut).toBeNull()
+  })
   it('escapes unknown identifiers and leaves the act unknown', () => {
     const zone = { areaId: '<img src=x>', name: null, level: 42 }
     const html = renderToStaticMarkup(<Compact state={{...snapshot,zone}}/>)

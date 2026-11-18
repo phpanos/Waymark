@@ -52,6 +52,7 @@ function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; league
     {!selected?.objective && optional.length === 0 && <p className="hint">
       {browse && !areaId ? 'Choose an area to see its objectives.' : 'No objective assigned'}
     </p>}
+    {selected?.shortcut && <Field label="Route shortcut"><p>{selected.shortcut.detail}</p></Field>}
     {selected?.tip && <Field label="Encounter tip">
       {!browse && zone?.level != null && <p className="encounter-level">Area level {zone.level}</p>}
       <p>{selected.tip}</p>

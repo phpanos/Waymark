@@ -48,6 +48,8 @@ The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](
 
 **Settings → Objectives** also shows preparation tips for selected bosses and Ascendancy trials. The detected area level and any suggested character level are labeled separately. The suggested levels for a first trial are approximate and depend on your build and gear. [Campaign and trial preparation reference](https://buildmentor.org/new-player-guide/)
 
+The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Objectives** for the full steps, including when to use a town portal, activate a waypoint, or return to the ship. Waymark keys these hints to the area and you decide when the listed conditions are met. [Act 1 route](https://mobalytics.gg/poe-2/guides/act-1-guide-guythatdies), [Act 2 route](https://www.definitivguide.com/docs/PoE2/Act%202/overview), [Act 3 route](https://www.definitivguide.com/docs/PoE2/Act%203/overview), [Act 4 route](https://www.definitivguide.com/docs/PoE2/Act%204/overview).
+
 ## Project layout
 
 | Path | Responsibility |

@@ -138,6 +138,9 @@ try {
     await select('campaignArea', 'G1_2')
     await expectText('Find the path into the Grelwood')
     await expectText('Defeat Beira for cold resistance', '.optional-list li > span:first-child')
+    await select('campaignArea', 'G1_5')
+    await expectText('Route shortcut')
+    await expectText('After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls.')
     await click('Use current zone')
     await expectText('No objective assigned')
     const recommendationToggle = 'document.querySelector("[aria-label=Objectives] input[type=checkbox]")'
@@ -162,6 +165,8 @@ try {
     await expectText('Find the path into the Grelwood')
     await expectText('Defeat Beira for cold resistance', '.optional-hint')
     await expectText('Recommended', '.optional-preview .recommended')
+    await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
+    await expectText('Open a portal by the final lever', '.route-preview .optional-hint')
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
     await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')

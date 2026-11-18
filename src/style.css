@@ -38,9 +38,12 @@ button:disabled { opacity: .55; cursor: default }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
 .zone-block h1 { font: 500 24px/1.5 var(--heading); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.035em }
+.with-shortcut .zone-block { height: 50px; padding: 5px 0 2px }
+.with-shortcut .zone-block h1 { line-height: 1.2 }
 .objective { border-top: 1px solid var(--line); padding-top: 5px }
 .story-objective { color: var(--paper); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.optional-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
+.optional-preview, .route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
+.route-preview { color: var(--gold) }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
 .optional-list { margin: 0; padding-left: 18px; color: var(--muted) }

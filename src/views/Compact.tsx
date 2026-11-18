@@ -17,8 +17,10 @@ export function Compact({ state }: { state: Snapshot }) {
   const showRecommendations = state.settings.leagueStart
   const recommended = showRecommendations ? zone.optional.find(objective => objective.leagueStart) : undefined
   const featuredOptional = recommended ?? zone.optional[0]
-  const context = state.zone && (state.status === 'missing' || state.status === 'readError') ? 'Last zone' : 'Current zone'
-  return <main className="compact">
+  const stale = state.status === 'missing' || state.status === 'readError'
+  const context = state.zone && stale ? 'Last zone' : 'Current zone'
+  const shortcut = stale ? null : zone.shortcut
+  return <main className={shortcut ? 'compact with-shortcut' : 'compact'}>
     {state.moving ? <div className="move-handle" onMouseDown={event => {
       if (event.button === 0) {
         event.preventDefault()
@@ -38,6 +40,10 @@ export function Compact({ state }: { state: Snapshot }) {
         <div className="eyebrow">Story objective</div>
         <p className="story-objective" title={zone.objective ?? undefined}>{zone.objective ?? 'No objective assigned'}</p>
       </>}
+      {shortcut && <p className="route-preview" title={shortcut.detail}>
+        <span className="optional-label">Shortcut</span>
+        <span className="optional-hint">{shortcut.cue}</span>
+      </p>}
       {featuredOptional && <div className="optional-preview" title={featuredOptional.hint}>
         <span className="optional-label">Optional</span>
         <span className="optional-hint">{featuredOptional.hint}</span>
