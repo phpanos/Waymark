@@ -182,8 +182,8 @@ try {
       await expectText('The Molten Vault', '.zone-block h1')
     } else if (argument === 'claimed' || argument === 'dismissed') {
       await expectText(`${argument === 'claimed' ? 'Claimed' : 'Dismissed'} · ${reward}`, '.town-reward-actions .reward-feedback')
-      await waitFor('the removed pin and its undo action', () => evaluate(`
-        !document.querySelector('.quest-reward') && document.querySelector('.town-reward-actions').innerText.includes('Undo')
+      await waitFor('the handled town reward to disappear', () => evaluate(`
+        !document.querySelector('.quest-reward')
       `))
     } else {
       if (argument === 'detour' || argument === 'restart') {

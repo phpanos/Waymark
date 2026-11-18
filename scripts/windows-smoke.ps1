@@ -305,12 +305,18 @@ try {
             Invoke-RewardShortcut 0x44 # D
             node $check $profile $log town claimed
             if ($LASTEXITCODE -ne 0) { throw 'Marking a town reward claimed failed.' }
+            if ((Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].townRewards.'treasures-of-utzaal' -ne 'claimed') {
+                throw 'The claimed town reward status was not saved.'
+            }
             Invoke-RewardShortcut 0x55 # U
             node $check $profile $log town restored
             if ($LASTEXITCODE -ne 0) { throw 'Undo did not restore the claimed town reward.' }
             Invoke-RewardShortcut 0x58 # X
             node $check $profile $log town dismissed
             if ($LASTEXITCODE -ne 0) { throw 'Dismissing a pinned town reward failed.' }
+            if ((Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].townRewards.'treasures-of-utzaal' -ne 'dismissed') {
+                throw 'The dismissed town reward status was not saved.'
+            }
             Invoke-RewardShortcut 0x55 # U
             node $check $profile $log town restored
             if ($LASTEXITCODE -ne 0) { throw 'Undo did not restore the dismissed town reward.' }
