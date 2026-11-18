@@ -165,6 +165,7 @@ fn close_settings(app: AppHandle) -> Result<(), String> {
 pub fn run() {
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             snapshot,
             set_placement,

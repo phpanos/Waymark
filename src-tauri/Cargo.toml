@@ -1,6 +1,6 @@
 [package]
 name = "waymark"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 build = "build.rs"
 
@@ -18,3 +18,4 @@ winreg = "0.55"
 keyvalues-parser = "0.2"
 waymark-log = { path = "../crates/log-core" }
 windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Graphics_Gdi", "Win32_UI_WindowsAndMessaging", "Win32_UI_HiDpi"] }
+tauri-plugin-updater = "2"

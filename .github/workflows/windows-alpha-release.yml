@@ -1,0 +1,77 @@
+name: Publish signed Windows alpha
+
+on: workflow_dispatch
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-alpha-release
+
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: windows-2022
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: cargo test --locked -p waymark-log
+      - name: Build and sign NSIS installer
+        shell: pwsh
+        env:
+          WAYMARK_PUBLIC_KEY: ${{ vars.WAYMARK_UPDATER_PUBLIC_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_WAYMARK_UPDATES: '1'
+        run: |
+          if (!$env:WAYMARK_PUBLIC_KEY -or !$env:TAURI_SIGNING_PRIVATE_KEY) {
+            throw 'Set the updater public key variable and signing key secret before publishing.'
+          }
+          @{
+            bundle = @{ createUpdaterArtifacts = $true }
+            plugins = @{ updater = @{
+              pubkey = $env:WAYMARK_PUBLIC_KEY.Trim()
+              endpoints = @('https://raw.githubusercontent.com/phpanos/Waymark/update-feed/latest.json')
+              windows = @{ installMode = 'passive' }
+            }}
+          } | ConvertTo-Json -Depth 5 | Set-Content updater-release.json
+          npm run tauri -- build --ci --bundles nsis --config updater-release.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Test native overlay
+        shell: powershell
+        run: ./scripts/windows-smoke.ps1 -Executable ./target/release/waymark.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: signed-installer
+          if-no-files-found: error
+          path: |
+            target/release/bundle/nsis/*-setup.exe
+            target/release/bundle/nsis/*-setup.exe.sig
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v5
+        with:
+          name: signed-installer
+          path: installer
+      - name: Publish and advance the alpha feed
+        shell: bash
+        run: bash scripts/publish-alpha.sh

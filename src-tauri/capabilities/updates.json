@@ -1,0 +1,6 @@
+{
+  "identifier": "updates",
+  "description": "The settings window can check for and install signed Waymark updates.",
+  "windows": ["settings"],
+  "permissions": ["updater:allow-check", "updater:allow-download-and-install", "core:resources:allow-close", "core:app:allow-version"]
+}

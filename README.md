@@ -2,6 +2,12 @@
 
 Waymark is a Windows 10/11 campaign overlay for Path of Exile 2. It tails newly appended `Client.txt` records and shows the latest detected zone, act when known, log status, and an empty objective slot. Windowed Fullscreen is the initial target. Sprint 1 includes one reference area and no campaign routes.
 
+## In-app updates
+
+In a signed Windows release, open **Settings → Updates**, click **Check for updates**, then choose **Install and restart** when a new version appears. Install the first signed release manually to enroll in the alpha channel.
+
+Maintainers can publish signed installers from GitHub Actions using the [Windows alpha release instructions](docs/windows-updates.md).
+
 ## Run on Windows
 
 For the portable x64 build, extract the entire ZIP, keep `waymark.exe` and `WebView2Loader.dll` together, and run `waymark.exe`. The Microsoft Edge WebView2 Evergreen Runtime must already be installed. The portable PoC is unsigned.

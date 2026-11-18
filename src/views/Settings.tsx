@@ -4,9 +4,10 @@ import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
 import { describeZone } from '../state/presentation'
 import { StatusLight } from './Compact'
+import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
-type Tab = 'Log source' | 'Position' | 'Diagnostics'
+type Tab = 'Log source' | 'Position' | 'Diagnostics' | 'Updates'
 const corners: [Corner, string][] = [['topLeft', 'Top left'], ['topRight', 'Top right'], ['bottomLeft', 'Bottom left'], ['bottomRight', 'Bottom right']]
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
@@ -56,7 +57,7 @@ export function Settings({ state }: { state: Snapshot }) {
       <div className="readout-head"><span className="eyebrow">{state.status === 'replaying' || state.status === 'replayComplete' ? 'Fixture zone' : 'Latest zone'}</span><StatusLight status={state.status}/></div>
       <h2>{zone.title}</h2>{zone.act && <span className="act">Act {zone.act}</span>}
     </section>
-    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Diagnostics'] as const).map(t =>
+    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Diagnostics', 'Updates'] as const).map(t =>
       <button key={t} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
     <fieldset className="pane" disabled={busy} aria-label={tab}>
       {tab === 'Log source' && <>
@@ -66,6 +67,7 @@ export function Settings({ state }: { state: Snapshot }) {
         {state.settings.logPath && <button onClick={() => run(native.discover)}>Use auto-detection</button>}</div>
       </>}
       {tab === 'Position' && <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>}
+      <div hidden={tab !== 'Updates'}><Updates/></div>
       {tab === 'Diagnostics' && <>
         <Field label="Fixture replay"><p>Play a sample log through the zone detector. Live log observation continues in the background.</p></Field>
         <div className="actions"><button className="primary" onClick={() => run(() => native.replay(true))}>{replay ? 'Restart replay' : 'Replay fixture'}</button>

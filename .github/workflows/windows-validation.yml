@@ -1,6 +1,12 @@
 name: Windows validation
 
-on: workflow_dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      test_updater:
+        description: Install and verify a signed in-app upgrade
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,3 +43,8 @@ jobs:
           path: target/release/bundle/nsis/*.exe
           if-no-files-found: error
           retention-days: 7
+
+      - name: Test signed in-app upgrade
+        if: inputs.test_updater
+        shell: pwsh
+        run: ./scripts/windows-updater-smoke.ps1
