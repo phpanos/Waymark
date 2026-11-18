@@ -1,0 +1,14 @@
+2026/01/01 10:00:00 1000 abcdef [DEBUG Client 42] Generating level 1 area "G1_1" with seed 1
+2026/01/01 10:00:01 2000 abcdef [INFO Client 42] [SCENE] Set Source [The Riverbank]
+2026/01/01 10:00:30 31000 abcdef [INFO Client 42] [SCENE] Set Source [Traitor's Passage]
+2026/01/01 10:01:00 61000 abcdef [DEBUG Client 42] Generating level 18 area "G2_3a" with seed 2
+2026/01/01 10:01:01 62000 abcdef [INFO Client 42] [SCENE] Set Source [The Halani Gates]
+2026/01/01 10:01:30 91000 abcdef [DEBUG Client 42] Generating level 22 area "G2_3s" with seed 3
+2026/01/01 10:01:31 92000 abcdef [INFO Client 42] [SCENE] Set Source [The Halani Gates]
+2026/01/01 10:02:00 121000 abcdef [DEBUG Client 42] Generating level 39 area "G3_2_2" with seed 4
+2026/01/01 10:02:01 122000 abcdef [INFO Client 42] [SCENE] Set Source [The Matlan Waterways]
+2026/01/01 10:02:30 151000 abcdef [INFO Client 42] [SCENE] Set Source [Solitary Confinement]
+2026/01/01 10:03:00 181000 abcdef [DEBUG Client 42] Generating level 52 area "G4_11_1a" with seed 5
+2026/01/01 10:03:01 182000 abcdef [INFO Client 42] [SCENE] Set Source [Ngakanu]
+2026/01/01 10:03:30 211000 abcdef [DEBUG Client 42] Generating level 52 area "G4_11_1b" with seed 6
+2026/01/01 10:03:31 212000 abcdef [INFO Client 42] [SCENE] Set Source [Ngakanu]

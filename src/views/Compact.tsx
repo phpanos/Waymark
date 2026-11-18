@@ -1,6 +1,6 @@
 import compass from '../assets/compass.png'
 import type { Snapshot, Status } from '../native/contract'
-import { describeZone, statusText } from '../state/presentation'
+import { activeProfile, describeZone, statusText } from '../state/presentation'
 
 export function StatusLight({ status }: { status: Status }) {
   return <span className={'status ' + status}><i aria-hidden="true" />{statusText[status]}</span>
@@ -8,9 +8,11 @@ export function StatusLight({ status }: { status: Status }) {
 
 export function Compact({ state }: { state: Snapshot }) {
   const zone = describeZone(state.zone)
+  const completed = activeProfile(state.settings)?.completed ?? []
+  const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
   const showRecommendations = state.settings.leagueStart
-  const recommended = showRecommendations ? zone.optional.find(objective => objective.leagueStart) : undefined
-  const featuredOptional = recommended ?? zone.optional[0]
+  const recommended = showRecommendations ? remaining.find(objective => objective.leagueStart) : undefined
+  const featuredOptional = recommended ?? remaining[0]
   const stale = state.status === 'missing' || state.status === 'readError'
   const context = state.zone && stale ? 'Last zone' : 'Current zone'
   const shortcut = stale ? null : zone.shortcut
@@ -22,8 +24,10 @@ export function Compact({ state }: { state: Snapshot }) {
     </div>
     <footer className="objective">
       {(zone.objective || !featuredOptional) && <>
-        <div className="eyebrow">Story objective</div>
-        <p className="story-objective" title={zone.objective ?? undefined}>{zone.objective ?? 'No objective assigned'}</p>
+        <div className="eyebrow">{!zone.objective && zone.optional.length ? 'Optional objectives' : 'Story objective'}</div>
+        <p className="story-objective" title={zone.objective ?? undefined}>
+          {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
+        </p>
       </>}
       {shortcut && <p className="route-preview" title={shortcut.detail}>
         <span className="optional-label">Shortcut</span>
@@ -33,7 +37,7 @@ export function Compact({ state }: { state: Snapshot }) {
         <span className="optional-label">Optional</span>
         <span className="optional-hint">{featuredOptional.hint}</span>
         {recommended && <span className="recommended">Recommended</span>}
-        {zone.optional.length > 1 && <span>+{zone.optional.length - 1}</span>}
+        {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
       </div>}
     </footer>
   </main>

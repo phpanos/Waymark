@@ -49,11 +49,32 @@ button:disabled { opacity: .55; cursor: default }
 .recommended { color: #c1b89f; font-size: .9em }
 .encounter-level { color: var(--muted); font-size: 12px; margin-bottom: 4px }
 .campaign-picker { display: grid; grid-template-columns: minmax(82px, 1fr) minmax(0, 3fr); gap: 12px; margin-bottom: 13px }
-.campaign-picker label { display: grid; gap: 4px; color: var(--muted); font-size: 13px }
-.campaign-picker select { min-width: 0; width: 100%; padding: 6px 8px; border: 1px solid #575b50; border-radius: 3px; background: #101513; color: var(--paper); font: inherit }
-.campaign-picker select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+.campaign-picker label, .settings-field { display: grid; gap: 4px; color: var(--muted); font-size: 13px; min-width: 0 }
+.campaign-picker select, .settings-field :is(input, select) { min-width: 0; width: 100%; padding: 6px 8px; border: 1px solid #575b50; border-radius: 3px; background: #101513; color: var(--paper); font: inherit }
+.campaign-picker select:focus-visible, .settings-field :is(input, select):focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
 .campaign-picker select:disabled { opacity: .6 }
 .campaign-reset { margin-bottom: 13px }
+.campaign-results { list-style: none; padding: 0; margin: 0 0 13px; max-height: 170px; overflow-y: auto }
+.campaign-results button { display: block; width: 100%; text-align: left; margin-bottom: 3px }
+.optional-list label { display: flex; align-items: baseline; gap: 6px; cursor: pointer }
+.optional-list input { flex-shrink: 0 }
+.optional-list .objective-completed label { color: #9da59b; text-decoration: line-through }
+.character-profile { border-top: 1px solid var(--line); padding-top: 10px }
+.character-profile details { margin-top: 8px }
+summary { color: var(--gold); cursor: pointer }
+.profile-form, .build-controls { display: flex; align-items: end; flex-wrap: wrap; gap: 8px }
+.profile-form { margin-top: 8px }
+.profile-form label { flex: 1 1 120px }
+.build-controls label { flex: 1 }
+.build-controls input[type=number] { width: 6rem }
+.build-controls .hint { margin: 0 }
+.build-guide { padding-top: 12px; border-top: 1px solid var(--line); overflow-wrap: anywhere }
+.build-guide h2 { font: 500 21px/1.4 var(--heading) }
+.build-guide h3, .build-guide summary { font-size: 14px; margin-bottom: 4px }
+.build-guide section, .build-guide details, .build-guide button { margin-top: 12px }
+.build-guide ul { margin: 3px 0 0; padding-left: 20px }
+.build-guide li { margin-bottom: 4px }
+.build-note { display: block; white-space: pre-wrap; color: var(--muted); font-size: 14px }
 .startup { padding: 14px; color: var(--paper); background: var(--panel) }
 .settings-window { background: #141918 }
 .settings { min-height: 100vh; padding: 26px 26px 0; display: flex; flex-direction: column; background: radial-gradient(ellipse at 70% 0%, #29312a66, transparent 58%), #151a19 }

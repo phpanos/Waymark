@@ -6,8 +6,8 @@ use std::{
 };
 use tauri::{AppHandle, Manager};
 use waymark_log::{
-    parser::{Detection, Detector, Zone},
-    tail::{Health, Item, Lines, Tail},
+    parser::{character_level, Detection, Detector, Zone},
+    tail::{recent_character_level, Health, Item, Lines, Tail},
 };
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/transitions.log");
@@ -65,11 +65,19 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
     let mut detector = Detector::default();
     let mut next_search = Duration::ZERO;
     let mut live_zone = None;
+    let mut level = None;
+    let mut tracked_profile = None;
     let mut replay = None;
     let mut session = 0;
     loop {
         let now = start.elapsed();
         let s = state.read();
+        let character = s
+            .settings
+            .campaign_profile()
+            .map(|profile| profile.character.as_str());
+        let mut refresh_level = tracked_profile != s.settings.active_profile;
+        tracked_profile = s.settings.active_profile;
         let manual = &s.settings.log_path;
         let changed = manual != &requested;
         if changed || (manual.is_none() && now >= next_search) {
@@ -78,10 +86,14 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 tail = next.as_deref().map(Tail::new);
                 detector = Detector::default();
                 live_zone = None;
+                refresh_level = true;
                 path = next;
             }
             requested.clone_from(manual);
             next_search = now + Duration::from_secs(5);
+        }
+        if refresh_level {
+            level = None;
         }
         let mut events = vec![];
         let mut again = false;
@@ -91,9 +103,13 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                     if let Some(d) = detector.line(line, now) {
                         events.push(d);
                     }
+                    if let Some(next) = character.and_then(|name| character_level(line, name)) {
+                        level = Some(next);
+                    }
                 }
                 Item::Reset => {
                     detector = Detector::default();
+                    level = None;
                 }
             }) {
                 Ok((h, more)) => {
@@ -112,6 +128,13 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
         } else {
             (Status::Searching, None)
         };
+        if refresh_level && level.is_none() && live_status == Status::Watching {
+            // Establish the live cursor before looking back so an append cannot fall between them.
+            level = path
+                .as_deref()
+                .zip(character)
+                .and_then(|(file, name)| recent_character_level(file, name).ok().flatten());
+        }
         if let Some(z) = events.last() {
             live_zone = Some(z.zone().clone());
         }
@@ -149,10 +172,16 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             if v.replay_session != session || v.settings.log_path != requested {
                 return false;
             }
+            let new_level = if v.settings.active_profile == tracked_profile {
+                level
+            } else {
+                v.character_level
+            };
             if v.zone == zone
                 && v.status == status
                 && v.active_path == path
                 && v.log_error == error
+                && v.character_level == new_level
             {
                 return false;
             }
@@ -160,6 +189,7 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             v.status = status;
             v.active_path.clone_from(&path);
             v.log_error = error;
+            v.character_level = new_level;
             true
         });
         if !again {

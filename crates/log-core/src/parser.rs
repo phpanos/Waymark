@@ -20,18 +20,42 @@ fn safe_value(value: &str) -> bool {
         c.is_control() || matches!(c, '\u{061c}' | '\u{200e}'..='\u{200f}' | '\u{202a}'..='\u{202e}' | '\u{2066}'..='\u{2069}'))
 }
 
+fn client_body(line: &str) -> Option<(&str, &str)> {
+    let (header, body) = line.trim_end_matches(['\n', '\r']).split_once("] ")?;
+    let tag = header.rsplit_once('[')?.1;
+    let (severity, client) = tag.split_once(" Client ")?;
+    client.parse::<u32>().ok()?;
+    Some((severity, body))
+}
+
+/// A system level-up for the named character. Chat and area levels are separate records.
+pub fn character_level(line: &str, character: &str) -> Option<u8> {
+    let ("INFO", body) = client_body(line)? else {
+        return None;
+    };
+    let (name, rest) = body.strip_prefix(": ")?.split_once(" (")?;
+    if !name.eq_ignore_ascii_case(character) || !safe_value(name) {
+        return None;
+    }
+    let (class, level) = rest.split_once(") is now level ")?;
+    let level = level.strip_suffix('.').unwrap_or(level);
+    if !safe_value(class)
+        || class.contains(['(', ')'])
+        || !level.bytes().all(|b| b.is_ascii_digit())
+    {
+        return None;
+    }
+    level.parse().ok().filter(|value| (1..=100).contains(value))
+}
+
 /// Recognize only a complete message body. Marker-like strings in chat are ignored.
 pub fn parse(line: &str) -> Option<Record> {
     let line = line.trim_end_matches(['\n', '\r']);
     let body = if line.starts_with("Generating ") || line.starts_with("[SCENE]") {
         line
     } else {
-        let (header, body) = line.split_once("] ")?;
-        let tag = header.rsplit_once('[')?.1;
-        let (severity, client) = tag.split_once(" Client ")?;
-        if !matches!(severity, "INFO" | "DEBUG" | "WARN" | "TRACE")
-            || client.parse::<u32>().is_err()
-        {
+        let (severity, body) = client_body(line)?;
+        if !matches!(severity, "INFO" | "DEBUG" | "WARN" | "TRACE") {
             return None;
         }
         body

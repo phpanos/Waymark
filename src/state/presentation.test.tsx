@@ -2,13 +2,13 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
-import { describeZone } from './presentation'
+import { campaignAreas, describeZone, searchCampaign } from './presentation'
 import { useSession } from './session'
 
 const snapshot: Snapshot = {
   version: 1, revision: 0, kind: 'snapshot', status: 'watching', zone: null,
-  activePath: null, visible: true, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
-  settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false },
+  activePath: null, characterLevel: null, visible: true, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
+  settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null },
 }
 
 describe('zone presentation', () => {
@@ -73,6 +73,38 @@ describe('zone presentation', () => {
   it('prefers a scene label and handles waiting for the first record', () => {
     expect(describeZone({areaId:'future',name:'A new zone',level:null}).title).toBe('A new zone')
     expect(describeZone(null).title).toBe('Awaiting zone')
+  })
+  it('resolves scene-only areas across Acts 1–4 and keeps variant-specific guidance keyed by ID', () => {
+    for (const [name, act] of [['riverbank', 1], ['Traitor’s Passage', 2], ['Matlan Waterways', 3], ['Solitary Confinement', 4]] as const) {
+      expect(describeZone({ areaId: null, name, level: null })).toMatchObject({ act, objective: expect.any(String) })
+    }
+    const scene = { name: 'The Halani Gates', level: null }
+    expect(describeZone({ ...scene, areaId: null })).toMatchObject({ act: 2, objective: null })
+    expect(describeZone({ ...scene, areaId: 'G2_3s' }).objective).toContain('sandstorm')
+    expect(describeZone({ ...scene, areaId: 'G2_3a' }).objective).toContain('closed gates')
+    expect(describeZone({ name: 'Ngakanu', areaId: null, level: null })).toMatchObject({
+      act: 4, areaId: null, objective: 'Find the Heart of the Tribe',
+      optional: [{ id: 'tribal-medicine:shark-fin' }],
+    })
+  })
+  it('searches area names, bosses and rewards without relying on matching punctuation', () => {
+    expect(searchCampaign('traitor’s passage')[0]?.id).toBe('G2_2')
+    expect(searchCampaign('bloated miller').map(area => area.id)).toContain('G1_1')
+    expect(searchCampaign('Beira cold resistance').map(area => area.id)).toContain('G1_2')
+    expect(searchCampaign('g4_5_2')[0]?.id).toBe('G4_5_2')
+    expect(searchCampaign('no such reward')).toEqual([])
+    expect(new Set(campaignAreas.map(area => area.id)).size).toBe(campaignAreas.length)
+  })
+  it('hides completed recommendations for the active character and league only', () => {
+    const state = {
+      ...snapshot, zone: { areaId: 'G1_2', name: null, level: 2 },
+      settings: { ...snapshot.settings, leagueStart: true, activeProfile: 0, profiles: [
+        { character: 'Exile', league: 'One', completed: ['G1_2:1'] },
+        { character: 'Exile', league: 'Two', completed: [] },
+      ] },
+    }
+    expect(renderToStaticMarkup(<Compact state={state}/>)).not.toContain('Defeat Beira')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, settings: { ...state.settings, activeProfile: 1 } }}/>)).toContain('Recommended')
   })
 })
 

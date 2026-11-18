@@ -5,8 +5,8 @@ use std::{
     time::Duration,
 };
 use waymark_log::{
-    parser::{parse, Detection, Detector, Record, Zone},
-    tail::{Health, Item, Lines, Tail},
+    parser::{character_level, parse, Detection, Detector, Record, Zone},
+    tail::{recent_character_level, Health, Item, Lines, Tail},
 };
 
 #[test]
@@ -67,6 +67,81 @@ fn fixture_pairs_and_repeats_publish_one_event_per_zone() {
     assert_eq!(
         replay(include_bytes!("../../../fixtures/scene-only.log")).len(),
         2
+    );
+}
+
+#[test]
+fn campaign_fixture_keeps_distinct_area_ids_and_scene_only_zones() {
+    let zones = replay(include_bytes!("../../../fixtures/campaign-areas.log"));
+    assert_eq!(
+        zones
+            .iter()
+            .map(|zone| (zone.area_id.as_deref(), zone.name.as_deref()))
+            .collect::<Vec<_>>(),
+        [
+            (Some("G1_1"), Some("The Riverbank")),
+            (None, Some("Traitor's Passage")),
+            (Some("G2_3a"), Some("The Halani Gates")),
+            (Some("G2_3s"), Some("The Halani Gates")),
+            (Some("G3_2_2"), Some("The Matlan Waterways")),
+            (None, Some("Solitary Confinement")),
+            (Some("G4_11_1a"), Some("Ngakanu")),
+            (Some("G4_11_1b"), Some("Ngakanu")),
+        ]
+    );
+}
+
+#[test]
+fn reads_only_named_character_level_up_messages() {
+    let line = "2026/01/01 10:00:00 1000 a [INFO Client 42] : ExampleExile (Smith of Kitava) is now level 12.";
+    assert_eq!(character_level(line, "exampleexile"), Some(12));
+    assert_eq!(
+        character_level(line.trim_end_matches('.'), "ExampleExile"),
+        Some(12)
+    );
+    assert_eq!(character_level(line, "OtherExile"), None);
+    for invalid in [
+        line.replace(" : ", " #ExampleExile: "),
+        line.replace("INFO", "DEBUG"),
+        line.replace("12.", "101."),
+        line.replace("12.", "12. trailing"),
+        line.replace("12.", "+12"),
+        "Generating level 12 area \"G1_2\"".into(),
+    ] {
+        assert_eq!(character_level(&invalid, "ExampleExile"), None, "{invalid}");
+    }
+}
+
+#[test]
+fn level_history_is_bounded_and_ignores_incomplete_lines() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("Client.txt");
+    let record =
+        |name: &str, level: u8| format!("[INFO Client 42] : {name} (Warrior) is now level {level}");
+    fs::write(&path, format!("{}\n", record("ExampleExile", 12))).unwrap();
+    append(&path, &vec![b'z'; 1024 * 1024]);
+    append(
+        &path,
+        format!("\n{}\n", record("OtherExile", 24)).as_bytes(),
+    );
+    assert_eq!(recent_character_level(&path, "ExampleExile").unwrap(), None);
+    append(
+        &path,
+        format!(
+            "{}\r\n{}",
+            record("ExampleExile", 13),
+            record("ExampleExile", 14)
+        )
+        .as_bytes(),
+    );
+    assert_eq!(
+        recent_character_level(&path, "ExampleExile").unwrap(),
+        Some(13)
+    );
+    append(&path, b"\n");
+    assert_eq!(
+        recent_character_level(&path, "ExampleExile").unwrap(),
+        Some(14)
     );
 }
 

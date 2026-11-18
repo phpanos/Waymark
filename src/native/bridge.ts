@@ -9,6 +9,9 @@ export const native = {
   discover: () => invoke<void>('use_discovery'),
   position: (placement: Placement) => invoke<void>('set_placement', { placement }),
   leagueStart: (enabled: boolean) => invoke<void>('set_league_start', { enabled }),
+  campaignProfile: (character: string, league: string) => invoke<void>('set_campaign_profile', { character, league }),
+  completeObjective: (profile: number, objective: string, completed: boolean) =>
+    invoke<void>('set_objective_completed', { profile, objective, completed }),
   toggle: () => invoke<void>('toggle_overlay'),
   replay: (enabled: boolean) => invoke<void>('replay_fixture', { enabled }),
   close: () => invoke<void>('close_settings'),

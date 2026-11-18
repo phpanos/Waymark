@@ -42,13 +42,21 @@ Settings are saved on change under `%APPDATA%\app.waymark.overlay\settings-v1.js
 
 ## Campaign objectives
 
-The compact overlay shows the area's story hint and a muted optional hint when available. **Settings → Objectives** follows the detected zone by default. Choose an act and area to browse its hints and rewards, then select **Use current zone** to resume following the game. Enable **League-start recommendations** there to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks. Waymark saves that preference across restarts. Area hints can still appear after you complete the objective.
+The compact overlay shows the area's story hint and a muted optional hint when available. **Settings → Objectives** follows the detected zone by default. Search by area, boss, or reward, or use the act and area menus. Select **Use current zone** to resume following the game.
+
+Choose a character and optionally name the league to save an independent reward checklist. Tick an optional objective to remove it from that character's compact overlay. Enable **League-start recommendations** to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks.
 
 The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](https://data.exiledata.dev/poe2/0.5.5.10/world_areas.min.json) and hints based on PoE2DB's [Act 1](https://poe2db.tw/us/Act_1), [Act 2](https://poe2db.tw/us/Act_2), [Act 3](https://poe2db.tw/us/Act_3), and [Act 4](https://poe2db.tw/us/Act_4) references. Recommendations focus on permanent campaign rewards and don’t depend on the league mechanic.
 
 **Settings → Objectives** also shows preparation tips for selected bosses and Ascendancy trials. The detected area level and any suggested character level are labeled separately. The suggested levels for a first trial are approximate and depend on your build and gear. [Campaign and trial preparation reference](https://buildmentor.org/new-player-guide/)
 
-The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Objectives** for the full steps, including when to use a town portal, activate a waypoint, or return to the ship. Waymark keys these hints to the area and you decide when the listed conditions are met. [Act 1 route](https://mobalytics.gg/poe-2/guides/act-1-guide-guythatdies), [Act 2 route](https://www.definitivguide.com/docs/PoE2/Act%202/overview), [Act 3 route](https://www.definitivguide.com/docs/PoE2/Act%203/overview), [Act 4 route](https://www.definitivguide.com/docs/PoE2/Act%204/overview).
+The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Objectives** for the full steps, including when to use a town portal, activate a waypoint, backtrack via a checkpoint, or return to the ship. [Act 1 route](https://mobalytics.gg/poe-2/guides/act-1-guide-guythatdies), [checkpoint routes for Act 1](https://www.definitivguide.com/docs/PoE2/Act%201/overview), [Act 2 route](https://www.definitivguide.com/docs/PoE2/Act%202/overview), [Act 3 route](https://www.definitivguide.com/docs/PoE2/Act%203/overview), [Act 4 route](https://www.definitivguide.com/docs/PoE2/Act%204/overview).
+
+## Build-aware leveling
+
+Open **Settings → Build** and choose a local PoE 2 `.build` export. If the guide offers multiple leveling stages, import the files together and select the stage you want. Waymark shows skills, supports, passive recommendations and gear notes for the selected level. **Preview level** shows the next level with new guidance. Imported files and level preferences are stored locally. [Build Planner format](https://www.pathofexile.com/developer/docs/game#buildplanner), [Path of Building export](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/dev/src/Classes/ImportTab.lua), [Mobalytics exports](https://mobalytics.gg/poe-2/guides/build-files).
+
+For automatic level tracking, enter your in-game character name and enable **Use character level from Client.txt**. Waymark looks for that character's English level-up messages in the last 1 MiB of the selected log, then follows new messages as they arrive. Set a manual level if a matching record is unavailable or if you want to read another part of the guide. The game log supplies the character name and level. The league label organizes your saved checklists and manual preferences. Gem, passive and campaign boss labels use the [0.5.5.10 ExileData export](https://data.exiledata.dev/poe2/0.5.5.10/).
 
 ## Project layout
 

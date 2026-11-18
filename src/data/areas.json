@@ -1,331 +1,342 @@
 [
-  { "id": "G1_1", "name": "The Riverbank", "act": 1, "objective": "Reach Clearfell" },
+  { "id": "G1_1", "name": "The Riverbank", "act": 1, "bosses": ["The Bloated Miller"], "objective": "Reach Clearfell" },
   { "id": "G1_town", "name": "Clearfell Encampment", "act": 1, "objective": "Speak with Renly and Una" },
-  { "id": "G1_2", "name": "Clearfell", "act": 1, "objective": "Find the path into the Grelwood",
+  { "id": "G1_2", "name": "Clearfell", "act": 1, "bosses": ["Beira of the Rotten Pack"], "objective": "Find the path into the Grelwood",
     "optional": [
-      { "hint": "Defeat Beira for cold resistance", "leagueStart": true }
+      { "id": "G1_2:1", "hint": "Defeat Beira for cold resistance", "leagueStart": true }
     ]
   },
-  { "id": "G1_3", "name": "Mud Burrow", "act": 1,
+  { "id": "G1_3", "name": "Mud Burrow", "act": 1, "bosses": ["The Devourer"],
     "optional": [
-      { "hint": "Defeat the Devourer for Finn" }
+      { "id": "G1_3:1", "hint": "Defeat the Devourer for Finn" }
     ]
   },
-  { "id": "G1_4", "name": "The Grelwood", "act": 1, "objective": "Investigate the Tree of Souls",
+  { "id": "G1_4", "name": "The Grelwood", "act": 1, "bosses": ["The Brambleghast"], "objective": "Investigate the Tree of Souls",
     "shortcut": { "cue": "Tag the Grim Tangle waypoint early", "detail": "If you reach the Grim Tangle entrance while exploring the Grelwood, step inside to activate its waypoint. After finishing Una’s turn-in in town, use that waypoint to resume the route." },
     "optional": [
-      { "hint": "Defeat the Brambleghast" }
+      { "id": "G1_4:1", "hint": "Defeat the Brambleghast" }
     ]
   },
   { "id": "ExpeditionSubArea_Kalguur_Act1", "name": "Lost Catacombs", "act": 1,
     "optional": [
-      { "hint": "Investigate the Starlit Rite and runic vault" }
+      { "id": "ExpeditionSubArea_Kalguur_Act1:1", "hint": "Investigate the Starlit Rite and runic vault" }
     ]
   },
-  { "id": "G1_5", "name": "The Red Vale", "act": 1, "objective": "Recover the girdles from the rust obelisks",
+  { "id": "G1_5", "name": "The Red Vale", "act": 1, "bosses": ["The Rust King"], "objective": "Recover the girdles from the rust obelisks",
     "shortcut": { "cue": "Portal after collecting all three pieces", "detail": "After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls." }
   },
-  { "id": "G1_6", "name": "The Grim Tangle", "act": 1, "objective": "Cross to the Cemetery of the Eternals",
+  { "id": "G1_6", "name": "The Grim Tangle", "act": 1, "bosses": ["The Rotten Druid"], "objective": "Cross to the Cemetery of the Eternals",
+    "shortcut": { "cue": "Continue when Una’s roots open", "detail": "Summon Una by the roots. Once the path is open, head through toward the cemetery while she finishes singing." },
     "optional": [
-      { "hint": "Defeat the Rotten Druid" }
+      { "id": "G1_6:1", "hint": "Defeat the Rotten Druid" }
     ]
   },
-  { "id": "G1_7", "name": "Cemetery of the Eternals", "act": 1, "objective": "Recover both keys and confront Lachlann" },
-  { "id": "G1_8", "name": "Mausoleum of the Praetor", "act": 1, "objective": "Defeat Draven and take his key piece",
+  { "id": "G1_7", "name": "Cemetery of the Eternals", "act": 1, "bosses": ["Lachlann of Endless Lament"], "objective": "Recover both keys and confront Lachlann",
+    "shortcut": { "cue": "Activate both tomb entrance checkpoints", "detail": "Locate and activate the checkpoints at both tomb entrances before clearing the tombs. Use the cemetery's checkpoint travel to get to the other entrance when you return with a key piece." }
+  },
+  { "id": "G1_8", "name": "Mausoleum of the Praetor", "act": 1, "bosses": ["Draven, the Eternal Praetor"], "objective": "Defeat Draven and take his key piece",
     "optional": [
-      { "hint": "Open the Forgotten Riches trove" }
+      { "id": "G1_8:1", "hint": "Open the Forgotten Riches trove" }
     ]
   },
-  { "id": "G1_9", "name": "Tomb of the Consort", "act": 1, "objective": "Defeat Asinia and take her key piece",
+  { "id": "G1_9", "name": "Tomb of the Consort", "act": 1, "bosses": ["Asinia, the Praetor's Consort"], "objective": "Defeat Asinia and take her key piece",
     "optional": [
-      { "hint": "Search the Embattled Trove" }
+      { "id": "G1_9:1", "hint": "Search the Embattled Trove" }
     ]
   },
-  { "id": "G1_10", "name": "Root Hollow", "act": 1,
+  { "id": "G1_10", "name": "Root Hollow", "act": 1, "bosses": ["The Rotten Druid"],
     "optional": [
-      { "hint": "Investigate the Hooded One’s request" }
+      { "id": "G1_10:1", "hint": "Investigate the Hooded One’s request" }
     ]
   },
-  { "id": "G1_11", "name": "Hunting Grounds", "act": 1, "objective": "Find the route to Ogham Farmlands",
+  { "id": "G1_11", "name": "Hunting Grounds", "act": 1, "bosses": ["The Crowbell"], "objective": "Find the route to Ogham Farmlands",
     "optional": [
-      { "hint": "Defeat Crowbell for passive points", "leagueStart": true },
-      { "hint": "Take the side path to Freythorn", "leagueStart": true }
+      { "id": "G1_11:1", "hint": "Defeat Crowbell for passive points", "leagueStart": true },
+      { "id": "G1_11:2", "hint": "Take the side path to Freythorn", "leagueStart": true }
     ]
   },
   { "id": "G1_12", "name": "Freythorn", "act": 1,
     "optional": [
-      { "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true }
+      { "id": "G1_12:1", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true }
     ]
   },
   { "id": "G1_13_1", "name": "Ogham Farmlands", "act": 1, "objective": "Continue to Ogham Village",
+    "shortcut": { "cue": "Turn in the lute on your next town trip", "detail": "Pick up Una’s lute on the way to Ogham Village. If you’re stopping in town for Renly’s tools, turn in the lute on the same visit." },
     "optional": [
-      { "hint": "Recover Una’s lute for passive points", "leagueStart": true }
+      { "id": "G1_13_1:1", "hint": "Recover Una’s lute for passive points", "leagueStart": true }
     ]
   },
-  { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
+  { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "bosses": ["The Executioner"], "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
     "shortcut": { "cue": "Portal to turn in Renly’s tools", "detail": "If you pick up Renly’s Smithing Tools before the Executioner, portal to town to unlock the Salvage Bench. Make any vendor upgrades on the same trip, then use the portal to return to the village." },
     "optional": [
-      { "hint": "Recover Renly’s tools for the Salvage Bench" }
+      { "id": "G1_13_2:1", "hint": "Recover Renly’s tools for the Salvage Bench" }
     ]
   },
   { "id": "G1_14", "name": "The Manor Ramparts", "act": 1, "objective": "Find a way into Ogham Manor" },
-  { "id": "G1_15", "name": "Ogham Manor", "act": 1, "objective": "Defeat Count Geonor", "tip": "Bring cold resistance for Geonor. Beira in Clearfell offers a permanent boost.",
+  { "id": "G1_15", "name": "Ogham Manor", "act": 1, "bosses": ["Candlemass, the Living Rite", "Count Geonor"], "objective": "Defeat Count Geonor", "tip": "Bring cold resistance for Geonor. Beira in Clearfell offers a permanent boost.",
     "optional": [
-      { "hint": "Defeat Candlemass for maximum life", "leagueStart": true }
+      { "id": "G1_15:1", "hint": "Defeat Candlemass for maximum life", "leagueStart": true }
     ]
   },
-  { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "objective": "Defeat Rathbreaker to earn passage",
+  { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "bosses": ["Rathbreaker"], "objective": "Defeat Rathbreaker to earn passage",
     "shortcut": { "cue": "Portal after Rathbreaker", "detail": "Once Rathbreaker is down, take a town portal and speak to Zarka to move on to the Ardura Caravan." }
   },
   { "id": "G2_town", "name": "The Ardura Caravan", "act": 2, "objective": "Speak with Asala and use the Desert Map",
     "shortcut": { "cue": "For Ancient Vows, leave the Valley last", "detail": "Once the three Horn of the Vastiri branches open, do the Keth and Bone Pits branches before the Valley of the Titans if you’re doing Ancient Vows. Bring both clan relics so you can use the altar on the same visit." }
   },
-  { "id": "G2_2", "name": "Traitor's Passage", "act": 2, "objective": "Take the passage to the Halani Gates",
+  { "id": "G2_2", "name": "Traitor's Passage", "act": 2, "bosses": ["Balbala, the Traitor"], "objective": "Take the passage to the Halani Gates",
     "optional": [
-      { "hint": "Defeat Balbala to unlock the Sekhemas trial", "leagueStart": true }
+      { "id": "G2_2:1", "hint": "Defeat Balbala to unlock the Sekhemas trial", "leagueStart": true }
     ]
   },
-  { "id": "G2_3", "name": "The Halani Gates", "act": 2, "objective": "Help Asala open the gates and pursue Jamanra",
+  { "id": "G2_3", "name": "The Halani Gates", "act": 2, "bosses": ["Jamanra, the Risen King"], "objective": "Help Asala open the gates and pursue Jamanra",
     "optional": [
-      { "hint": "Defeat L’im the Impaler" }
+      { "id": "G2_3:1", "hint": "Defeat L’im the Impaler" }
     ]
   },
   { "id": "G2_3a", "name": "The Halani Gates", "act": 2, "objective": "Speak to Asala about the closed gates" },
   { "id": "G2_3s", "name": "The Halani Gates", "act": 2, "objective": "Investigate the sandstorm blocking the pursuit" },
-  { "id": "G2_4_1", "name": "Keth", "act": 2, "objective": "Find the entrance to the Lost City",
+  { "id": "G2_4_1", "name": "Keth", "act": 2, "bosses": ["Kabala, Constrictor Queen"], "objective": "Find the entrance to the Lost City",
     "optional": [
-      { "hint": "Defeat Kabala for passive points", "leagueStart": true }
+      { "id": "G2_4_1:1", "hint": "Defeat Kabala for passive points", "leagueStart": true }
     ]
   },
   { "id": "G2_4_2", "name": "The Lost City", "act": 2, "objective": "Find the Buried Shrines",
     "optional": [
-      { "hint": "Look for the Kabala Clan Relic", "leagueStart": true }
+      { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true }
     ]
   },
-  { "id": "G2_4_3", "name": "Buried Shrines", "act": 2, "objective": "Defeat Azarian and recover the water essence", "tip": "Bring fire resistance for Azarian. The fire offering in the shrine gives you a Ruby Ring.",
+  { "id": "G2_4_3", "name": "Buried Shrines", "act": 2, "bosses": ["Azarian, the Forsaken Son"], "objective": "Defeat Azarian and recover the water essence", "tip": "Bring fire resistance for Azarian. The fire offering in the shrine gives you a Ruby Ring.",
     "optional": [
-      { "hint": "Look for the Kabala Clan Relic", "leagueStart": true },
-      { "hint": "Claim an elemental resistance ring" }
+      { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true },
+      { "id": "G2_4_3:2", "hint": "Claim an elemental resistance ring" }
     ]
   },
   { "id": "G2_5_1", "name": "Mastodon Badlands", "act": 2, "objective": "Find the entrance to the Bone Pits" },
-  { "id": "G2_5_2", "name": "The Bone Pits", "act": 2, "objective": "Defeat Iktab and Ekbab for the tusks",
+  { "id": "G2_5_2", "name": "The Bone Pits", "act": 2, "bosses": ["Ekbab, Ancient Steed"], "objective": "Defeat Iktab and Ekbab for the tusks",
     "optional": [
-      { "hint": "Look for the Sun Clan Relic", "leagueStart": true }
+      { "id": "G2_5_2:1", "hint": "Look for the Sun Clan Relic", "leagueStart": true }
     ]
   },
   { "id": "G2_6", "name": "Valley of the Titans", "act": 2, "objective": "Open the Titan Grotto using the seals",
     "optional": [
-      { "hint": "Use both clan relics at the altar", "leagueStart": true }
+      { "id": "G2_6:1", "hint": "Use both clan relics at the altar", "leagueStart": true }
     ]
   },
-  { "id": "G2_7", "name": "The Titan Grotto", "act": 2, "objective": "Defeat Zalmarath and recover the Flame Ruby" },
+  { "id": "G2_7", "name": "The Titan Grotto", "act": 2, "bosses": ["Zalmarath, the Colossus"], "objective": "Defeat Zalmarath and recover the Flame Ruby" },
   { "id": "G2_8", "name": "Deshar", "act": 2, "objective": "Find the Path of Mourning",
     "optional": [
-      { "hint": "Retrieve the Final Letter for passive points", "leagueStart": true }
+      { "id": "G2_8:1", "hint": "Retrieve the Final Letter for passive points", "leagueStart": true }
     ]
   },
   { "id": "G2_8a", "name": "Deshar", "act": 2, "objective": "Find the Path of Mourning" },
   { "id": "G2_9_1", "name": "Path of Mourning", "act": 2, "objective": "Continue toward the Spires of Deshar" },
-  { "id": "G2_9_2", "name": "The Spires of Deshar", "act": 2, "objective": "Defeat Tor Gul",
+  { "id": "G2_9_2", "name": "The Spires of Deshar", "act": 2, "bosses": ["Tor Gul, the Defiler"], "objective": "Defeat Tor Gul",
+    "shortcut": { "cue": "Finish in Deshar before you portal", "detail": "If you want the lightning resistance reward, visit the Sisters of Garukhan before leaving. After Tor Gul, portal to the caravan and speak to Asala to open the Dreadnought route." },
     "optional": [
-      { "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true }
+      { "id": "G2_9_2:1", "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true }
     ]
   },
   { "id": "G2_10_1", "name": "Mawdun Quarry", "act": 2, "objective": "Find the entrance to Mawdun Mine",
     "optional": [
-      { "hint": "Recover the Tinker’s Tools" }
+      { "id": "G2_10_1:1", "hint": "Recover the Tinker’s Tools" }
     ]
   },
-  { "id": "G2_10_2", "name": "Mawdun Mine", "act": 2, "objective": "Defeat Rudja and free Risu" },
+  { "id": "G2_10_2", "name": "Mawdun Mine", "act": 2, "bosses": ["Rudja, the Dread Engineer"], "objective": "Defeat Rudja and free Risu",
+    "shortcut": { "cue": "Portal after freeing and speaking to Risu", "detail": "Free Risu after Rudja and speak to her before leaving. Portal to the caravan, then speak to Risu and Asala to continue at the Halani Gates." }
+  },
   { "id": "ExpeditionSubArea_Kalguur_Act2", "name": "Skull of the Titan", "act": 2,
     "optional": [
-      { "hint": "Investigate the runic vault" }
+      { "id": "ExpeditionSubArea_Kalguur_Act2:1", "hint": "Investigate the runic vault" }
     ]
   },
   { "id": "G2_11", "name": "The Dreadnought's Wake", "act": 2, "objective": "Cross the Dreadnought to reach Jamanra" },
-  { "id": "G2_12", "name": "Dreadnought", "act": 2, "objective": "Defeat Jamanra, the Abomination", "tip": "Bring lightning resistance for Jamanra. Visit the Sisters of Garukhan in the Spires of Deshar for a permanent boost." },
+  { "id": "G2_12", "name": "Dreadnought", "act": 2, "bosses": ["Jamanra, the Abomination"], "objective": "Defeat Jamanra, the Abomination", "tip": "Bring lightning resistance for Jamanra. Visit the Sisters of Garukhan in the Spires of Deshar for a permanent boost." },
   { "id": "G2_13", "name": "Trial of the Sekhemas", "act": 2, "tip": "For a first run, aim for character level 26–30. Equip relics with Honour resistance when available.",
     "optional": [
-      { "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true }
+      { "id": "G2_13:1", "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true }
     ]
   },
-  { "id": "G3_1", "name": "Sandswept Marsh", "act": 3, "objective": "Cross the marsh to the Ziggurat",
+  { "id": "G3_1", "name": "Sandswept Marsh", "act": 3, "bosses": ["Rootdredge"], "objective": "Cross the marsh to the Ziggurat",
     "optional": [
-      { "hint": "Search the Orok camp for supplies" }
+      { "id": "G3_1:1", "hint": "Search the Orok camp for supplies" }
     ]
   },
   { "id": "G3_town", "name": "Ziggurat Encampment", "act": 3, "objective": "Work with Alva to open the route below" },
-  { "id": "G3_3", "name": "Jungle Ruins", "act": 3, "objective": "Find the route into the Infested Barrens",
+  { "id": "G3_3", "name": "Jungle Ruins", "act": 3, "bosses": ["Mighty Silverfist"], "objective": "Find the route into the Infested Barrens",
     "optional": [
-      { "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true },
-      { "hint": "Detour into the Venom Crypts" }
+      { "id": "G3_3:1", "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true },
+      { "id": "G3_3:2", "hint": "Detour into the Venom Crypts" }
     ]
   },
   { "id": "G3_4", "name": "The Venom Crypts", "act": 3,
     "optional": [
-      { "hint": "Recover the corpse venom for Servi", "leagueStart": true }
+      { "id": "G3_4:1", "hint": "Recover the corpse venom for Servi", "leagueStart": true }
     ]
   },
   { "id": "G3_2_1", "name": "Infested Barrens", "act": 3, "objective": "Find the Wetlands and return with a Soul Core" },
   { "id": "ExpeditionSubArea_Kalguur_Act3", "name": "Mystic Refuge", "act": 3,
     "optional": [
-      { "hint": "Investigate the Scrying Pool and vault" }
+      { "id": "ExpeditionSubArea_Kalguur_Act3:1", "hint": "Investigate the Scrying Pool and vault" }
     ]
   },
   { "id": "G3_2_2", "name": "The Matlan Waterways", "act": 3, "objective": "Drain the canals using the sluice levers",
     "shortcut": { "cue": "Open a portal by the final lever", "detail": "At the final sluice lever, open a town portal beside it. Pull the lever, wait for the quest to update, then take the portal to speak to Alva in the encampment." },
     "optional": [
-      { "hint": "Take the detour to the Azak Bog" }
+      { "id": "G3_2_2:1", "hint": "Take the detour to the Azak Bog" }
     ]
   },
-  { "id": "G3_5", "name": "Chimeral Wetlands", "act": 3, "objective": "Defeat the Chimera and find the Machinarium", "tip": "The Chimera uses several elements. Balance your elemental resistances before fighting it.",
+  { "id": "G3_5", "name": "Chimeral Wetlands", "act": 3, "bosses": ["Xyclucian, the Chimera"], "objective": "Defeat the Chimera and find the Machinarium", "tip": "The Chimera uses several elements. Balance your elemental resistances before fighting it.",
     "optional": [
-      { "hint": "Take its Ultimatum to the Temple of Chaos", "leagueStart": true }
+      { "id": "G3_5:1", "hint": "Take its Ultimatum to the Temple of Chaos", "leagueStart": true }
     ]
   },
-  { "id": "G3_6_1", "name": "Jiquani's Machinarium", "act": 3, "objective": "Use small Soul Cores to reach the Sanctum",
+  { "id": "G3_6_1", "name": "Jiquani's Machinarium", "act": 3, "bosses": ["Blackjaw, the Remnant"], "objective": "Use small Soul Cores to reach the Sanctum",
     "optional": [
-      { "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true }
+      { "id": "G3_6_1:1", "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true }
     ]
   },
-  { "id": "G3_6_2", "name": "Jiquani's Sanctum", "act": 3, "objective": "Power the generators and defeat Zicoatl",
+  { "id": "G3_6_2", "name": "Jiquani's Sanctum", "act": 3, "bosses": ["Zicoatl, Warden of the Core"], "objective": "Power the generators and defeat Zicoatl",
     "shortcut": { "cue": "Waypoint back with the Large Soul Core", "detail": "After taking the Large Soul Core from Zicoatl, use the waypoint to return to the Infested Barrens. Take the core to the stone altar to open the Matlan Waterways." },
     "optional": [
-      { "hint": "Find the corruption altar" }
+      { "id": "G3_6_2:1", "hint": "Find the corruption altar" }
     ]
   },
-  { "id": "G3_7", "name": "The Azak Bog", "act": 3,
+  { "id": "G3_7", "name": "The Azak Bog", "act": 3, "bosses": ["Ignagduk, the Bog Witch"],
     "optional": [
-      { "hint": "Defeat Ignagduk for Spirit", "leagueStart": true }
+      { "id": "G3_7:1", "hint": "Defeat Ignagduk for Spirit", "leagueStart": true }
     ]
   },
   { "id": "G3_8", "name": "The Drowned City", "act": 3, "objective": "Cross the ruins to the Apex of Filth",
+    "shortcut": { "cue": "Activate the Drowned City waypoint", "detail": "Activate the waypoint on your first visit. After getting the Temple Door Idol in Apex of Filth, travel back here and use the nearby entrance to the encampment." },
     "optional": [
-      { "hint": "Find the Molten Vault for Oswald" }
+      { "id": "G3_8:1", "hint": "Find the Molten Vault for Oswald" }
     ]
   },
-  { "id": "G3_9", "name": "The Molten Vault", "act": 3,
+  { "id": "G3_9", "name": "The Molten Vault", "act": 3, "bosses": ["Mektul, the Forgemaster"],
+    "shortcut": { "cue": "Checkpoint back to the vault entrance", "detail": "After taking the Hammer of Kamasa from Mektul, use checkpoint travel to the vault entrance. Return to the Drowned City and continue toward Apex of Filth." },
     "optional": [
-      { "hint": "Defeat Mektul and recover the forge treasure" }
+      { "id": "G3_9:1", "hint": "Defeat Mektul and recover the forge treasure" }
     ]
   },
   { "id": "G3_10_Airlock", "name": "The Temple of Chaos", "act": 3, "tip": "For the campaign Trial of Chaos, aim for character level 42–45 and high fire and lightning resistance.",
     "optional": [
-      { "hint": "Bring an Ultimatum to the Trial of Chaos", "leagueStart": true }
+      { "id": "G3_10_Airlock:1", "hint": "Bring an Ultimatum to the Trial of Chaos", "leagueStart": true }
     ]
   },
-  { "id": "G3_10", "name": "The Trial of Chaos", "act": 3, "tip": "For the campaign trial, aim for character level 42–45 and high fire and lightning resistance.",
+  { "id": "G3_10", "name": "The Trial of Chaos", "act": 3, "bosses": ["Uxmal, the Beastlord", "Chetza, the Feathered Plague", "Bahlak, the Sky Seer", "The Trialmaster"], "tip": "For the campaign trial, aim for character level 42–45 and high fire and lightning resistance.",
     "optional": [
-      { "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true }
+      { "id": "G3_10:1", "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true }
     ]
   },
-  { "id": "G3_11", "name": "Apex of Filth", "act": 3, "objective": "Defeat the queen and take the temple idol",
+  { "id": "G3_11", "name": "Apex of Filth", "act": 3, "bosses": ["The Queen of Filth"], "objective": "Defeat the queen and take the temple idol",
     "shortcut": { "cue": "Return via the Drowned City waypoint", "detail": "After collecting the Temple Door Idol, use the checkpoint to get back to the waypoint. Travel to the Drowned City and leave through its town entrance to reach Alva quickly." },
     "optional": [
-      { "hint": "Bring three mushrooms to the Cauldron Keeper" }
+      { "id": "G3_11:1", "hint": "Bring three mushrooms to the Cauldron Keeper" }
     ]
   },
-  { "id": "G3_12", "name": "Temple of Kopec", "act": 3, "objective": "Defeat Ketzuli and follow Alva through the gateway" },
-  { "id": "G3_14", "name": "Utzaal", "act": 3, "objective": "Defeat Viper Napuatzi and reach Aggorat",
+  { "id": "G3_12", "name": "Temple of Kopec", "act": 3, "bosses": ["Ketzuli, High Priest of the Sun"], "objective": "Defeat Ketzuli and follow Alva through the gateway" },
+  { "id": "G3_14", "name": "Utzaal", "act": 3, "bosses": ["Viper Napuatzi"], "objective": "Defeat Viper Napuatzi and reach Aggorat",
     "optional": [
-      { "hint": "Find the Sacrificial Heart" }
+      { "id": "G3_14:1", "hint": "Find the Sacrificial Heart" }
     ]
   },
   { "id": "G3_15", "name": "Library of Kamasa", "act": 3,
     "optional": [
-      { "hint": "Explore the library for its Vaal lore" }
+      { "id": "G3_15:1", "hint": "Explore the library for its Vaal lore" }
     ]
   },
   { "id": "G3_16", "name": "Aggorat", "act": 3, "objective": "Find the entrance to the Black Chambers",
     "optional": [
-      { "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true }
+      { "id": "G3_16:1", "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true }
     ]
   },
-  { "id": "G3_17", "name": "The Black Chambers", "act": 3, "objective": "Defeat Doryani and advance the story", "tip": "Prioritize fire and lightning resistance for Doryani. Move away from the back of the machine when its lasers fire." },
+  { "id": "G3_17", "name": "The Black Chambers", "act": 3, "bosses": ["Doryani, Royal Thaumaturge", "Doryani's Triumph"], "objective": "Defeat Doryani and advance the story", "tip": "Prioritize fire and lightning resistance for Doryani. Move away from the back of the machine when its lasers fire." },
   { "id": "G4_town", "name": "Kingsmarch", "act": 4, "objective": "Arrange passage with Makoru and investigate the islands" },
-  { "id": "G4_1_1", "name": "Isle of Kin", "act": 4, "objective": "Find the way into the Volcanic Warrens",
+  { "id": "G4_1_1", "name": "Isle of Kin", "act": 4, "bosses": ["The Blind Beast"], "objective": "Find the way into the Volcanic Warrens",
     "optional": [
-      { "hint": "Defeat the Blind Beast" },
-      { "hint": "Recover a torn map piece" }
+      { "id": "G4_1_1:1", "hint": "Defeat the Blind Beast" },
+      { "id": "G4_1_1:2", "hint": "Recover a torn map piece" }
     ]
   },
-  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "objective": "Defeat Krutog and release Matiki",
+  { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "bosses": ["Krutog, Lord of Kin"], "objective": "Defeat Krutog and release Matiki",
     "shortcut": { "cue": "Return to the ship after freeing Matiki", "detail": "After defeating Krutog and speaking to Matiki, take the return route to the ship. Ask Makoru to sail to your next island if you have no town turn-ins." }
   },
   { "id": "G4_2_1", "name": "Kedge Bay", "act": 4, "objective": "Continue along the coast to Journey’s End",
     "optional": [
-      { "hint": "Recover a torn map piece" }
+      { "id": "G4_2_1:1", "hint": "Recover a torn map piece" }
     ]
   },
-  { "id": "G4_2_2", "name": "Journey's End", "act": 4, "objective": "Defeat Captain Hartlin and recover Verisium",
+  { "id": "G4_2_2", "name": "Journey's End", "act": 4, "bosses": ["Captain Hartlin"], "objective": "Defeat Captain Hartlin and recover Verisium",
     "optional": [
-      { "hint": "Defeat Omniphobia for passive points", "leagueStart": true }
+      { "id": "G4_2_2:1", "hint": "Defeat Omniphobia for passive points", "leagueStart": true }
     ]
   },
-  { "id": "G4_3_1", "name": "Whakapanu Island", "act": 4, "objective": "Find the Singing Caverns",
+  { "id": "G4_3_1", "name": "Whakapanu Island", "act": 4, "bosses": ["Great White One"], "objective": "Find the Singing Caverns",
     "optional": [
-      { "hint": "Defeat the Great White One for its fin", "leagueStart": true },
-      { "hint": "Recover a torn map piece" }
+      { "id": "G4_3_1:1", "hint": "Defeat the Great White One for its fin", "leagueStart": true },
+      { "id": "G4_3_1:2", "hint": "Recover a torn map piece" }
     ]
   },
-  { "id": "G4_3_2", "name": "Singing Caverns", "act": 4, "objective": "Confront Diamora",
+  { "id": "G4_3_2", "name": "Singing Caverns", "act": 4, "bosses": ["Diamora, Song of Death"], "objective": "Confront Diamora",
     "shortcut": { "cue": "Return to the ship after Diamora", "detail": "After defeating Diamora, talk to the Hooded One and take the return route to the ship. You can save the Humming Pearl turn-in for your next planned town stop." },
     "optional": [
-      { "hint": "Recover the pearl from the clam" }
+      { "id": "G4_3_2:1", "hint": "Recover the pearl from the clam" }
     ]
   },
   { "id": "G4_4_1", "name": "Eye of Hinekora", "act": 4,
     "optional": [
-      { "hint": "Pass Hinekora’s trials" },
-      { "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true }
+      { "id": "G4_4_1:1", "hint": "Pass Hinekora’s trials" },
+      { "id": "G4_4_1:2", "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true }
     ]
   },
-  { "id": "G4_4_2", "name": "Halls of the Dead", "act": 4,
+  { "id": "G4_4_2", "name": "Halls of the Dead", "act": 4, "bosses": ["Yama The White"],
     "optional": [
-      { "hint": "Defeat Yama to reach the trial", "leagueStart": true },
-      { "hint": "Complete the three tattoo tests", "leagueStart": true }
+      { "id": "G4_4_2:1", "hint": "Defeat Yama to reach the trial", "leagueStart": true },
+      { "id": "G4_4_2:2", "hint": "Complete the three tattoo tests", "leagueStart": true }
     ]
   },
   { "id": "G4_4_3", "name": "Trial of the Ancestors", "act": 4,
     "optional": [
-      { "hint": "Speak with Navali for passive points", "leagueStart": true }
+      { "id": "G4_4_3:1", "hint": "Speak with Navali for passive points", "leagueStart": true }
     ]
   },
   { "id": "G4_5_1", "name": "Abandoned Prison", "act": 4, "objective": "Find the way into Solitary Confinement",
     "optional": [
-      { "hint": "Choose a flask bonus at the chapel", "leagueStart": true }
+      { "id": "G4_5_1:1", "hint": "Choose a flask bonus at the chapel", "leagueStart": true }
     ]
   },
-  { "id": "G4_5_2", "name": "Solitary Confinement", "act": 4, "objective": "Defeat the Prisoner using the ballistae" },
-  { "id": "G4_7", "name": "Shrike Island", "act": 4, "objective": "Defeat the Scourge of the Skies",
+  { "id": "G4_5_2", "name": "Solitary Confinement", "act": 4, "bosses": ["The Prisoner"], "objective": "Defeat the Prisoner using the ballistae",
+    "shortcut": { "cue": "Return to the ship after the Prisoner", "detail": "After the fight, speak to the Hooded One. Take the return route to the ship and talk to Makoru if you’re ready to sail to another island." }
+  },
+  { "id": "G4_7", "name": "Shrike Island", "act": 4, "bosses": ["Scourge of the Skies"], "objective": "Defeat the Scourge of the Skies",
     "optional": [
-      { "hint": "Recover a torn map piece" }
+      { "id": "G4_7:1", "hint": "Recover a torn map piece" }
     ]
   },
   { "id": "G4_8a", "name": "Arastas", "act": 4, "objective": "Speak to Lorandis and investigate Arastas" },
-  { "id": "G4_8b", "name": "Arastas", "act": 4, "objective": "Defeat Torvian and reach the Excavation",
+  { "id": "G4_8b", "name": "Arastas", "act": 4, "bosses": ["Torvian, Hand of the Saviour"], "objective": "Defeat Torvian and reach the Excavation",
     "optional": [
-      { "hint": "Find the two golden bells" }
+      { "id": "G4_8b:1", "hint": "Find the two golden bells" }
     ]
   },
   { "id": "G4_9_", "name": "Isle of Decay", "act": 4 },
-  { "id": "G4_10", "name": "The Excavation", "act": 4, "objective": "Defeat Benedictus and follow Tavakai" },
+  { "id": "G4_10", "name": "The Excavation", "act": 4, "bosses": ["Benedictus, First Herald of Utopia"], "objective": "Defeat Benedictus and follow Tavakai" },
   { "id": "G4_11_1a", "name": "Ngakanu", "act": 4, "objective": "Find the Heart of the Tribe",
     "optional": [
-      { "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
+      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
     ]
   },
   { "id": "G4_11_1b", "name": "Ngakanu", "act": 4, "objective": "Find the Heart of the Tribe",
     "optional": [
-      { "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
+      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true }
     ]
   },
-  { "id": "G4_11_2", "name": "Heart of the Tribe", "act": 4, "objective": "Defeat Tavakai and return to Kingsmarch", "tip": "Tavakai uses fire, cold, and lightning across his phases. Prepare all three elemental resistances." },
+  { "id": "G4_11_2", "name": "Heart of the Tribe", "act": 4, "bosses": ["Tavakai, the Chieftain"], "objective": "Defeat Tavakai and return to Kingsmarch", "tip": "Tavakai uses fire, cold, and lightning across his phases. Prepare all three elemental resistances." },
   { "id": "G4_13", "name": "Plunder's Point", "act": 4,
     "optional": [
-      { "hint": "Use the completed map to explore with Dannig" },
-      { "hint": "Complete the Runeseeker for the Verisium Anvil", "leagueStart": true }
+      { "id": "G4_13:1", "hint": "Use the completed map to explore with Dannig" },
+      { "id": "G4_13:2", "hint": "Complete the Runeseeker for the Verisium Anvil", "leagueStart": true }
     ]
   },
   { "id": "G4_14", "name": "Brinerot Cove", "act": 4 }

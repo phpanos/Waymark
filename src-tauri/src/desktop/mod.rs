@@ -5,7 +5,7 @@ mod watcher;
 mod window;
 
 use serde::Serialize;
-use settings::{Placement, Settings};
+use settings::{CampaignProfile, Placement, Settings};
 use std::{path::PathBuf, sync::Mutex};
 use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, AppHandle, Emitter, Manager, State};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
@@ -42,6 +42,7 @@ struct Snapshot {
     active_path: Option<PathBuf>,
     status: Status,
     zone: Option<Zone>,
+    character_level: Option<u8>,
     visible: bool,
     anchored: bool,
     log_error: Option<String>,
@@ -82,6 +83,11 @@ impl Runtime {
                 result = Err(e.to_string());
                 return false;
             }
+            if next.active_profile != s.settings.active_profile
+                || next.log_path != s.settings.log_path
+            {
+                s.character_level = None;
+            }
             s.settings = next;
             true
         });
@@ -114,11 +120,11 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
     }
     let state = app.state::<Runtime>();
     let s = state.read();
-    let result = app
-        .state::<Mutex<window::Tracker>>()
-        .lock()
-        .unwrap()
-        .apply(hwnd, s.settings.placement, s.visible);
+    let result = app.state::<Mutex<window::Tracker>>().lock().unwrap().apply(
+        hwnd,
+        s.settings.placement,
+        s.visible,
+    );
     let (anchored, error) = match result {
         Ok(anchored) => (anchored, None),
         Err(e) => (false, Some(e.to_string())),
@@ -184,8 +190,77 @@ fn use_discovery(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String
 }
 
 #[tauri::command]
-fn set_league_start(app: AppHandle, state: State<'_, Runtime>, enabled: bool) -> Result<(), String> {
+fn set_league_start(
+    app: AppHandle,
+    state: State<'_, Runtime>,
+    enabled: bool,
+) -> Result<(), String> {
     state.edit(&app, |settings| settings.league_start = enabled)
+}
+
+#[tauri::command]
+fn set_campaign_profile(
+    app: AppHandle,
+    state: State<'_, Runtime>,
+    character: String,
+    league: String,
+) -> Result<(), String> {
+    let character = character.trim();
+    let league = league.trim();
+    if [character, league]
+        .iter()
+        .any(|value| value.len() > 128 || value.chars().any(char::is_control))
+    {
+        return Err("Use a character and league name of up to 128 bytes.".into());
+    }
+    state.edit(&app, |settings| {
+        if character.is_empty() {
+            settings.active_profile = None;
+            return;
+        }
+        let index = settings.profiles.iter().position(|profile| {
+            profile.character.eq_ignore_ascii_case(character)
+                && profile.league.eq_ignore_ascii_case(league)
+        });
+        settings.active_profile = Some(index.unwrap_or_else(|| {
+            settings.profiles.push(CampaignProfile {
+                character: character.into(),
+                league: league.into(),
+                ..CampaignProfile::default()
+            });
+            settings.profiles.len() - 1
+        }));
+    })
+}
+
+#[tauri::command]
+fn set_objective_completed(
+    app: AppHandle,
+    state: State<'_, Runtime>,
+    profile: usize,
+    objective: String,
+    completed: bool,
+) -> Result<(), String> {
+    if objective.is_empty()
+        || objective.len() > 96
+        || !objective
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || matches!(b, b':' | b'_' | b'-'))
+    {
+        return Err("Invalid objective ID.".into());
+    }
+    if state.read().settings.active_profile != Some(profile) {
+        return Err("Choose a campaign character before marking objectives.".into());
+    }
+    state.edit(&app, |settings| {
+        if let Some(progress) = settings.profiles.get_mut(profile) {
+            if completed {
+                progress.completed.insert(objective);
+            } else {
+                progress.completed.remove(&objective);
+            }
+        }
+    })
 }
 
 #[tauri::command]
@@ -235,6 +310,8 @@ pub fn run() {
             pick_log,
             use_discovery,
             set_league_start,
+            set_campaign_profile,
+            set_objective_completed,
             replay_fixture,
             toggle_overlay,
             close_settings
@@ -320,6 +397,7 @@ pub fn run() {
             active_path: None,
             status: Status::Searching,
             zone: None,
+            character_level: None,
             visible: true,
             anchored: false,
             log_error: None,

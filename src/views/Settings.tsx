@@ -1,13 +1,15 @@
-import { useState, type FormEvent, type ReactNode } from 'react'
+import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
-import { campaignAreas, describeZone } from '../state/presentation'
+import { activeProfile, campaignAreas, describeZone, searchCampaign } from '../state/presentation'
+import { CharacterProfile } from './CharacterProfile'
 import { StatusLight } from './Compact'
 import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
-type Tab = 'Log source' | 'Position' | 'Objectives' | 'Diagnostics' | 'Updates'
+type Tab = 'Log source' | 'Position' | 'Objectives' | 'Build' | 'Diagnostics' | 'Updates'
+const Build = lazy(() => import('./Build'))
 const corners: [Corner, string][] = [['topLeft', 'Top left'], ['topRight', 'Top right'], ['bottomLeft', 'Bottom left'], ['bottomRight', 'Bottom right']]
 const campaignActs = [...new Set(campaignAreas.map(area => area.act))].sort((a, b) => a - b)
 
@@ -15,8 +17,12 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="field"><div className="eyebrow">{label}</div>{children}</div>
 }
 
-function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; leagueStart: boolean; run: Run }) {
+function Objectives({ zone, settings, run }: { zone: Snapshot['zone']; settings: Snapshot['settings']; run: Run }) {
   const [browse, setBrowse] = useState<{ act: number; areaId: string | null } | null>(null)
+  const [query, setQuery] = useState('')
+  const results = searchCampaign(query)
+  const profile = activeProfile(settings)
+  const profileIndex = settings.activeProfile
   const current = describeZone(zone)
   const act = browse?.act ?? current.act
   const areaId = browse ? browse.areaId : current.areaId
@@ -25,6 +31,15 @@ function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; league
   const optional = selected?.optional ?? []
 
   return <>
+    <label className="settings-field field">Search campaign
+      <input type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Area, boss, or reward"/>
+    </label>
+    {query.trim() && (results.length > 0 ? <ul className="campaign-results" aria-label="Campaign search results">
+      {results.map(area => <li key={area.id}><button type="button" onClick={() => {
+        setBrowse({ act: area.act, areaId: area.id })
+        setQuery('')
+      }}>{area.name} · Act {area.act}{results.some(other => other.id !== area.id && other.name === area.name) && ` (${area.id})`}</button></li>)}
+    </ul> : <p className="hint" role="status">No matching areas</p>)}
     <div className="campaign-picker">
       <label>Act
         <select name="campaignAct" value={act ?? ''} onChange={e => setBrowse({ act: Number(e.target.value), areaId: null })}>
@@ -45,9 +60,17 @@ function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; league
     {browse && <button type="button" className="campaign-reset" onClick={() => setBrowse(null)}>Use current zone</button>}
     {selected?.objective && <Field label="Story objective"><p>{selected.objective}</p></Field>}
     {optional.length > 0 && <Field label="Optional objectives">
-      <ul className="optional-list">{optional.map(objective => <li key={objective.hint}>
-        <span>{objective.hint}</span>{leagueStart && objective.leagueStart && <span className="recommended"> · Recommended</span>}
-      </li>)}</ul>
+      <ul className="optional-list">{optional.map(objective => {
+        const completed = profile?.completed.includes(objective.id) ?? false
+        const hint = <><span>{objective.hint}</span>{settings.leagueStart && objective.leagueStart && !completed && <span className="recommended"> · Recommended</span>}</>
+        return <li key={objective.id} className={completed ? 'objective-completed' : undefined}>
+          {profileIndex !== null && profile ? <label><input type="checkbox" checked={completed} onChange={e => {
+            const checked = e.target.checked
+            run(() => native.completeObjective(profileIndex, objective.id, checked))
+          }}/>{hint}</label> : hint}
+        </li>
+      })}</ul>
+      {!profile && <p className="hint">Choose a character to record completed objectives.</p>}
     </Field>}
     {!selected?.objective && optional.length === 0 && <p className="hint">
       {browse && !areaId ? 'Choose an area to see its objectives.' : 'No objective assigned'}
@@ -57,7 +80,8 @@ function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; league
       {!browse && zone?.level != null && <p className="encounter-level">Area level {zone.level}</p>}
       <p>{selected.tip}</p>
     </Field>}
-    <label className="check"><input type="checkbox" checked={leagueStart}
+    <CharacterProfile settings={settings} run={run}/>
+    <label className="check"><input type="checkbox" name="leagueStartRecommendations" checked={settings.leagueStart}
       onChange={e => { const enabled = e.target.checked; run(() => native.leagueStart(enabled)) }}/>
       League-start recommendations
     </label>
@@ -109,7 +133,7 @@ export function Settings({ state }: { state: Snapshot }) {
       <div className="readout-head"><span className="eyebrow">{state.status === 'replaying' || state.status === 'replayComplete' ? 'Fixture zone' : 'Latest zone'}</span><StatusLight status={state.status}/></div>
       <h2>{zone.title}</h2>{zone.act && <span className="act">Act {zone.act}</span>}
     </section>
-    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Objectives', 'Diagnostics', 'Updates'] as const).map(t =>
+    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Objectives', 'Build', 'Diagnostics', 'Updates'] as const).map(t =>
       <button key={t} disabled={busy} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
     <fieldset className="pane" disabled={busy} aria-label={tab}>
       {tab === 'Log source' && <>
@@ -121,7 +145,8 @@ export function Settings({ state }: { state: Snapshot }) {
       {tab === 'Position' &&
         <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>
       }
-      {tab === 'Objectives' && <Objectives zone={state.zone} leagueStart={state.settings.leagueStart} run={run}/>}
+      {tab === 'Objectives' && <Objectives zone={state.zone} settings={state.settings} run={run}/>}
+      {tab === 'Build' && <Suspense fallback={<p role="status">Loading build guide…</p>}><Build state={state} run={run}/></Suspense>}
       <div hidden={tab !== 'Updates'}><Updates/></div>
       {tab === 'Diagnostics' && <>
         <Field label="Fixture replay"><p>Play a sample log through the zone detector. Live log observation continues in the background.</p></Field>

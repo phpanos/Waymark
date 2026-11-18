@@ -8,6 +8,7 @@ use std::{
 const MAX_LINE: usize = 16 * 1024;
 const GUARD: usize = 64;
 const CHUNK: usize = 32 * 1024;
+const LEVEL_HISTORY: u64 = 1024 * 1024;
 
 #[derive(Default)]
 pub struct Lines {
@@ -35,6 +36,33 @@ impl Lines {
             }
         }
     }
+}
+
+/// Look back only for the selected character's latest complete level-up record.
+pub fn recent_character_level(path: &Path, character: &str) -> io::Result<Option<u8>> {
+    let mut file = File::open(path)?;
+    let length = file.metadata()?.len();
+    let start = length.saturating_sub(LEVEL_HISTORY);
+    file.seek(SeekFrom::Start(start))?;
+    let mut lines = Lines {
+        discard: start != 0,
+        ..Lines::default()
+    };
+    let mut bytes = [0; CHUNK];
+    let mut file = file.take(length - start);
+    let mut latest = None;
+    loop {
+        let count = file.read(&mut bytes)?;
+        if count == 0 {
+            break;
+        }
+        lines.push(&bytes[..count], |line| {
+            if let Some(level) = crate::parser::character_level(line, character) {
+                latest = Some(level);
+            }
+        });
+    }
+    Ok(latest)
 }
 
 pub enum Item<'a> {

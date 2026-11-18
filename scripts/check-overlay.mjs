@@ -131,25 +131,67 @@ try {
     })()`))
     await select('campaignAct', '2')
     await select('campaignArea', 'G2_13')
-    await expectText('Finish the Sekhemas trial for Ascendancy', '.optional-list li > span:first-child')
+    await expectText('Finish the Sekhemas trial for Ascendancy', '.optional-list li span:first-of-type')
     await expectText('For a first run, aim for character level 26–30. Equip relics with Honour resistance when available.')
     await select('campaignAct', '1')
     await expectText('Choose an area to see its objectives.')
     await select('campaignArea', 'G1_2')
     await expectText('Find the path into the Grelwood')
-    await expectText('Defeat Beira for cold resistance', '.optional-list li > span:first-child')
+    await expectText('Defeat Beira for cold resistance', '.optional-list li span:first-of-type')
     await select('campaignArea', 'G1_5')
     await expectText('ROUTE SHORTCUT')
     await expectText('After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls.')
     await click('Use current zone')
     await expectText('No objective assigned')
-    const recommendationToggle = 'document.querySelector("[aria-label=Objectives] input[type=checkbox]")'
+    const recommendationToggle = 'document.querySelector("[name=leagueStartRecommendations]")'
     const firstLaunch = argument === '1'
     const enabled = await evaluate(`${recommendationToggle}?.checked`)
     if (enabled !== !firstLaunch) throw new Error('Unexpected saved league-start preference')
     if (firstLaunch) await evaluate(`${recommendationToggle}.click()`)
     await click('Position')
     await expectText('Hold Alt and drag the Waymark header to move it. Release the mouse to save.')
+    await click('Objectives')
+    const fill = (selector, value) => evaluate(`(() => {
+      const input = document.querySelector(${JSON.stringify(selector)})
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(input, ${JSON.stringify(value)})
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    })()`)
+    await fill('input[type=search]', 'bloated miller')
+    await click('The Riverbank · Act 1')
+    await expectText('Reach Clearfell')
+    if (firstLaunch) {
+      await fill('input[name=character]', 'WaymarkSmoke')
+      await fill('input[name=league]', 'Smoke league')
+      await click('Use character')
+    }
+    await waitFor('saved campaign profile', () => evaluate('document.querySelector("select[name=activeProfile]")?.value === "0"'))
+    await select('campaignArea', 'G1_3')
+    const devourer = 'document.querySelector(".optional-list input[type=checkbox]")'
+    await waitFor('saved optional objective', () => evaluate(`${devourer}?.checked === ${!firstLaunch}`))
+    if (firstLaunch) {
+      await evaluate(`${devourer}.click()`)
+      await waitFor('completed objective', () => evaluate('!!document.querySelector(".objective-completed")'))
+    }
+    await click('Build')
+    await expectText('Import build files')
+    if (firstLaunch) {
+      await evaluate(`(() => {
+        const picker = document.querySelector('input[type=file]')
+        const transfer = new DataTransfer()
+        const build = { name: 'Smoke leveling build', skills: [
+          'Metadata/Items/Gem/SkillGemEarthquake',
+          { id: 'Metadata/Items/Gem/SkillGemArchmage', level_interval: [12, 100] }
+        ] }
+        transfer.items.add(new File([JSON.stringify(build)], 'smoke.build'))
+        picker.files = transfer.files
+        picker.dispatchEvent(new Event('change', { bubbles: true }))
+      })()`)
+    }
+    await expectText('Smoke leveling build', '.build-guide h2')
+    await expectText('Using level 1 (manual)')
+    await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 12.\r\n')
+    await expectText('Using level 12 (Client.txt)')
+    await expectText('Archmage', '.build-guide li:last-child strong')
   } else {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')

@@ -1,9 +1,18 @@
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeSet,
     fs,
     io::{self, Write},
     path::{Path, PathBuf},
 };
+
+#[derive(Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct CampaignProfile {
+    pub character: String,
+    pub league: String,
+    pub completed: BTreeSet<String>,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -48,6 +57,14 @@ pub struct Settings {
     pub log_path: Option<PathBuf>,
     pub placement: Placement,
     pub league_start: bool,
+    pub profiles: Vec<CampaignProfile>,
+    pub active_profile: Option<usize>,
+}
+
+impl Settings {
+    pub fn campaign_profile(&self) -> Option<&CampaignProfile> {
+        self.profiles.get(self.active_profile?)
+    }
 }
 
 pub fn load(path: &Path) -> (Settings, Option<String>) {
