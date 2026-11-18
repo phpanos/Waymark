@@ -7,7 +7,7 @@ export interface Snapshot {
   version: 1
   revision: number
   kind: 'snapshot' | 'zoneChanged' | 'zoneUpdated'
-  settings: { logPath: string | null; placement: Placement }
+  settings: { logPath: string | null; placement: Placement; leagueStart: boolean }
   activePath: string | null
   status: Status
   zone: Zone | null

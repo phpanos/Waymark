@@ -85,8 +85,8 @@ try {
         if ([OverlayCheck]::GetForegroundWindow() -eq $hwnd) { throw 'Compact window has foreground focus.' }
         if (Test-HotkeyAvailable) { throw 'Waymark did not register Alt+N.' }
         $check = Join-Path $PSScriptRoot 'check-overlay.mjs'
-        node $check $profile $log settings
-        if ($LASTEXITCODE -ne 0) { throw "Could not enter move mode on launch $launch." }
+        node $check $profile $log settings $launch
+        if ($LASTEXITCODE -ne 0) { throw "Settings controls failed on launch $launch." }
         Assert-OverlayStyle $hwnd $false
         node $check $profile $log cancel-move
         if ($LASTEXITCODE -ne 0) { throw "Could not cancel move mode on launch $launch." }

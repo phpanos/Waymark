@@ -252,6 +252,11 @@ fn use_discovery(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String
 }
 
 #[tauri::command]
+fn set_league_start(app: AppHandle, state: State<'_, Runtime>, enabled: bool) -> Result<(), String> {
+    state.edit(&app, |settings| settings.league_start = enabled)
+}
+
+#[tauri::command]
 fn replay_fixture(app: AppHandle, state: State<'_, Runtime>, enabled: bool) {
     state.mutate(&app, Kind::Snapshot, |s| {
         s.replay_session = if enabled {
@@ -299,6 +304,7 @@ pub fn run() {
             drag_overlay,
             pick_log,
             use_discovery,
+            set_league_start,
             replay_fixture,
             toggle_overlay,
             close_settings

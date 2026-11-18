@@ -2,16 +2,66 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot } from '../native/contract'
-import { describeZone } from '../state/presentation'
+import { campaignAreas, describeZone } from '../state/presentation'
 import { StatusLight } from './Compact'
 import { Updates } from './Updates'
 
 type Run = (task: () => Promise<void>) => void
-type Tab = 'Log source' | 'Position' | 'Diagnostics' | 'Updates'
+type Tab = 'Log source' | 'Position' | 'Objectives' | 'Diagnostics' | 'Updates'
 const corners: [Corner, string][] = [['topLeft', 'Top left'], ['topRight', 'Top right'], ['bottomLeft', 'Bottom left'], ['bottomRight', 'Bottom right']]
+const campaignActs = [...new Set(campaignAreas.map(area => area.act))].sort((a, b) => a - b)
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="field"><div className="eyebrow">{label}</div>{children}</div>
+}
+
+function Objectives({ zone, leagueStart, run }: { zone: Snapshot['zone']; leagueStart: boolean; run: Run }) {
+  const [browse, setBrowse] = useState<{ act: number; areaId: string | null } | null>(null)
+  const current = describeZone(zone)
+  const act = browse?.act ?? current.act
+  const areaId = browse ? browse.areaId : current.areaId
+  const choices = campaignAreas.filter(area => area.act === act)
+  const selected = browse ? choices.find(area => area.id === areaId) : current
+  const optional = selected?.optional ?? []
+
+  return <>
+    <div className="campaign-picker">
+      <label>Act
+        <select name="campaignAct" value={act ?? ''} onChange={e => setBrowse({ act: Number(e.target.value), areaId: null })}>
+          <option value="" disabled>Choose act</option>
+          {campaignActs.map(number => <option key={number} value={number}>Act {number}</option>)}
+        </select>
+      </label>
+      <label>Area
+        <select name="campaignArea" value={areaId ?? ''} disabled={act === null}
+          onChange={e => { if (act !== null) setBrowse({ act, areaId: e.target.value }) }}>
+          <option value="" disabled>Choose area</option>
+          {choices.map(area => <option key={area.id} value={area.id}>
+            {area.name}{choices.some(other => other.id !== area.id && other.name === area.name) ? ` (${area.id})` : ''}
+          </option>)}
+        </select>
+      </label>
+    </div>
+    {browse && <button type="button" className="campaign-reset" onClick={() => setBrowse(null)}>Use current zone</button>}
+    {selected?.objective && <Field label="Story objective"><p>{selected.objective}</p></Field>}
+    {optional.length > 0 && <Field label="Optional objectives">
+      <ul className="optional-list">{optional.map(objective => <li key={objective.hint}>
+        <span>{objective.hint}</span>{leagueStart && objective.leagueStart && <span className="recommended"> · Recommended</span>}
+      </li>)}</ul>
+    </Field>}
+    {!selected?.objective && optional.length === 0 && <p className="hint">
+      {browse && !areaId ? 'Choose an area to see its objectives.' : 'No objective assigned'}
+    </p>}
+    {selected?.tip && <Field label="Encounter tip">
+      {!browse && zone?.level != null && <p className="encounter-level">Area level {zone.level}</p>}
+      <p>{selected.tip}</p>
+    </Field>}
+    <label className="check"><input type="checkbox" checked={leagueStart}
+      onChange={e => { const enabled = e.target.checked; run(() => native.leagueStart(enabled)) }}/>
+      League-start recommendations
+    </label>
+    <p className="hint">Highlight optional objectives with lasting character rewards.</p>
+  </>
 }
 
 function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchored: boolean }) {
@@ -60,7 +110,7 @@ export function Settings({ state }: { state: Snapshot }) {
       <div className="readout-head"><span className="eyebrow">{state.status === 'replaying' || state.status === 'replayComplete' ? 'Fixture zone' : 'Latest zone'}</span><StatusLight status={state.status}/></div>
       <h2>{zone.title}</h2>{zone.act && <span className="act">Act {zone.act}</span>}
     </section>
-    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Diagnostics', 'Updates'] as const).map(t =>
+    <nav aria-label="Settings sections">{(['Log source', 'Position', 'Objectives', 'Diagnostics', 'Updates'] as const).map(t =>
       <button key={t} disabled={state.moving || busy} aria-current={t === tab ? 'page' : undefined} onClick={() => setTab(t)}>{t}</button>)}</nav>
     <fieldset className="pane" disabled={busy} aria-label={tab}>
       {tab === 'Log source' && <>
@@ -72,6 +122,7 @@ export function Settings({ state }: { state: Snapshot }) {
       {tab === 'Position' && <div hidden={state.moving}>
         <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>
       </div>}
+      {tab === 'Objectives' && <Objectives zone={state.zone} leagueStart={state.settings.leagueStart} run={run}/>}
       {state.moving && <>
         <p className="hint" role="status">Drag the Waymark header, then confirm here. The saved position stays within the current anchor.</p>
         <div className="position-actions">

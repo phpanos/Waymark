@@ -33,14 +33,25 @@ button:disabled { opacity: .55; cursor: default }
 .status.watching { color: #a2c6a5 }
 .status.replaying, .status.replayComplete { color: #c3b1de }
 .status.readError { color: #e9a78c }
-.zone-block { padding: 11px 0 8px; height: 73px }
+.zone-block { padding: 7px 0 4px; height: 58px }
 .eyebrow, .act { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .15em; text-transform: uppercase; color: #b5ad96 }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
 .zone-block h1 { font: 500 24px/1.5 var(--heading); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.035em }
-.objective { display: flex; gap: 9px; align-items: center; border-top: 1px solid var(--line); padding-top: 8px }
-.objective-mark { color: var(--gold); font: 22px/1 Georgia,serif }
-.objective p { color: #d1d2c9; font-size: 13px }
+.objective { border-top: 1px solid var(--line); padding-top: 5px }
+.story-objective { color: var(--paper); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.optional-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
+.optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
+.optional-hint { overflow: hidden; text-overflow: ellipsis }
+.optional-list { margin: 0; padding-left: 18px; color: var(--muted) }
+.recommended { color: #c1b89f; font-size: .9em }
+.encounter-level { color: var(--muted); font-size: 12px; margin-bottom: 4px }
+.campaign-picker { display: grid; grid-template-columns: minmax(82px, 1fr) minmax(0, 3fr); gap: 12px; margin-bottom: 13px }
+.campaign-picker label { display: grid; gap: 4px; color: var(--muted); font-size: 13px }
+.campaign-picker select { min-width: 0; width: 100%; padding: 6px 8px; border: 1px solid #575b50; border-radius: 3px; background: #101513; color: var(--paper); font: inherit }
+.campaign-picker select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px }
+.campaign-picker select:disabled { opacity: .6 }
+.campaign-reset { margin-bottom: 13px }
 .startup { padding: 14px; color: var(--paper); background: var(--panel) }
 .settings-window { background: #141918 }
 .settings { min-height: 100vh; padding: 26px 26px 0; display: flex; flex-direction: column; background: radial-gradient(ellipse at 70% 0%, #29312a66, transparent 58%), #151a19 }
@@ -50,7 +61,7 @@ button:disabled { opacity: .55; cursor: default }
 .settings h1 { font: 500 28px/1.2 var(--heading); letter-spacing: -.04em }
 .readout { border: 1px solid #5e5b48; border-left: 2px solid #b79b67; padding: 14px 17px; background: linear-gradient(110deg,#2b322b,#202623) }
 .readout h2 { font: 500 21px/1.4 var(--heading); margin-top: 5px; overflow-wrap: anywhere }
-nav { display: flex; border-bottom: 1px solid var(--line); gap: 20px; margin: 17px 0 20px }
+nav { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line); column-gap: 13px; margin: 17px 0 20px }
 button { padding: 8px 13px; border: 1px solid #575b50; border-radius: 3px; background: #272e29; color: var(--paper); font-size: 14px; font-weight: 600 }
 button:hover:enabled { background: #343d35; border-color: #a2987e }
 nav button { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 9px 0; color: var(--muted) }

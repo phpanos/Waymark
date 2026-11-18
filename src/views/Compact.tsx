@@ -14,6 +14,9 @@ export function Compact({ state }: { state: Snapshot }) {
     if (!state.moving) setDragError('')
   }, [state.moving])
   const zone = describeZone(state.zone)
+  const showRecommendations = state.settings.leagueStart
+  const recommended = showRecommendations ? zone.optional.find(objective => objective.leagueStart) : undefined
+  const featuredOptional = recommended ?? zone.optional[0]
   const context = state.zone && (state.status === 'missing' || state.status === 'readError') ? 'Last zone' : 'Current zone'
   return <main className="compact">
     {state.moving ? <div className="move-handle" onMouseDown={event => {
@@ -30,6 +33,17 @@ export function Compact({ state }: { state: Snapshot }) {
       <div className="eyebrow">{context}{zone.act && <span className="act">Act {zone.act}</span>}</div>
       <h1 title={zone.title}>{zone.title}</h1>
     </div>
-    <footer className="objective"><span className="objective-mark" aria-hidden="true">◇</span><div><div className="eyebrow">Next objective</div><p>No objective assigned</p></div></footer>
+    <footer className="objective">
+      {(zone.objective || !featuredOptional) && <>
+        <div className="eyebrow">Story objective</div>
+        <p className="story-objective" title={zone.objective ?? undefined}>{zone.objective ?? 'No objective assigned'}</p>
+      </>}
+      {featuredOptional && <div className="optional-preview" title={featuredOptional.hint}>
+        <span className="optional-label">Optional</span>
+        <span className="optional-hint">{featuredOptional.hint}</span>
+        {recommended && <span className="recommended">Recommended</span>}
+        {zone.optional.length > 1 && <span>+{zone.optional.length - 1}</span>}
+      </div>}
+    </footer>
   </main>
 }

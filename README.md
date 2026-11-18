@@ -1,6 +1,6 @@
 # Waymark
 
-Waymark is a Windows 10/11 campaign overlay for Path of Exile 2. It tails newly appended `Client.txt` records and shows the latest detected zone, act when known, log status, and an empty objective slot. Windowed Fullscreen is the initial target. Sprint 1 includes one reference area and no campaign routes.
+Waymark is a Windows 10/11 campaign overlay for Path of Exile 2. It tails newly appended `Client.txt` records and shows the latest detected zone, act when known, log status, and story and optional objective hints for Acts 1–4. Windowed Fullscreen is the initial target.
 
 ## In-app updates
 
@@ -36,9 +36,17 @@ With the default Cargo target directory, the executable is `target\release\wayma
 3. In **Settings → Log source**, check the selected path. Auto-detection checks standalone install locations and Steam libraries, including custom libraries declared in `libraryfolders.vdf`. Use **Choose Client.txt…** for a custom install. **Use auto-detection** clears a manual selection.
 4. **Alt+N** toggles the compact window globally. If Windows refuses registration, the settings window shows the error and the tray toggle remains available.
 5. In **Settings → Position**, select **Move overlay**, drag the Waymark header, then choose **Confirm position** or **Cancel**. Waymark saves the confirmed position relative to the current anchor and restores click-through when move mode ends. To place it with exact insets, choose a corner, enter the insets in device-independent pixels, and select **Save position**. **Done** or the window close button hides Settings and cancels any move in progress.
-6. **Settings → Diagnostics → Replay fixture** runs the bundled synthetic log through the Rust decoder and detector. The status reads **Replaying** and then **Replay complete**. Expect **The Riverbank · Act 1**, followed by **Fixture_Unknown_02** with no act. Choose **Return to live** to display the latest live observation, including transitions received during replay.
+6. **Settings → Diagnostics → Replay fixture** runs the bundled synthetic log through the Rust decoder and detector. The status reads **Replaying** and then **Replay complete**. Expect **The Riverbank · Act 1** with **Reach Clearfell**, followed by **Fixture_Unknown_02** with no act or assigned objective. Choose **Return to live** to display the latest live observation, including transitions received during replay.
 
 Settings are saved on change under `%APPDATA%\app.waymark.overlay\settings-v1.json`, using a temporary file and replacement. Placement and the manual path survive restart. Visibility, replay mode and the current zone are session state.
+
+## Campaign objectives
+
+The compact overlay shows the area's story hint and a muted optional hint when available. **Settings → Objectives** follows the detected zone by default. Choose an act and area to browse its hints and rewards, then select **Use current zone** to resume following the game. Enable **League-start recommendations** there to highlight lasting rewards such as passive points, Spirit, and Ascendancy unlocks. Waymark saves that preference across restarts. Area hints can still appear after you complete the objective.
+
+The bundled catalog uses area IDs checked against [ExileData's 0.5.5.10 export](https://data.exiledata.dev/poe2/0.5.5.10/world_areas.min.json) and hints based on PoE2DB's [Act 1](https://poe2db.tw/us/Act_1), [Act 2](https://poe2db.tw/us/Act_2), [Act 3](https://poe2db.tw/us/Act_3), and [Act 4](https://poe2db.tw/us/Act_4) references. Recommendations focus on permanent campaign rewards and don’t depend on the league mechanic.
+
+**Settings → Objectives** also shows preparation tips for selected bosses and Ascendancy trials. The detected area level and any suggested character level are labeled separately. The suggested levels for a first trial are approximate and depend on your build and gear. [Campaign and trial preparation reference](https://buildmentor.org/new-player-guide/)
 
 ## Project layout
 

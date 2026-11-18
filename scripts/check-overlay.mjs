@@ -4,7 +4,7 @@ import path from 'node:path'
 import { createServer } from 'node:http'
 import { setTimeout as delay } from 'node:timers/promises'
 
-const [profile, log, view, installer, version] = process.argv.slice(2)
+const [profile, log, view, argument, version] = process.argv.slice(2)
 
 async function waitFor(description, probe) {
   const deadline = Date.now() + 45_000
@@ -63,9 +63,9 @@ try {
       } }))
     })
   }
-  async function expectText(text) {
+  async function expectText(text, selector = 'body') {
     await waitFor(text, async () => {
-      const body = await evaluate("document.body?.innerText ?? ''")
+      const body = await evaluate(`document.querySelector(${JSON.stringify(selector)})?.innerText ?? ''`)
       if (!body.split(/\r?\n/).some(line => line.trim() === text)) {
         throw new Error(`Last rendered text: ${JSON.stringify(body)}`)
       }
@@ -73,11 +73,17 @@ try {
     })
     console.log(`Overlay displayed '${text}'`)
   }
-  const click = label => evaluate(`Array.from(document.querySelectorAll('button'))
-    .find(button => !button.disabled && !button.closest('[hidden]') && button.textContent.trim() === ${JSON.stringify(label)})?.click()`)
+  const click = label => waitFor(`enabled ${label} button`, () => evaluate(`(() => {
+    const button = Array.from(document.querySelectorAll('button'))
+      .find(button => !button.matches(':disabled') && !button.closest('[hidden]') && button.textContent.trim() === ${JSON.stringify(label)})
+    if (!button) return false
+    button.click()
+    return true
+  })()`))
   await expectText('Connected')
   await expectText('Awaiting zone')
   if (view === 'update') {
+    const installer = argument
     const exe = await readFile(installer)
     const signature = (await readFile(installer + '.sig', 'utf8')).trim()
     const manifest = JSON.stringify({
@@ -113,6 +119,32 @@ try {
     }
   } else if (view === 'settings') {
     await expectText('Settings')
+    await click('Objectives')
+    await expectText('League-start recommendations')
+    const select = (name, value) => waitFor(`${name} option ${value}`, () => evaluate(`(() => {
+      const picker = document.querySelector(${JSON.stringify(`select[name=${name}]`)})
+      const value = ${JSON.stringify(value)}
+      if (!picker || picker.disabled || !Array.from(picker.options).some(option => option.value === value)) return false
+      picker.value = value
+      picker.dispatchEvent(new Event('change', { bubbles: true }))
+      return true
+    })()`))
+    await select('campaignAct', '2')
+    await select('campaignArea', 'G2_13')
+    await expectText('Finish the Sekhemas trial for Ascendancy', '.optional-list li > span:first-child')
+    await expectText('For a first run, aim for character level 26–30. Equip relics with Honour resistance when available.')
+    await select('campaignAct', '1')
+    await expectText('Choose an area to see its objectives.')
+    await select('campaignArea', 'G1_2')
+    await expectText('Find the path into the Grelwood')
+    await expectText('Defeat Beira for cold resistance', '.optional-list li > span:first-child')
+    await click('Use current zone')
+    await expectText('No objective assigned')
+    const recommendationToggle = 'document.querySelector("[aria-label=Objectives] input[type=checkbox]")'
+    const firstLaunch = argument === '1'
+    const enabled = await evaluate(`${recommendationToggle}?.checked`)
+    if (enabled !== !firstLaunch) throw new Error('Unexpected saved league-start preference')
+    if (firstLaunch) await evaluate(`${recommendationToggle}.click()`)
     await click('Position')
     await expectText('Move overlay')
     await click('Move overlay')
@@ -123,12 +155,18 @@ try {
   } else {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')
+    await expectText('Reach Clearfell')
     await appendFile(log, '[SCENE] Set Source [Smoke test crossing]\r\n')
     await expectText('Smoke test crossing')
+    await appendFile(log, 'Generating level 2 area "G1_2"\r\n')
+    await expectText('Find the path into the Grelwood')
+    await expectText('Defeat Beira for cold resistance', '.optional-hint')
+    await expectText('Recommended', '.optional-preview .recommended')
     await rename(log, log + '.' + process.pid + '.old')
     await expectText('File missing')
     await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')
     await expectText('Smoke_Unknown')
+    await expectText('No objective assigned')
   }
 } finally {
   socket.close()

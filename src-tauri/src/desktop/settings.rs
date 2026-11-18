@@ -47,6 +47,7 @@ impl Placement {
 pub struct Settings {
     pub log_path: Option<PathBuf>,
     pub placement: Placement,
+    pub league_start: bool,
 }
 
 pub fn load(path: &Path) -> (Settings, Option<String>) {

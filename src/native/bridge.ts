@@ -8,6 +8,7 @@ export const native = {
   pick: () => invoke<void>('pick_log'),
   discover: () => invoke<void>('use_discovery'),
   position: (placement: Placement) => invoke<void>('set_placement', { placement }),
+  leagueStart: (enabled: boolean) => invoke<void>('set_league_start', { enabled }),
   beginMove: () => invoke<void>('begin_move'),
   finishMove: (save: boolean) => invoke<void>('finish_move', { save }),
   dragOverlay: () => invoke<void>('drag_overlay'),
