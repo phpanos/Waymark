@@ -15,7 +15,7 @@ Run on Windows 10 and 11 x64 with WebView2 installed. Record Windows build, game
 
 ## On-demand Windows check
 
-In GitHub Actions, choose **Windows validation → Run workflow**. The Windows Server 2022 runner tests the log core on NTFS, runs Vitest, builds an x64 executable and NSIS installer, and launches the executable with a disposable Client.txt. The smoke test queries only Waymark's own window and rendered text. It starts a disposable WebView2 profile with a loopback debugging port for this test process. It checks the passive window styles, Alt+N registration, new zone records, and recovery after rotation. A successful run retains the unsigned installer as a workflow artifact for seven days.
+In GitHub Actions, choose **Windows validation → Run workflow**. The Windows Server 2022 runner tests the log core on NTFS, runs Vitest, builds an x64 executable and NSIS installer, and launches the executable with a disposable Client.txt. The smoke test queries only Waymark's own window and rendered text. It starts a disposable WebView2 profile with a loopback debugging port for this test process. It launches Waymark three times using the same settings and WebView2 profile. On each launch it checks that both windows load their initial state, then checks the passive window styles, Alt+N registration, new zone records, and recovery after rotation. A successful run retains the unsigned installer as a workflow artifact for seven days.
 
 To repeat the native smoke test in a clean Windows test profile, build the app and run the following from the repository root in Windows PowerShell with Node.js 24 available. The script needs a desktop session and an unused Alt+N shortcut. It exits if the profile already has Waymark settings.
 

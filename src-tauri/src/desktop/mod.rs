@@ -163,7 +163,7 @@ fn close_settings(app: AppHandle) -> Result<(), String> {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
             snapshot,
@@ -175,26 +175,6 @@ pub fn run() {
             close_settings
         ])
         .setup(|app| {
-            let file = app.path().app_config_dir()?.join("settings-v1.json");
-            let (settings, notice) = settings::load(&file);
-            app.manage(Runtime {
-                file,
-                snapshot: Mutex::new(Snapshot {
-                    version: 1,
-                    revision: 0,
-                    kind: Kind::Snapshot,
-                    settings,
-                    active_path: None,
-                    status: Status::Searching,
-                    zone: None,
-                    visible: true,
-                    anchored: false,
-                    log_error: None,
-                    notices: notice.into_iter().collect(),
-                    window_error: None,
-                    replay_session: 0,
-                }),
-            });
             if let Err(e) = app.global_shortcut().on_shortcut("Alt+N", |app, _, event| {
                 if event.state == ShortcutState::Pressed {
                     toggle(app);
@@ -247,6 +227,34 @@ pub fn run() {
                 }
             }
         })
-        .run(tauri::generate_context!())
-        .expect("Unable to start Waymark");
+        .build(tauri::generate_context!())
+        .expect("Unable to build Waymark");
+
+    // Tauri creates configured windows on Ready, before calling our setup hook.
+    // Register the command state before starting the event loop so even a cached page can read it.
+    let file = app
+        .path()
+        .app_config_dir()
+        .expect("Unable to resolve the Waymark settings directory")
+        .join("settings-v1.json");
+    let (settings, notice) = settings::load(&file);
+    app.manage(Runtime {
+        file,
+        snapshot: Mutex::new(Snapshot {
+            version: 1,
+            revision: 0,
+            kind: Kind::Snapshot,
+            settings,
+            active_path: None,
+            status: Status::Searching,
+            zone: None,
+            visible: true,
+            anchored: false,
+            log_error: None,
+            notices: notice.into_iter().collect(),
+            window_error: None,
+            replay_session: 0,
+        }),
+    });
+    app.run(|_, _| {});
 }

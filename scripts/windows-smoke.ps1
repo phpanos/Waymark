@@ -63,20 +63,28 @@ try {
     $start.UseShellExecute = $false
     $start.EnvironmentVariables['WEBVIEW2_USER_DATA_FOLDER'] = $profile
     $start.EnvironmentVariables['WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS'] = '--remote-debugging-port=0 --remote-debugging-address=127.0.0.1'
-    $process = [Diagnostics.Process]::Start($start)
-    $hwnd = Wait-For 'the compact Waymark window' {
-        $process.Refresh()
-        if ($process.MainWindowTitle -eq 'Waymark') { $process.MainWindowHandle }
+    # Reuse both the settings and WebView2 disk cache to cover warm launches.
+    foreach ($launch in 1..3) {
+        Write-Host "Testing launch $launch with the same profile"
+        $process = [Diagnostics.Process]::Start($start)
+        $hwnd = Wait-For 'the compact Waymark window' {
+            $process.Refresh()
+            if ($process.MainWindowTitle -eq 'Waymark') { $process.MainWindowHandle }
+        }
+        $style = [OverlayCheck]::GetWindowLong($hwnd, -20)
+        # WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_EX_LAYERED, WS_EX_NOACTIVATE.
+        $required = 0x08080028
+        if (($style -band $required) -ne $required) { throw ('Missing passive window styles: 0x{0:X}' -f $style) }
+        if (![OverlayCheck]::IsWindowVisible($hwnd)) { throw 'Compact window is hidden.' }
+        if ([OverlayCheck]::GetForegroundWindow() -eq $hwnd) { throw 'Compact window has foreground focus.' }
+        if (Test-HotkeyAvailable) { throw 'Waymark did not register Alt+N.' }
+        foreach ($view in 'settings', 'overlay') {
+            node (Join-Path $PSScriptRoot 'check-overlay.mjs') $profile $log $view
+            if ($LASTEXITCODE -ne 0) { throw "Rendered $view check failed on launch $launch." }
+        }
+        $process.Kill()
+        $process.WaitForExit()
     }
-    $style = [OverlayCheck]::GetWindowLong($hwnd, -20)
-    # WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_EX_LAYERED, WS_EX_NOACTIVATE.
-    $required = 0x08080028
-    if (($style -band $required) -ne $required) { throw ('Missing passive window styles: 0x{0:X}' -f $style) }
-    if (![OverlayCheck]::IsWindowVisible($hwnd)) { throw 'Compact window is hidden.' }
-    if ([OverlayCheck]::GetForegroundWindow() -eq $hwnd) { throw 'Compact window has foreground focus.' }
-    if (Test-HotkeyAvailable) { throw 'Waymark did not register Alt+N.' }
-    node (Join-Path $PSScriptRoot 'check-overlay.mjs') $profile $log
-    if ($LASTEXITCODE -ne 0) { throw 'Rendered overlay check failed.' }
     Write-Host 'Native overlay, hotkey registration and live log recovery passed.'
 } finally {
     if ($process -and !$process.HasExited) { $process.Kill(); $process.WaitForExit() }

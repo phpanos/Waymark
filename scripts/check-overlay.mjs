@@ -1,9 +1,9 @@
-// Node 24. Read the rendered compact view through the disposable test WebView's loopback endpoint.
+// Node 24. Read the rendered settings or compact view through the disposable test WebView's loopback endpoint.
 import { appendFile, readdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout as delay } from 'node:timers/promises'
 
-const [profile, log] = process.argv.slice(2)
+const [profile, log, view] = process.argv.slice(2)
 
 async function waitFor(description, probe) {
   const deadline = Date.now() + 45_000
@@ -20,17 +20,15 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const port = await waitFor('WebView2 debugging port', async () => {
+const target = await waitFor(`local ${view} page`, async () => {
+  // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
   const active = files.find(name => path.basename(name) === 'DevToolsActivePort')
   if (!active) return
-  return Number((await readFile(path.join(profile, active), 'utf8')).split('\n')[0])
-})
-
-const target = await waitFor('local compact page', async () => {
+  const port = Number((await readFile(path.join(profile, active), 'utf8')).split('\n')[0])
   const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`, { signal: AbortSignal.timeout(3000) })).json()
   const page = pages.find(p => p.type === 'page' && new URL(p.url).hostname === 'tauri.localhost' &&
-    !new URL(p.url).searchParams.has('view'))
+    (new URL(p.url).searchParams.get('view') ?? 'overlay') === view)
   if (!page) throw new Error(`Page URLs: ${pages.map(p => p.url).join(', ')}`)
   return page
 })
@@ -75,14 +73,18 @@ try {
   }
   await expectText('Connected')
   await expectText('Awaiting zone')
-  await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
-  await expectText('The Riverbank')
-  await appendFile(log, '[SCENE] Set Source [Smoke test crossing]\r\n')
-  await expectText('Smoke test crossing')
-  await rename(log, log + '.old')
-  await expectText('File missing')
-  await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')
-  await expectText('Smoke_Unknown')
+  if (view === 'settings') {
+    await expectText('Settings')
+  } else {
+    await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
+    await expectText('The Riverbank')
+    await appendFile(log, '[SCENE] Set Source [Smoke test crossing]\r\n')
+    await expectText('Smoke test crossing')
+    await rename(log, log + '.' + process.pid + '.old')
+    await expectText('File missing')
+    await writeFile(log, 'Generating level 9 area "Smoke_Unknown"\r\n')
+    await expectText('Smoke_Unknown')
+  }
 } finally {
   socket.close()
 }
