@@ -23,6 +23,7 @@ button:disabled { opacity: .55; cursor: default }
   box-shadow: inset 0 0 0 3px #1b201df0, inset 0 0 0 4px #685e443d;
   padding: 0 16px; user-select: none;
 }
+.compact.with-build { height: 190px }
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--heading); letter-spacing: .19em; text-transform: uppercase; color: #dfc99d }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
@@ -56,6 +57,12 @@ button:disabled { opacity: .55; cursor: default }
 .route-preview.direction .optional-hint { font-weight: 600 }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
+.build-milestone { margin-top: 3px; border-top: 1px solid var(--line); padding-top: 2px; color: #a9c6bf; font-size: 11px }
+.build-milestone-row { display: flex; align-items: baseline; gap: 6px; line-height: 15px }
+.build-milestone-row .optional-label { flex-shrink: 0; white-space: nowrap }
+.build-milestone-change { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.compact.expanded .build-milestone-change { white-space: normal; overflow-wrap: anywhere }
+.build-milestone-more { margin: 2px 0 0; padding-left: 20px; overflow-wrap: anywhere }
 .optional-list { margin: 0; padding-left: 18px; color: var(--muted) }
 .recommended { color: #c1b89f; font-size: .9em }
 .encounter-level { color: var(--muted); font-size: 12px; margin-bottom: 4px }

@@ -226,7 +226,12 @@ try {
         const transfer = new DataTransfer()
         const build = { name: 'Smoke leveling build', skills: [
           'Metadata/Items/Gem/SkillGemEarthquake',
-          { id: 'Metadata/Items/Gem/SkillGemArchmage', level_interval: [12, 100] }
+          { id: 'Metadata/Items/Gem/SkillGemArchmage', level_interval: [12, 100] },
+          { id: 'Metadata/Items/Gem/SkillGemRollingSlam', level_interval: [14, 100] }
+        ], passives: [
+          { id: 'accuracy1', level_interval: 16 }
+        ], inventory_slots: [
+          { inventory_id: 'Weapon1', unique_name: 'Smoke weapon', level_interval: [20, 100] }
         ] }
         transfer.items.add(new File([JSON.stringify(build)], 'smoke.build'))
         picker.files = transfer.files
@@ -238,6 +243,8 @@ try {
     await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 12.\r\n')
     await expectText('Using level 12 (Client.txt)')
     await expectText('Archmage', '.build-guide li:last-child strong')
+    await click('Preview level 14')
+    await expectText('Using level 14 (preview)')
   } else {
     await appendFile(log, 'Generating level 1 area "G1_1"\r\n')
     await expectText('The Riverbank')
@@ -251,12 +258,23 @@ try {
     await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
     await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
     await expectText('Tag the Grim Tangle waypoint early', '.route-preview:not(.direction) .optional-hint')
+    await expectText('Gem · Rolling Slam', '.build-milestone-change')
+    await expectText('BUILD LV 14', '.build-milestone-row .optional-label')
     await waitFor('all Grelwood hints fit inside the overlay', () => evaluate(`(() => {
       const card = document.querySelector('.compact').getBoundingClientRect()
       const optional = document.querySelector('.optional-preview')
       const cue = document.querySelector('.direction .optional-hint')
-      return optional?.getBoundingClientRect().bottom <= card.bottom - 1 && cue?.scrollWidth <= cue?.clientWidth
+      const milestone = document.querySelector('.build-milestone')
+      return optional && milestone?.getBoundingClientRect().bottom <= card.bottom - 1 && cue?.scrollWidth <= cue?.clientWidth
     })()`))
+    await appendFile(log, '[INFO Client 42] : OtherCharacter (Warrior) is now level 99.\r\n')
+    await expectText('Gem · Rolling Slam', '.build-milestone-change')
+    await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 14.\r\n')
+    await expectText('Passive · Accuracy', '.build-milestone-change')
+    await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 16.\r\n')
+    await expectText('Gear · Smoke weapon', '.build-milestone-change')
+    await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 20.\r\n')
+    await waitFor('the last build milestone to clear', () => evaluate('!document.querySelector(".build-milestone")'))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
     await expectText('Portal after crossing the canals', '.route-preview:not(.direction) .optional-hint')
     await rename(log, log + '.' + process.pid + '.old')

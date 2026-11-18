@@ -16,6 +16,14 @@ export type BuildGuide = {
   gear: Gear[]
 }
 
+export type BuildChange =
+  | { kind: 'gem'; id: string }
+  | { kind: 'support'; id: string; skillId: string }
+  | { kind: 'gear'; item: Gear }
+  | { kind: 'passive'; passive: Passive }
+
+export type BuildMilestone = { level: number; changes: BuildChange[] }
+
 function record(value: unknown): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error('Invalid build entry.')
   return value as Record<string, unknown>
@@ -86,24 +94,37 @@ function atLevel({ range: [first, last] }: { range: Range }, level: number) {
   return first <= level && level <= last
 }
 
+function* scheduledChanges(build: BuildGuide): Generator<[number, BuildChange]> {
+  for (const skill of build.skills) {
+    yield [skill.range[0], { kind: 'gem', id: skill.id }]
+    for (const support of skill.supports) {
+      const start = Math.max(support.range[0], skill.range[0])
+      if (start <= Math.min(support.range[1], skill.range[1])) {
+        yield [start, { kind: 'support', id: support.id, skillId: skill.id }]
+      }
+    }
+  }
+  for (const item of build.gear) yield [item.range[0], { kind: 'gear', item }]
+  for (const passive of build.passives) yield [passive.range[0], { kind: 'passive', passive }]
+}
+
+export function nextBuildMilestone(build: BuildGuide, level: number): BuildMilestone | null {
+  let next: BuildMilestone | null = null
+  for (const [start, change] of scheduledChanges(build)) {
+    if (start <= level) continue
+    if (!next || start < next.level) next = { level: start, changes: [change] }
+    else if (start === next.level) next.changes.push(change)
+  }
+  return next
+}
+
 export function guidanceAtLevel(build: BuildGuide, level: number) {
-  const nextLevel = [
-    ...build.skills.flatMap(skill => [
-      skill.range[0],
-      ...skill.supports.flatMap(({ range }) => {
-        const start = Math.max(range[0], skill.range[0])
-        return start <= Math.min(range[1], skill.range[1]) ? [start] : []
-      }),
-    ]),
-    ...build.gear.map(item => item.range[0]),
-    ...build.passives.map(passive => passive.range[0]),
-  ].reduce<number | null>((next, start) => start > level && (next === null || start < next) ? start : next, null)
   return {
     skills: build.skills.filter(skill => atLevel(skill, level)).map(skill => ({
       ...skill, supports: skill.supports.filter(support => atLevel(support, level)),
     })),
     gear: build.gear.filter(item => atLevel(item, level)),
     passives: build.passives.filter(passive => atLevel(passive, level)),
-    nextLevel,
+    nextLevel: nextBuildMilestone(build, level)?.level ?? null,
   }
 }

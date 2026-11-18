@@ -64,6 +64,8 @@ Quick completion updates the same checklist as Settings. It uses the selected ch
 
 Open **Settings → Build** and choose a local PoE 2 `.build` export. If the guide offers multiple leveling stages, import the files together and select the stage you want. Waymark shows skills, supports, passive recommendations and gear notes for the selected level. **Preview level** shows the next level with new guidance. Imported files and level preferences are stored locally. [Build Planner format](https://www.pathofexile.com/developer/docs/game#buildplanner), [Path of Building export](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/dev/src/Classes/ImportTab.lua), [Mobalytics exports](https://mobalytics.gg/poe-2/guides/build-files).
 
+The overlay shows the next level with a scheduled gem, support, passive, or gear change from the selected build file. It advances as the character levels up and uses the same manual fallback as the Build tab. Expanding the overlay shows more changes scheduled for the same level. Builds without future level intervals have no upcoming cue.
+
 For automatic level tracking, enter your in-game character name and enable **Use character level from Client.txt**. Waymark looks for that character's English level-up messages in the last 1 MiB of the selected log, then follows new messages as they arrive. Set a manual level if a matching record is unavailable or if you want to read another part of the guide. The game log supplies the character name and level. The league label organizes your saved checklists and manual preferences. Gem, passive and campaign boss labels use the [0.5.5.10 ExileData export](https://data.exiledata.dev/poe2/0.5.5.10/).
 
 ## Project layout

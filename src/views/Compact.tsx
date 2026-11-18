@@ -1,9 +1,12 @@
-import { useEffect, useRef } from 'react'
+import { lazy, Suspense, useEffect, useRef } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Snapshot, Status } from '../native/contract'
 import { completedObjectives, describeZone, statusText, type Route } from '../state/presentation'
+import { useBuildMilestone } from '../state/use-build-milestone'
 import { RewardRecap, useRewardRecap } from './RewardRecap'
+
+const BuildMilestoneRow = lazy(() => import('./BuildMilestone'))
 
 export function StatusLight({ status }: { status: Status }) {
   return <span className={'status ' + status}><i aria-hidden="true" />{statusText[status]}</span>
@@ -32,6 +35,7 @@ export function Compact({ state }: { state: Snapshot }) {
   }, [])
 
   const zone = describeZone(state.zone)
+  const milestone = useBuildMilestone(state)
   const completed = completedObjectives(state.settings)
   const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
   const showRecommendations = state.settings.leagueStart
@@ -44,9 +48,9 @@ export function Compact({ state }: { state: Snapshot }) {
   const tip = stale ? null : zone.tip
   const hasDirections = !!(route || shortcut || tip || remaining.length)
   const recap = useRewardRecap(state, zone.act, zone.areaId, hasDirections)
-  const hasDetails = hasDirections || recap.available
+  const hasDetails = hasDirections || recap.available || !!milestone
   const expanded = state.detailsExpanded && hasDetails
-  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}`}>
+  return <main ref={panel} className={`compact${shortcut ? ' with-shortcut' : ''}${route ? ' with-route' : ''}${expanded ? ' expanded' : ''}${milestone ? ' with-build' : ''}`}>
     <header className="compact-head"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></header>
     <div className="zone-block">
       <div className="zone-meta">
@@ -79,7 +83,8 @@ export function Compact({ state }: { state: Snapshot }) {
         {recommended && <span className="recommended">Recommended</span>}
         {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
       </div>}
-      {expanded && <section className="overlay-details" aria-label="Objective details">
+      {milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
+      {expanded && (hasDirections || recap.available) && <section className="overlay-details" aria-label="Objective details">
         {recap.available && hasDirections && <p className="reward-keys">
           <span><kbd>Alt+Shift+R</kbd> {recap.showRecap ? 'Directions' : 'Rewards'}</span>
         </p>}

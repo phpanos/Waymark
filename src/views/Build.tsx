@@ -2,34 +2,9 @@ import { useMemo, useState, type ChangeEvent } from 'react'
 import labels from '../data/build-labels.json'
 import type { Snapshot } from '../native/contract'
 import { guidanceAtLevel, maximumBuildBytes, parseBuild } from '../state/build'
-import { activeProfile } from '../state/presentation'
+import { buildLabel } from '../state/build-label'
+import { buildLevel, loadBuilds, saveBuilds, type BuildLevel, type SavedBuilds } from '../state/build-storage'
 import { CharacterProfile } from './CharacterProfile'
-
-type Stage = { filename: string; source: string }
-type Level = { manual: number; useLog: boolean }
-type Saved = { stages: Stage[]; active: string; levels: Record<string, Level> }
-const storageKey = 'waymark.build.v1'
-const defaultLevel: Level = { manual: 1, useLog: true }
-const empty: Saved = { stages: [], active: '', levels: {} }
-
-function load(): Saved {
-  try {
-    const stored = localStorage.getItem(storageKey)
-    if (!stored) return empty
-    const saved = JSON.parse(stored) as Saved
-    return Array.isArray(saved.stages) && saved.levels && typeof saved.active === 'string' ? saved : empty
-  } catch {
-    return empty
-  }
-}
-
-function label(id: string, entries: Record<string, string>) {
-  if (Object.hasOwn(entries, id)) return entries[id]
-  const canonical = id.replace('/Items/Gems/', '/Items/Gem/')
-  if (Object.hasOwn(entries, canonical)) return entries[canonical]
-  const key = id.split('/').pop() ?? id
-  return key.replace(/^(?:SkillGem|SupportGem)/, '').replace(/([a-z])([A-Z0-9])/g, '$1 $2')
-}
 
 function Note({ text }: { text: string }) {
   return text && <span className="build-note">{text}</span>
@@ -39,17 +14,14 @@ export default function Build({ state, run }: {
   state: Snapshot
   run: (task: () => Promise<void>) => void
 }) {
-  const [saved, setSaved] = useState(load)
+  const [saved, setSaved] = useState(loadBuilds)
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
-  const profile = activeProfile(state.settings)
-  const profileKey = JSON.stringify(profile ? [profile.character, profile.league] : [])
-  const level = saved.levels[profileKey] ?? defaultLevel
-  const logged = profile && level.useLog ? state.characterLevel : null
+  const { profile, profileKey, preferences: level, logged, effective: characterLevel } = buildLevel(state, saved)
   const [preview, setPreview] = useState<{ scope: string; level: number } | null>(null)
   const scope = JSON.stringify([profileKey, saved.active])
   const previewLevel = preview?.scope === scope ? preview.level : null
-  const effective = previewLevel ?? logged ?? level.manual
+  const effective = previewLevel ?? characterLevel
   const stage = saved.stages.find(item => item.filename === saved.active)
   const guide = useMemo(() => {
     if (!stage) return null
@@ -59,9 +31,9 @@ export default function Build({ state, run }: {
   const guidance = guide && guidanceAtLevel(guide, effective)
   const nextLevel = guidance?.nextLevel ?? null
 
-  function save(next: Saved) {
+  function save(next: SavedBuilds) {
     try {
-      localStorage.setItem(storageKey, JSON.stringify(next))
+      saveBuilds(next)
       setSaved(next)
       setError('')
     } catch {
@@ -97,7 +69,7 @@ export default function Build({ state, run }: {
     }
   }
 
-  function setLevel(next: Level) {
+  function setLevel(next: BuildLevel) {
     setPreview(null)
     save({ ...saved, levels: { ...saved.levels, [profileKey]: next } })
   }
@@ -144,21 +116,21 @@ export default function Build({ state, run }: {
       {!guidance.skills.length && !guidance.gear.length && !guidance.passives.length && <p className="hint">No entries at level {effective}.</p>}
       {guidance.skills.length > 0 && <section aria-label="Skills"><h3>Skills and supports</h3>
         <ul>{guidance.skills.map(({ id, note, supports }, index) => <li key={index}>
-          <strong>{label(id, labels.gems)}</strong>
+          <strong>{buildLabel(id, labels.gems)}</strong>
           <Note text={note}/>
           {supports.length > 0 && <ul>{supports.map((support, supportIndex) => <li key={supportIndex}>
-            {label(support.id, labels.gems)}<Note text={support.note}/>
+            {buildLabel(support.id, labels.gems)}<Note text={support.note}/>
           </li>)}</ul>}
         </li>)}</ul>
       </section>}
       {guidance.gear.length > 0 && <section aria-label="Gear"><h3>Gear</h3>
         <ul>{guidance.gear.map(({ slot, name, note }, index) => <li key={index}>
-          {label(slot, {})}{name && ` · ${name}`}<Note text={note}/>
+          {buildLabel(slot)}{name && ` · ${name}`}<Note text={note}/>
         </li>)}</ul>
       </section>}
       {guidance.passives.length > 0 && <details><summary>Passives ({guidance.passives.length})</summary>
         <ul>{guidance.passives.map(({ id, note, weaponSet }, index) => <li key={index}>
-          {label(id, labels.passives)}{weaponSet && ` · Weapon set ${weaponSet}`}<Note text={note}/>
+          {buildLabel(id, labels.passives)}{weaponSet && ` · Weapon set ${weaponSet}`}<Note text={note}/>
         </li>)}</ul>
       </details>}
     </article>}
