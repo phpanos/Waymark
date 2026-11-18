@@ -139,7 +139,7 @@ try {
     await expectText('Find the path into the Grelwood')
     await expectText('Defeat Beira for cold resistance', '.optional-list li > span:first-child')
     await select('campaignArea', 'G1_5')
-    await expectText('Route shortcut')
+    await expectText('ROUTE SHORTCUT')
     await expectText('After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls.')
     await click('Use current zone')
     await expectText('No objective assigned')
