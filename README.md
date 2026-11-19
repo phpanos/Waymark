@@ -31,12 +31,12 @@ With the default Cargo target directory, the executable is `target\release\wayma
 
 ## Use the overlay
 
-1. Launch Waymark once. The compact window appears at the top right. The compass icon in the Windows notification area opens a menu with **Open settings**, **Show / hide overlay**, and **Quit Waymark**. Windows may put the icon under the overflow arrow.
+1. Launch Waymark. The compact window appears at the top right. Launch it again to open Settings in the running instance. The compass icon in the Windows notification area opens a menu with **Open settings**, **Show / hide overlay**, and **Quit Waymark**. Windows may put the icon under the overflow arrow.
 2. Open PoE 2 in **Windowed Fullscreen** and enter a zone. **Connected** means the file is readable. **Awaiting zone** lasts until a supported *new* record arrives. Starting the app in the middle of a zone may require another transition.
 3. In **Settings → Log source**, check the selected path. Auto-detection checks standalone install locations and Steam libraries, including custom libraries declared in `libraryfolders.vdf`. Use **Choose Client.txt…** for a custom install. **Use auto-detection** clears a manual selection.
 4. **Alt+N** toggles the compact window globally. If Windows refuses registration, the settings window shows the error and the tray toggle remains available.
 5. Hold **Alt** and drag the Waymark header. Release the mouse to save the position relative to the current anchor. Ordinary clicks pass through to the game. To place the overlay with exact insets, open **Settings → Position**, choose a corner, enter the insets in device-independent pixels, and select **Save position**.
-6. **Settings → Diagnostics → Replay fixture** runs the bundled synthetic log through the Rust decoder and detector. The status reads **Replaying** and then **Replay complete**. Expect **The Riverbank · Act 1** with **Reach Clearfell**, followed by **Fixture_Unknown_02** with no act or assigned objective. Choose **Return to live** to display the latest live observation, including transitions received during replay.
+6. **Settings → Diagnostics → Replay fixture** runs the bundled synthetic log through the Rust decoder and detector. The status reads **Replaying** and then **Replay complete**. Expect **The Riverbank · Act 1** with **Reach Clearfell**, followed by **Fixture_Unknown_02** with no act or assigned objective. Real zone transitions continue updating the act timer and campaign progress during replay. Choose **Return to live** to display the latest live zone.
 
 Settings are saved on change under `%APPDATA%\app.waymark.overlay\settings-v1.json`, using a temporary file and replacement. Placement and the manual path survive restart. Visibility, replay mode and the current zone are session state.
 
@@ -57,6 +57,8 @@ The overlay shows a **Shortcut** cue in selected areas. Open **Settings → Obje
 The overlay starts compact. It shows the current objective and a short sequence of route actions where available. Hold **Alt** and click the Waymark header for diagrams, landmarks, optional detours, shortcuts, and encounter tips. See **Settings → Controls** for the hotkeys. Orient yourself from the entrance, the world map, or the named landmarks as each instance can vary. [Act 1 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-1), [Act 2 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-2), [Act 3 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-3), [Act 4 layouts](https://mobalytics.gg/poe-2/guides/campaign-layout-act-4).
 
 The expanded overlay shows objectives, waypoints, and exits for each cataloged area in Acts 1–4. The separate **Directions** diagram appears where there’s a known route or landmark to orient by. Arrows can refer to the screen, the world map, or the starting landmark printed on the diagram. In Clearfell, use the arrow that matches the Grelwood’s position on your world map. [Act 1 layout reference](https://mobalytics.gg/poe-2/guides/campaign-layout-act-1)
+
+Use the arrows beside the zone name to browse Waymark’s suggested story route, including town turn-ins and return visits. The guide uses one itinerary for branches you can visit in different orders, such as the Act 4 islands. Select **Live** to return to the detected zone. [Act 2 itinerary](https://www.definitivguide.com/docs/PoE2/Act%202/overview) · [Campaign walkthrough](https://pathofexile.gg/campaign/)
 
 Press **Alt+Shift+T** to start or stop the act timer, or use **Settings → Act timer**. When Waymark detects a later act, it saves the previous act’s time and resets the clock for the new act. A running timer continues into the new act and through app restarts. Switching campaign profiles stops the previous profile’s clock. See **Settings → Act timer** for the active profile’s saved times.
 
@@ -98,6 +100,8 @@ The first supported marker emits a zone change immediately. Repeated observation
 The native channel is `waymark://state-v1`. Every payload is a full snapshot with `version: 1`, a process-local increasing `revision`, and a typed `kind`. Consumers subscribe first, request the current snapshot and keep the highest revision. `zoneChanged` represents a new detected zone, `zoneUpdated` enriches the current one, and `snapshot` carries other state changes or a switch between displayed sources. Replay status identifies fixture observations. Each zone contains nullable `areaId`, `name` and `level`. The complete shape is in `src/native/contract.ts`. No raw chat or log lines cross the WebView boundary.
 
 ## Automated checks
+
+Pull requests run frontend tests and a production build, the Rust format check and log-pipeline tests, and a Windows desktop build with workspace tests and the WebView2 smoke suite. [Pull request workflow](.github/workflows/pull-request-checks.yml)
 
 ```powershell
 npm ci

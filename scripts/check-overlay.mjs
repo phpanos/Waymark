@@ -90,7 +90,7 @@ try {
     })()`))
     console.log('Reward control point ' + point.join(' '))
   }
-  await expectText('Connected')
+  if (view !== 'replay' || argument === 'start') await expectText('Connected')
   if (view === 'settings' || (view === 'overlay' && argument !== '1')) await expectText('Awaiting zone')
   if (view === 'timer') {
     const ready = argument === 'ready-one'
@@ -102,6 +102,18 @@ try {
       return timer?.getAttribute('aria-label') === 'Act ${act} timer ${running ? 'running' : 'stopped'}' &&
         (timer.querySelector('.act-timer-value').innerText === '00:00:00') === ${ready}
     })()`))
+  } else if (view === 'replay') {
+    if (argument === 'start') {
+      await click('Diagnostics')
+      await click('Replay fixture')
+      await expectText('Replaying')
+    } else {
+      await expectText('Replay complete')
+      await expectText('Fixture_Unknown_02', '.readout h2')
+      await click('Return to live')
+      await expectText('Connected')
+      await expectText('Vastiri Outskirts', '.readout h2')
+    }
   } else if (view === 'timer-settings') {
     await click('Act timer')
     await expectText('Stop timer', '.act-timer-settings button')
@@ -188,8 +200,22 @@ try {
     if (argument.endsWith('-point')) {
       await rewardControlPoint(`[data-reward-target="guide:${argument.replace('-point', '')}"]:enabled`)
     } else {
-      await expectText(argument === 'previous' ? 'The Riverbank' : 'Clearfell Encampment', '.zone-block h1')
-      if (argument === 'live') {
+      if (argument === 'spires') await appendFile(log, 'Generating level 25 area "G2_9_2"\r\n')
+      const titles = {
+        previous: 'The Riverbank', next: 'Clearfell Encampment', live: 'Clearfell Encampment',
+        spires: 'The Spires of Deshar', caravan: 'The Ardura Caravan',
+        dreadnought: "The Dreadnought's Wake", 'live-spires': 'The Spires of Deshar',
+      }
+      await expectText(titles[argument], '.zone-block h1')
+      if (argument === 'caravan') {
+        await expectText('Use the Desert Map to reach the Dreadnought', '.story-objective')
+        await waitFor('the full caravan instruction to fit', () => evaluate(`(() => {
+          const objective = document.querySelector('.story-objective')
+          const panel = document.querySelector('.compact')
+          return objective.scrollWidth <= objective.clientWidth && panel.getBoundingClientRect().bottom <= innerHeight
+        })()`))
+      }
+      if (argument === 'live' || argument === 'spires' || argument === 'live-spires') {
         await waitFor('live tracking to resume', () => evaluate('!document.querySelector("[data-reward-target=\\"guide:live\\"]")'))
       } else {
         await waitFor('a read-only story preview', () => evaluate(`

@@ -80,6 +80,7 @@ button:disabled { opacity: .55; cursor: default }
 .with-route.with-shortcut .optional-label { line-height: 1.1 }
 .objective { border-top: 1px solid var(--line); padding-top: 5px }
 .story-objective { color: var(--paper); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.story-objective[data-story-step] { white-space: normal }
 .optional-preview, .route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
 .route-preview { color: var(--gold) }
 .route-preview.direction .optional-hint { font-weight: 600 }

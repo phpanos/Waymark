@@ -12,8 +12,8 @@ use settings::{CampaignProfile, Placement, Settings, TownRewardStatus};
 use std::{
     path::PathBuf,
     sync::{
-        atomic::{AtomicU16, Ordering},
-        Mutex,
+        atomic::{AtomicBool, AtomicU16, Ordering},
+        Arc, Mutex,
     },
 };
 use tauri::{
@@ -98,10 +98,7 @@ impl Runtime {
         point: (i32, i32),
     ) -> Option<RewardClick> {
         let state = self.snapshot.try_lock().ok()?;
-        if !state.visible
-            || state.status != Status::Watching
-            || state.replay_session != 0
-        {
+        if !state.visible || state.status != Status::Watching || state.replay_session != 0 {
             return None;
         }
         let targets = self.reward_targets.try_lock().ok()?;
@@ -111,8 +108,11 @@ impl Runtime {
         targets.hit(rect, dpi, point)
     }
     fn mutate(&self, app: &AppHandle, kind: Kind, f: impl FnOnce(&mut Snapshot) -> bool) {
+        self.update(app, |state| f(state).then_some(kind));
+    }
+    fn update(&self, app: &AppHandle, f: impl FnOnce(&mut Snapshot) -> Option<Kind>) {
         let mut s = self.snapshot.lock().unwrap();
-        if f(&mut s) {
+        if let Some(kind) = f(&mut s) {
             s.kind = kind;
             s.revision += 1;
             let event = s.clone();
@@ -175,7 +175,7 @@ impl Runtime {
         state.settings = next;
         Ok(())
     }
-    fn record_story_progress(&self, state: &mut Snapshot, zone: &Zone) {
+    fn update_campaign_progress(&self, state: &mut Snapshot, zone: &Zone) -> bool {
         let is_clearfell = match zone.area_id.as_deref() {
             Some(id) => id == "G1_2",
             None => zone
@@ -183,33 +183,33 @@ impl Runtime {
                 .as_deref()
                 .is_some_and(|name| name.eq_ignore_ascii_case("Clearfell")),
         };
-        if !is_clearfell || state.settings.reached_clearfell() {
-            return;
+        let reached_clearfell = is_clearfell && !state.settings.reached_clearfell();
+        let later_act = state
+            .settings
+            .act_timing()
+            .current
+            .as_ref()
+            .and_then(|clock| act_timer::act_for_zone(zone).filter(|act| *act > clock.act));
+        if !reached_clearfell && later_act.is_none() {
+            return false;
         }
         let mut next = state.settings.clone();
-        next.record_clearfell();
-        if let Err(error) = self.store_settings(state, next) {
-            eprintln!("Could not save Clearfell story progress: {error}");
+        if reached_clearfell {
+            next.record_clearfell();
         }
-    }
-
-    fn advance_act_timer(&self, state: &mut Snapshot, zone: &Zone) {
-        let Some(clock) = &state.settings.act_timing().current else {
-            return;
-        };
-        let Some(act) = act_timer::act_for_zone(zone).filter(|act| *act > clock.act) else {
-            return;
-        };
-        let mut next = state.settings.clone();
-        if let Some(timing) = next.act_timing_for(next.active_profile) {
-            timing.advance(act, act_timer::timestamp());
-            if let Err(error) = self.store_settings(state, next) {
-                let notice = format!("Act timer could not be saved ({error}).");
-                if !state.notices.contains(&notice) {
-                    state.notices.push(notice);
-                }
+        if let Some(act) = later_act {
+            if let Some(timing) = next.act_timing_for(next.active_profile) {
+                timing.advance(act, act_timer::timestamp());
             }
         }
+        if let Err(error) = self.store_settings(state, next) {
+            let notice = format!("Campaign progress could not be saved ({error}).");
+            if state.notices.contains(&notice) {
+                return false;
+            }
+            state.notices.push(notice);
+        }
+        true
     }
 }
 
@@ -234,24 +234,29 @@ fn set_reward_targets(
     }
     let mut hitboxes = state.reward_targets.lock().unwrap();
     if revision >= hitboxes.revision {
-        *hitboxes = RewardTargets { revision, height, targets };
+        *hitboxes = RewardTargets {
+            revision,
+            height,
+            targets,
+        };
     }
 }
 
 #[tauri::command]
 fn toggle_act_timer(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
-    state.try_edit_with_snapshot(&app, |snapshot, settings| {
-        let act = if snapshot.status == Status::Watching && snapshot.replay_session == 0 {
-            snapshot.zone.as_ref().and_then(act_timer::act_for_zone)
-        } else {
-            None
-        };
-        let timing = settings
-            .act_timing_for(settings.active_profile)
-            .ok_or("Choose a campaign profile first.")?;
-        timing.toggle(act, act_timer::timestamp())
-    })
-    .map(|_| ())
+    state
+        .try_edit_with_snapshot(&app, |snapshot, settings| {
+            let act = if snapshot.status == Status::Watching && snapshot.replay_session == 0 {
+                snapshot.zone.as_ref().and_then(act_timer::act_for_zone)
+            } else {
+                None
+            };
+            let timing = settings
+                .act_timing_for(settings.active_profile)
+                .ok_or("Choose a campaign profile first.")?;
+            timing.toggle(act, act_timer::timestamp())
+        })
+        .map(|_| ())
 }
 
 fn toggle_timer_from_shortcut(app: &AppHandle) {
@@ -303,9 +308,10 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
 #[tauri::command]
 fn set_overlay_height(window: WebviewWindow, state: State<'_, Runtime>, height: u16) {
     if window.label() == "overlay" {
-        state
-            .overlay_height
-            .store(height.clamp(window::COMPACT_HEIGHT, MAX_OVERLAY_HEIGHT), Ordering::Relaxed);
+        state.overlay_height.store(
+            height.clamp(window::COMPACT_HEIGHT, MAX_OVERLAY_HEIGHT),
+            Ordering::Relaxed,
+        );
     }
 }
 
@@ -533,8 +539,28 @@ fn close_settings(app: AppHandle) -> Result<(), String> {
         .map_err(|e| e.to_string())
 }
 
+fn open_settings(app: &AppHandle) -> bool {
+    let Some(window) = app.get_webview_window("settings") else {
+        return false;
+    };
+    let _ = window.show();
+    if window.is_minimized().unwrap_or(false) {
+        let _ = window.unminimize();
+    }
+    let _ = window.set_focus();
+    true
+}
+
 pub fn run() {
+    // A second launch can arrive before the Settings window is registered.
+    let settings_requested = Arc::new(AtomicBool::new(false));
+    let pending_settings = Arc::clone(&settings_requested);
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(move |app, _, _| {
+            if !open_settings(app) {
+                pending_settings.store(true, Ordering::Relaxed);
+            }
+        }))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
@@ -553,7 +579,7 @@ pub fn run() {
             toggle_overlay,
             close_settings
         ])
-        .setup(|app| {
+        .setup(move |app| {
             if let Err(e) = app.global_shortcut().on_shortcut("Alt+N", |app, _, event| {
                 if event.state == ShortcutState::Pressed {
                     toggle(app);
@@ -584,17 +610,19 @@ pub fn run() {
                     );
                 }
             }
-            if let Err(error) = app.global_shortcut().on_shortcut(
-                ACT_TIMER_SHORTCUT,
-                |app, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        toggle_timer_from_shortcut(app);
-                    }
-                },
-            ) {
+            if let Err(error) =
+                app.global_shortcut()
+                    .on_shortcut(ACT_TIMER_SHORTCUT, |app, _, event| {
+                        if event.state == ShortcutState::Pressed {
+                            toggle_timer_from_shortcut(app);
+                        }
+                    })
+            {
                 report_notice(
                     app.handle(),
-                    format!("{ACT_TIMER_SHORTCUT} unavailable ({error}). Use Act timer in Settings."),
+                    format!(
+                        "{ACT_TIMER_SHORTCUT} unavailable ({error}). Use Act timer in Settings."
+                    ),
                 );
             }
             let overlay = app.get_webview_window("overlay").unwrap();
@@ -626,9 +654,7 @@ pub fn run() {
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "settings" => {
-                        let w = app.get_webview_window("settings").unwrap();
-                        let _ = w.show();
-                        let _ = w.set_focus();
+                        open_settings(app);
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
@@ -644,6 +670,9 @@ pub fn run() {
             std::thread::Builder::new()
                 .name("waymark-watcher".into())
                 .spawn(move || watcher::run(handle, hwnd))?;
+            if settings_requested.swap(false, Ordering::Relaxed) {
+                open_settings(app.handle());
+            }
             Ok(())
         })
         .on_window_event(|win, event| {

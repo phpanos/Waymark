@@ -84,7 +84,9 @@ impl Settings {
 
     pub fn reached_clearfell(&self) -> bool {
         self.campaign_profile()
-            .map_or(self.default_reached_clearfell, |profile| profile.reached_clearfell)
+            .map_or(self.default_reached_clearfell, |profile| {
+                profile.reached_clearfell
+            })
     }
 
     pub fn record_clearfell(&mut self) {
@@ -105,7 +107,10 @@ impl Settings {
 
     pub(super) fn act_timing_for(&mut self, profile: Option<usize>) -> Option<&mut ActTiming> {
         match profile {
-            Some(index) => self.profiles.get_mut(index).map(|item| &mut item.act_timing),
+            Some(index) => self
+                .profiles
+                .get_mut(index)
+                .map(|item| &mut item.act_timing),
             None => Some(&mut self.default_act_timing),
         }
     }

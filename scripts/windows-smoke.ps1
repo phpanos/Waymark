@@ -15,6 +15,8 @@ public static class OverlayCheck {
     public struct Point { public int X, Y; }
     [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr hwnd, int index);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string className, string title);
+    [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll", SetLastError=true)] private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
     [DllImport("user32.dll")] private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
@@ -257,6 +259,18 @@ try {
                 node $check $profile $log guide $action
                 if ($LASTEXITCODE -ne 0) { throw "Guide navigation failed for $action." }
             }
+            node $check $profile $log guide spires
+            if ($LASTEXITCODE -ne 0) { throw 'The story guide did not detect the Spires of Deshar.' }
+            foreach ($step in @(
+                @{ Action = 'next'; View = 'caravan' },
+                @{ Action = 'next'; View = 'dreadnought' },
+                @{ Action = 'previous'; View = 'caravan' },
+                @{ Action = 'live'; View = 'live-spires' }
+            )) {
+                Invoke-RewardControlClick $hwnd $check $profile $log "$($step.Action)-point" 'guide'
+                node $check $profile $log guide $step.View
+                if ($LASTEXITCODE -ne 0) { throw "Campaign route did not show $($step.View)." }
+            }
         }
         # The recap shortcut expands the panel, and switching back leaves directions expanded.
         Invoke-RewardShortcut 0x52 # R
@@ -353,7 +367,14 @@ try {
             Invoke-RewardShortcut 0x54 # T
             node $check $profile $log timer running-one
             if ($LASTEXITCODE -ne 0) { throw 'The Act 1 timer did not start.' }
+            node $check $profile $log replay start
+            if ($LASTEXITCODE -ne 0) { throw 'The diagnostics fixture did not start.' }
             [IO.File]::AppendAllText($log, "Generating level 16 area `"G2_1`"`r`n", $utf8)
+            [void](Wait-For 'the live Act 2 timer to be saved during replay' {
+                (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].actTiming.current.act -eq 2
+            })
+            node $check $profile $log replay return
+            if ($LASTEXITCODE -ne 0) { throw 'The fixture did not stay active until returning to the live Act 2 zone.' }
             node $check $profile $log timer running-two
             if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not start after the transition.' }
             $timing = (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].actTiming
@@ -368,6 +389,28 @@ try {
             Invoke-RewardShortcut 0x54 # T
             node $check $profile $log timer stopped-two
             if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not stop.' }
+
+            # Launch the same executable while the original instance owns the overlay.
+            $settingsHwnd = [OverlayCheck]::FindWindow([NullString]::Value, 'Waymark settings')
+            if ([OverlayCheck]::IsWindowVisible($settingsHwnd)) { throw 'Settings was already visible before the second launch.' }
+            $second = [Diagnostics.Process]::Start($start)
+            try {
+                if (!$second.WaitForExit(15000) -or $second.ExitCode -ne 0) {
+                    throw 'The second Waymark process did not exit successfully.'
+                }
+                [void](Wait-For 'Settings to open in the original instance' {
+                    $settingsHwnd = [OverlayCheck]::FindWindow([NullString]::Value, 'Waymark settings')
+                    $owner = [uint32]0
+                    if ($settingsHwnd -ne [IntPtr]::Zero) {
+                        [void][OverlayCheck]::GetWindowThreadProcessId($settingsHwnd, [ref]$owner)
+                        $owner -eq $process.Id -and [OverlayCheck]::IsWindowVisible($settingsHwnd)
+                    }
+                })
+                Assert-PassiveOverlay $hwnd
+            } finally {
+                if (!$second.HasExited) { $second.Kill(); $second.WaitForExit() }
+                $second.Dispose()
+            }
         } else {
             node $check $profile $log town restart
             if ($LASTEXITCODE -ne 0) { throw 'The pinned town reward did not survive restart.' }
@@ -375,7 +418,7 @@ try {
         $process.Kill()
         $process.WaitForExit()
     }
-    Write-Host 'Native overlay, Alt-drag persistence, hotkey registration and live log recovery passed.'
+    Write-Host 'Native overlay, single instance, replay progress, Alt-drag persistence, hotkeys and live log recovery passed.'
 } finally {
     if ($process -and !$process.HasExited) { $process.Kill(); $process.WaitForExit() }
     if ($createdSettings) { Remove-Item -LiteralPath $settingsFile }
