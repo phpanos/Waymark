@@ -95,13 +95,13 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
         if refresh_level {
             level = None;
         }
-        let mut events = vec![];
+        let mut live_events = vec![];
         let mut again = false;
         let (live_status, error) = if let Some(tail) = &mut tail {
             match tail.poll(|item| match item {
                 Item::Line(line) => {
                     if let Some(d) = detector.line(line, now) {
-                        events.push(d);
+                        live_events.push(d);
                     }
                     if let Some(next) = character.and_then(|name| character_level(line, name)) {
                         level = Some(next);
@@ -135,7 +135,7 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 .zip(character)
                 .and_then(|(file, name)| recent_character_level(file, name).ok().flatten());
         }
-        if let Some(z) = events.last() {
+        if let Some(z) = live_events.last() {
             live_zone = Some(z.zone().clone());
         }
 
@@ -143,39 +143,44 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
             session = s.replay_session;
             replay = (session != 0).then(|| Replay::new(now));
         }
+        let mut fixture_events = vec![];
         let (zone, status, error) = match &mut replay {
             Some(r) => {
-                events.clear();
-                let status = r.step(now, &mut events);
+                let status = r.step(now, &mut fixture_events);
                 (r.zone.clone(), status, None)
             }
             None => (live_zone.clone(), live_status, error),
         };
         // Preserve every accepted transition even when one disk read contains several.
-        for detection in events {
+        let transitions = live_events
+            .into_iter()
+            .map(|event| (event, true))
+            .chain(fixture_events.into_iter().map(|event| (event, false)));
+        for (detection, live) in transitions {
             let (kind, z) = match detection {
                 Detection::Changed(z) => (Kind::ZoneChanged, z),
                 Detection::Updated(z) => (Kind::ZoneUpdated, z),
             };
-            state.mutate(&app, kind, |v| {
-                if v.replay_session != session || v.settings.log_path != requested {
-                    return false;
+            state.update(&app, |v| {
+                if v.settings.log_path != requested {
+                    return None;
+                }
+                let progress_changed = live
+                    && live_status == Status::Watching
+                    && v.settings.active_profile == tracked_profile
+                    && state.update_campaign_progress(v, &z);
+                // Publish background progress without replacing the displayed zone.
+                if v.replay_session != session || live != (session == 0) {
+                    return progress_changed.then_some(Kind::Snapshot);
                 }
                 if matches!(kind, Kind::ZoneChanged) {
                     v.reward_recap = false;
-                }
-                if session == 0
-                    && status == Status::Watching
-                    && v.settings.active_profile == tracked_profile
-                {
-                    state.record_story_progress(v, &z);
-                    state.advance_act_timer(v, &z);
                 }
                 v.zone = Some(z);
                 v.status = status;
                 v.active_path.clone_from(&path);
                 v.log_error.clone_from(&error);
-                true
+                Some(kind)
             });
         }
         state.mutate(&app, Kind::Snapshot, |v| {

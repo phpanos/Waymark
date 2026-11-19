@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
-import { adjacentStoryObjectives, campaignAreas, describeZone, searchCampaign, townRewards } from './presentation'
+import { adjacentStoryObjectives, campaignAreas, describeStoryStep, describeZone, searchCampaign, storyRoute, townRewards } from './presentation'
 import { permanentRewards, selectedReward } from './rewards'
 import { useSession } from './session'
 
@@ -291,12 +291,44 @@ describe('permanent reward recap', () => {
     expect(markup).toContain('Next story objective')
   })
 
-  it('browses adjacent story objectives in guide order and skips optional-only zones', () => {
-    expect(adjacentStoryObjectives('G1_2').previous?.id).toBe('G1_town')
-    expect(adjacentStoryObjectives('G1_2').next?.id).toBe('G1_4')
-    expect(adjacentStoryObjectives('G1_3').next?.id).toBe('G1_4')
+  it('uses known campaign areas and rejoins the route from optional detours', () => {
+    const ids = new Set(campaignAreas.map(area => area.id))
+    expect(storyRoute.every(step => ids.has(step.areaId) && !!describeStoryStep(step).objective)).toBe(true)
+    expect(adjacentStoryObjectives('G1_2').previous?.areaId).toBe('G1_town')
+    expect(adjacentStoryObjectives('G1_2').next?.areaId).toBe('G1_4')
+    expect(adjacentStoryObjectives('G1_3', 'G1_2').next?.areaId).toBe('G1_2')
+    expect(adjacentStoryObjectives('Abyss_Hub').next?.areaId).toBe('G2_5_1')
+    expect(adjacentStoryObjectives('G3_10').next?.areaId).toBe('G3_5')
+    expect(adjacentStoryObjectives('G4_13').next).toBe(adjacentStoryObjectives('G4_2_2').next)
     expect(adjacentStoryObjectives('G1_1').previous).toBeUndefined()
     expect(adjacentStoryObjectives('Unknown').next).toBeUndefined()
+  })
+
+  it('continues from the Spires through the correct caravan visit in both directions', () => {
+    const caravan = adjacentStoryObjectives('G2_9_2').next!
+    expect(caravan.areaId).toBe('G2_town')
+    expect(describeStoryStep(caravan).objective).toBe('Use the Desert Map to reach the Dreadnought')
+    expect(adjacentStoryObjectives('G2_town', 'G2_1').next?.areaId).toBe('G2_10_1')
+    expect(adjacentStoryObjectives('G2_town', 'G2_9_2').next?.areaId).toBe('G2_11')
+    const dreadnought = adjacentStoryObjectives(caravan.areaId, null, caravan).next!
+    expect(dreadnought.areaId).toBe('G2_11')
+    expect(adjacentStoryObjectives(dreadnought.areaId, null, dreadnought).previous).toBe(caravan)
+    expect(adjacentStoryObjectives('G2_town', 'G2_3s').next?.areaId).toBe('G2_4_1')
+  })
+
+  it.each([
+    ['G1_town', 'G1_5', 'G1_4'],
+    ['G1_7', 'G1_9', 'G1_11'],
+    ['G3_3', 'G3_6_2', 'G3_2_2'],
+    ['G3_town', 'G3_2_2', 'G3_8'],
+    ['G4_town', 'G4_3_2', 'G4_7'],
+    ['G4_town', 'G4_7', 'G4_5_1'],
+    ['G4_town', 'G4_1_2', 'G4_4_1'],
+    ['G4_town', 'G4_11_2', undefined],
+  ] as const)('continues from %s after returning from %s', (area, from, next) => {
+    const adjacent = adjacentStoryObjectives(area, from)
+    expect(adjacent.previous?.areaId).toBe(from)
+    expect(adjacent.next?.areaId).toBe(next)
   })
 
   it.each([

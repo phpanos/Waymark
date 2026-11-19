@@ -3,7 +3,7 @@ import compass from '../assets/compass.png'
 import { directionsByArea } from '../data/directions'
 import { native } from '../native/bridge'
 import type { RewardClick, Snapshot, Status, Zone } from '../native/contract'
-import { adjacentStoryObjectives, completedObjectives, describeZone, reachedClearfell, statusText, townRewardProgress, type Route, type ZoneNavigation } from '../state/presentation'
+import { adjacentStoryObjectives, completedObjectives, describeStoryStep, describeZone, reachedClearfell, statusText, townRewardProgress, type Route, type StoryStep, type ZoneNavigation } from '../state/presentation'
 import { useBuildMilestone } from '../state/use-build-milestone'
 import { useTownRewards } from '../state/use-town-rewards'
 import { OverlayActTimer } from './ActTimer'
@@ -55,9 +55,9 @@ function AreaOverview({ navigation, fork, children }: {
 
 export function Compact({ state, previousZone = null }: { state: Snapshot; previousZone?: Zone | null }) {
   const panel = useRef<HTMLElement>(null)
-  const [previewArea, setPreviewArea] = useState<string | null>(null)
+  const [previewStep, setPreviewStep] = useState<StoryStep | null>(null)
   useEffect(() => {
-    setPreviewArea(null)
+    setPreviewStep(null)
   }, [state.activePath, state.settings.activeProfile, state.replaySession, state.status])
   const lastHeight = useRef(0)
   const lastTargets = useRef('')
@@ -93,10 +93,8 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
 
   const previousAreaId = previousZone?.areaId ?? describeZone(previousZone).areaId
   const liveZone = describeZone(state.zone, previousAreaId, townRewardProgress(state.settings), reachedClearfell(state.settings))
-  const preview = previewArea !== null
-  const zone = preview
-    ? describeZone({ areaId: previewArea, name: null, level: null }, previewArea === 'G1_town' ? 'G1_1' : null)
-    : liveZone
+  const preview = previewStep !== null
+  const zone = previewStep ? describeStoryStep(previewStep) : liveZone
   const buildMilestone = useBuildMilestone(state)
   const milestone = preview ? null : buildMilestone
   const completed = completedObjectives(state.settings)
@@ -108,7 +106,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const shortcut = stale ? null : zone.shortcut
   const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
   const navigation = stale ? null : zone.navigation
-  const direction = !stale && zone.areaId ? directionsByArea[zone.areaId] : undefined
+  const direction = !stale && !previewStep?.objective && zone.areaId ? directionsByArea[zone.areaId] : undefined
   const showRouteLandmarks = route && !(direction && (route.diagram || direction.layout === 'landmarks'))
   const tip = stale ? null : zone.tip
   const hasDiagram = navigation && (navigation.waypoint || navigation.exits.length || zone.objective || remaining.length)
@@ -126,15 +124,15 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     ? direction.quickSteps ?? direction.legs.map(([, instruction]) => instruction) : null
   const optionalLoot = !expanded && !zone.objective ? featuredOptional?.loot : undefined
   const next = navigation?.exits.length === 1 ? navigation.exits[0].landmark : null
-  const adjacent = adjacentStoryObjectives(zone.areaId)
+  const adjacent = adjacentStoryObjectives(zone.areaId, previousAreaId, previewStep)
   const canBrowse = state.visible && state.status === 'watching' && state.replaySession === 0 && !recap.showRecap
   const browseClick = useRef<(click: RewardClick) => void>(() => {})
   useLayoutEffect(() => {
     browseClick.current = ({ revision, id }) => {
       if (!canBrowse || revision !== state.revision) return
-      if (id === 'guide:previous' && adjacent.previous) setPreviewArea(adjacent.previous.id)
-      if (id === 'guide:next' && adjacent.next) setPreviewArea(adjacent.next.id)
-      if (id === 'guide:live') setPreviewArea(null)
+      if (id === 'guide:previous' && adjacent.previous) setPreviewStep(adjacent.previous)
+      if (id === 'guide:next' && adjacent.next) setPreviewStep(adjacent.next)
+      if (id === 'guide:live') setPreviewStep(null)
     }
   })
   useEffect(() => {
@@ -164,11 +162,11 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         <div className="zone-actions">
           {hasDetails && <span className="details-gesture" data-expanded={expanded} title="Alt+click the header">Details <span aria-hidden="true">{expanded ? '▾' : '▸'}</span></span>}
           {canBrowse && (adjacent.previous || adjacent.next || preview) && <nav className="guide-navigation" aria-label="Story objectives">
-            {preview && <button type="button" data-reward-target="guide:live" onClick={() => setPreviewArea(null)} aria-label="Resume live tracking">Live</button>}
+            {preview && <button type="button" data-reward-target="guide:live" onClick={() => setPreviewStep(null)} aria-label="Resume live tracking">Live</button>}
             <button type="button" disabled={!adjacent.previous} data-reward-target="guide:previous" aria-label="Previous story objective"
-              onClick={() => adjacent.previous && setPreviewArea(adjacent.previous.id)}>‹</button>
+              onClick={() => adjacent.previous && setPreviewStep(adjacent.previous)}>‹</button>
             <button type="button" disabled={!adjacent.next} data-reward-target="guide:next" aria-label="Next story objective"
-              onClick={() => adjacent.next && setPreviewArea(adjacent.next.id)}>›</button>
+              onClick={() => adjacent.next && setPreviewStep(adjacent.next)}>›</button>
           </nav>}
         </div>
       </div>
@@ -177,7 +175,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     <footer className="objective">
       {(zone.objective || !featuredOptional) && <>
         <div className="eyebrow">{!zone.objective && zone.optional.length ? 'Optional objectives' : 'Story objective'}</div>
-        <p className="story-objective" title={zone.objective ?? undefined}>
+        <p className="story-objective" data-story-step={previewStep?.objective ? '' : undefined} title={zone.objective ?? undefined}>
           {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
         </p>
       </>}

@@ -1,5 +1,6 @@
 import areas from '../data/areas.json'
 import navigation from '../data/navigation.json'
+import storySteps from '../data/story-route.json'
 import type { Snapshot, Status, TownRewardProgress, Zone } from '../native/contract'
 
 type OptionalObjective = {
@@ -107,12 +108,59 @@ export function reachedClearfell(settings: Snapshot['settings']) {
   return settings.activeProfile === null ? settings.defaultReachedClearfell : activeProfile(settings)?.reachedClearfell
 }
 
-export function adjacentStoryObjectives(areaId: string | null) {
-  const index = campaignAreas.findIndex(area => area.id === areaId)
-  if (index < 0) return { previous: undefined, next: undefined }
+export type StoryStep = { areaId: string; objective?: string; index: number }
+export const storyRoute: readonly StoryStep[] = storySteps.map((step, index) => ({
+  ...(typeof step === 'string' ? { areaId: step } : step), index,
+}))
+
+const storyVariants = new Map([['G2_3s', 'G2_3'], ['G2_8a', 'G2_8']])
+const storyReturns = new Map<string, { areaId: string; from?: string }>([
+  ['Abyss_Intro', { areaId: 'G2_5_1' }],
+  ['Abyss_Hub', { areaId: 'G2_5_1' }],
+  ['G3_10_Airlock', { areaId: 'G3_5' }],
+  ['G3_10', { areaId: 'G3_5' }],
+  ['G4_13', { areaId: 'G4_town', from: 'G4_2_2' }],
+  ['ExpeditionSubArea_Kalguur_Act4', { areaId: 'G4_town', from: 'G4_2_2' }],
+])
+
+function findStoryStep(areaId: string | null, from: string | null) {
+  if (!areaId) return undefined
+  const id = storyVariants.get(areaId) ?? areaId
+  const previous = from && (storyVariants.get(from) ?? from)
+  return storyRoute.find((step, index) => step.areaId === id && storyRoute[index - 1]?.areaId === previous)
+    ?? storyRoute.find(step => step.areaId === id)
+}
+
+export function adjacentStoryObjectives(areaId: string | null, from: string | null = null, preview: StoryStep | null = null) {
+  const step = preview ?? findStoryStep(areaId, from)
+  if (step) return { previous: storyRoute[step.index - 1], next: storyRoute[step.index + 1] }
+
+  const exits = areaId ? navigationById[areaId]?.exits : undefined
+  const rejoin = areaId ? storyReturns.get(areaId) : undefined
   return {
-    previous: campaignAreas.slice(0, index).reverse().find(area => !!area.objective),
-    next: campaignAreas.find((area, i) => i > index && !!area.objective),
+    previous: areaId && byId.has(areaId) ? findStoryStep(from, null) : undefined,
+    next: rejoin ? findStoryStep(rejoin.areaId, rejoin.from ?? null)
+      : exits?.length === 1 ? findStoryStep(exits[0].id, areaId) : undefined,
+  }
+}
+
+export function describeStoryStep(step: StoryStep) {
+  const previous = storyRoute[step.index - 1]
+  const zone = describeZone({ areaId: step.areaId, name: null, level: null }, previous?.areaId)
+  if (!step.objective) return zone
+
+  const next = storyRoute[step.index + 1]
+  const nextArea = next && byId.get(next.areaId)
+  return {
+    ...zone,
+    objective: step.objective,
+    route: null,
+    shortcut: null,
+    navigation: zone.navigation && {
+      ...zone.navigation,
+      label: 'Next story zone',
+      exits: nextArea ? [{ landmark: nextArea.name, detail: '' }] : [],
+    },
   }
 }
 
