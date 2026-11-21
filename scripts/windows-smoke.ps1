@@ -207,10 +207,13 @@ function Test-AltResize($Hwnd) {
     $cursor = New-Object OverlayCheck+Point
     if (![OverlayCheck]::GetPhysicalCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
     $savedBefore = Get-Content -LiteralPath $settingsFile -Raw
-    $anchorRight = ($savedBefore | ConvertFrom-Json).placement.corner.EndsWith('Right')
+    $placement = ($savedBefore | ConvertFrom-Json).placement
+    $anchorRight = $placement.corner.EndsWith('Right')
+    $anchorBottom = $placement.corner.StartsWith('bottom')
     $x = if ($anchorRight) { $origin.Left + 9 } else { $origin.Right - 9 }
     $delta = if ($anchorRight) { -80 } else { 80 }
-    $y = $origin.Bottom - 9
+    $y = if ($anchorBottom) { $origin.Top + 9 } else { $origin.Bottom - 9 }
+    $deltaY = if ($anchorBottom) { -64 } else { 64 }
     $altHeld = $false
     $buttonHeld = $false
     try {
@@ -221,26 +224,29 @@ function Test-AltResize($Hwnd) {
         [OverlayCheck]::PrimaryButton($true)
         $buttonHeld = $true
         Start-Sleep -Milliseconds 70
-        if (![OverlayCheck]::SetPhysicalCursorPos(($x + $delta), $y)) { throw 'Could not drag the resize grip.' }
+        if (![OverlayCheck]::SetPhysicalCursorPos(($x + $delta), ($y + $deltaY))) { throw 'Could not drag the resize grip.' }
 
-        [void](Wait-For 'the overlay to widen during corner drag' {
+        [void](Wait-For 'the overlay to widen and grow taller during corner drag' {
             $bounds = [OverlayCheck]::WindowBounds($Hwnd)
-            ($bounds.Right - $bounds.Left) -ge ($origin.Right - $origin.Left + 76)
+            ($bounds.Right - $bounds.Left) -ge ($origin.Right - $origin.Left + 76) -and
+                ($bounds.Bottom - $bounds.Top) -ge ($origin.Bottom - $origin.Top + 60)
         })
-        if ((Get-Content -LiteralPath $settingsFile -Raw) -ne $savedBefore) { throw 'Width was saved before release.' }
+        if ((Get-Content -LiteralPath $settingsFile -Raw) -ne $savedBefore) { throw 'Size was saved before release.' }
         Assert-PassiveOverlay $Hwnd
 
         [OverlayCheck]::PrimaryButton($false)
         $buttonHeld = $false
         [OverlayCheck]::Alt($false)
         $altHeld = $false
-        [void](Wait-For 'the resized width to be saved' {
+        [void](Wait-For 'the resized width and height to be saved' {
             $settings = Get-Content -LiteralPath $settingsFile -Raw | ConvertFrom-Json
-            $settings.placement.width -gt 328
+            $settings.placement.width -gt $placement.width -and $settings.placement.minHeight -gt 172
         })
         $bounds = [OverlayCheck]::WindowBounds($Hwnd)
         if (($anchorRight -and $bounds.Right -ne $origin.Right) -or
-            (!$anchorRight -and $bounds.Left -ne $origin.Left)) { throw 'Resizing moved the anchored edge.' }
+            (!$anchorRight -and $bounds.Left -ne $origin.Left) -or
+            ($anchorBottom -and $bounds.Bottom -ne $origin.Bottom) -or
+            (!$anchorBottom -and $bounds.Top -ne $origin.Top)) { throw 'Resizing moved the anchored corner.' }
         return $bounds
     } finally {
         if ($buttonHeld) { [OverlayCheck]::PrimaryButton($false) }
@@ -294,8 +300,8 @@ try {
         } else {
             $bounds = [OverlayCheck]::WindowBounds($hwnd)
             if ($bounds.Left -ne $dragged.Left -or $bounds.Right -ne $dragged.Right -or
-                [Math]::Abs($bounds.Top - $dragged.Top) -gt 2) {
-                throw 'The overlay position and width did not survive restart.'
+                [Math]::Abs($bounds.Top - $dragged.Top) -gt 2 -or $bounds.Bottom -lt $dragged.Bottom - 2) {
+                throw 'The overlay position or saved minimum size did not survive restart.'
             }
         }
         if ($launch -eq 2) {

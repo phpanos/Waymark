@@ -11,8 +11,6 @@ use windows_sys::Win32::{
     },
 };
 
-pub(super) const COMPACT_HEIGHT: u16 = 172;
-
 pub fn enable_click_through(hwnd: isize) -> io::Result<()> {
     // Keep the overlay layered and leave its visibility under Tracker's control.
     // Tao's cursor-ignore setter rewrites both window styles and can hide the overlay.
@@ -124,6 +122,47 @@ impl Anchor {
         };
         (x, y)
     }
+
+    fn fit_resize(
+        &self,
+        p: Placement,
+        origin: RECT,
+        (horizontal, vertical): (i32, i32),
+    ) -> Placement {
+        let x = if horizontal < 0 {
+            origin.right - self.width
+        } else {
+            origin.left
+        };
+        let y = if vertical < 0 {
+            origin.bottom - self.height
+        } else {
+            origin.top
+        };
+        let x = x.clamp(self.rect.left, self.rect.right - self.width);
+        let y = y.clamp(self.rect.top, self.rect.bottom - self.height);
+        let inset_x = match p.corner {
+            Corner::TopLeft | Corner::BottomLeft => x - self.rect.left,
+            _ => self.rect.right - x - self.width,
+        };
+        let inset_y = match p.corner {
+            Corner::TopLeft | Corner::TopRight => y - self.rect.top,
+            _ => self.rect.bottom - y - self.height,
+        };
+        Placement {
+            inset_x: if horizontal == 0 {
+                p.inset_x
+            } else {
+                self.inset(inset_x)
+            },
+            inset_y: if vertical == 0 {
+                p.inset_y
+            } else {
+                self.inset(inset_y)
+            },
+            ..p
+        }
+    }
 }
 
 impl Tracker {
@@ -151,14 +190,15 @@ impl Tracker {
                 rect,
                 dpi,
                 width: ((width * dpi + 48) / 96).min(rect.right - rect.left),
-                height: ((i32::from(height) * dpi + 48) / 96).min(rect.bottom - rect.top),
+                height: ((i32::from(height.max(placement.min_height)) * dpi + 48) / 96)
+                    .min(rect.bottom - rect.top),
                 game,
             })
         }
     }
 
     pub fn capture(&mut self, hwnd: isize, saved: Placement) -> io::Result<Placement> {
-        let anchor = self.anchor(saved, self.height.unwrap_or(COMPACT_HEIGHT))?;
+        let anchor = self.anchor(saved, self.height.unwrap_or(saved.min_height))?;
         let mut actual = RECT::default();
         if unsafe { GetWindowRect(hwnd as HWND, &mut actual) } == 0 {
             return Err(io::Error::last_os_error());
@@ -183,6 +223,17 @@ impl Tracker {
             inset_y: anchor.inset(top.min(bottom)),
             ..saved
         })
+    }
+
+    pub fn resize_placement(
+        &mut self,
+        placement: Placement,
+        content_height: u16,
+        origin: RECT,
+        (horizontal, vertical): (i32, i32),
+    ) -> io::Result<Placement> {
+        let anchor = self.anchor(placement, content_height)?;
+        Ok(anchor.fit_resize(placement, origin, (horizontal, vertical)))
     }
 
     /// All coordinates are physical desktop pixels. The webview layout and insets use DIPs.
@@ -219,5 +270,43 @@ impl Tracker {
             self.height = Some(height);
             Ok(anchor.game)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resize_keeps_the_opposite_corner_fixed_until_the_work_area_edge() {
+        let origin = RECT {
+            left: 600,
+            top: 20,
+            right: 928,
+            bottom: 192,
+        };
+        let placement = Placement {
+            width: 408,
+            min_height: 252,
+            ..Placement::default()
+        };
+        let anchor = Anchor {
+            rect: RECT {
+                left: 0,
+                top: 0,
+                right: 948,
+                bottom: 720,
+            },
+            dpi: 96,
+            width: 408,
+            height: 252,
+            game: false,
+        };
+        let standard = anchor.fit_resize(placement, origin, (1, 1));
+        assert_eq!(anchor.origin(standard), (540, 20));
+        let free_corner = anchor.fit_resize(placement, origin, (-1, 1));
+        assert_eq!(anchor.origin(free_corner), (520, 20));
+        let vertical_only = anchor.fit_resize(placement, origin, (0, 1));
+        assert_eq!(vertical_only.inset_x, placement.inset_x);
     }
 }
