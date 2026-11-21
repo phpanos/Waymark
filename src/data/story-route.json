@@ -88,9 +88,9 @@
   "G4_8a",
   "G4_8b",
   "G4_10",
-  { "areaId": "G4_town", "objective": "Return to Makoru’s ship and sail to Ngakanu" },
+  { "areaId": "G4_town", "objective": "Return to Kingsmarch and speak to Rhodri to sail to Ngakanu" },
   "G4_11_1a",
   "G4_11_1b",
   "G4_11_2",
-  { "areaId": "G4_town", "objective": "Speak with the Hooded One to unlock the Interludes" }
+  { "areaId": "G4_town", "objective": "Speak with the Hooded One in Kingsmarch" }
 ]

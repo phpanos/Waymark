@@ -19,6 +19,7 @@ const controls = [
   { title: 'Overlay', actions: [
     ['Alt+N', 'Show or hide Waymark'],
     ['Alt+drag header', 'Move the overlay'],
+    ['Alt+drag corner', 'Resize the overlay width'],
     ['Alt+click header', 'Open or close route details'],
     ['Alt+Shift+T', 'Start or stop the act timer'],
   ] },
@@ -127,7 +128,7 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
   const [follow, setFollow] = useState(saved.followGame)
   function submit(e: FormEvent) {
     e.preventDefault()
-    run(() => native.position({ corner, insetX: Number(x), insetY: Number(y), followGame: follow }))
+    run(() => native.position({ ...saved, corner, insetX: Number(x), insetY: Number(y), followGame: follow }))
   }
   const dirty = saved.corner !== corner || saved.insetX !== Number(x) || saved.insetY !== Number(y) || saved.followGame !== follow
   return <form onSubmit={submit}>
@@ -142,6 +143,7 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
     <label className="check"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)}/>Follow the game window</label>
     <p className="hint">Current anchor · {anchored ? 'Game client area' : 'Primary display work area'}</p>
     <p className="hint">Hold Alt and drag the Waymark header to move it. Release the mouse to save.</p>
+    <p className="hint">Hold Alt and drag the marked bottom corner to resize the overlay.</p>
     <p className="hint">Alt+click the header to expand or collapse objective details.</p>
     <button className="primary" disabled={!dirty}>Save position</button>
   </form>

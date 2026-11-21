@@ -1,4 +1,4 @@
-use super::settings::{Corner, Placement};
+use super::settings::{Corner, Placement, MAX_OVERLAY_WIDTH, MIN_OVERLAY_WIDTH};
 use std::{io, mem::size_of};
 use windows_sys::Win32::{
     Foundation::{GetLastError, SetLastError, HWND, POINT, RECT},
@@ -127,11 +127,11 @@ impl Anchor {
 }
 
 impl Tracker {
-    fn anchor(&mut self, follow_game: bool, height: u16) -> io::Result<Anchor> {
+    fn anchor(&mut self, placement: Placement, height: u16) -> io::Result<Anchor> {
         // HWNDs are borrowed OS identifiers; failed/stale lookups fall back to the work area.
         unsafe {
             let mut bounds = None;
-            if follow_game {
+            if placement.follow_game {
                 let fg = GetForegroundWindow();
                 bounds = game_bounds(fg);
                 if bounds.is_some() {
@@ -146,10 +146,11 @@ impl Tracker {
                 None => primary_bounds()?,
             };
             let dpi = dpi.max(96) as i32;
+            let width = i32::from(placement.width.clamp(MIN_OVERLAY_WIDTH, MAX_OVERLAY_WIDTH));
             Ok(Anchor {
                 rect,
                 dpi,
-                width: ((328 * dpi + 48) / 96).min(rect.right - rect.left),
+                width: ((width * dpi + 48) / 96).min(rect.right - rect.left),
                 height: ((i32::from(height) * dpi + 48) / 96).min(rect.bottom - rect.top),
                 game,
             })
@@ -157,7 +158,7 @@ impl Tracker {
     }
 
     pub fn capture(&mut self, hwnd: isize, saved: Placement) -> io::Result<Placement> {
-        let anchor = self.anchor(saved.follow_game, self.height.unwrap_or(COMPACT_HEIGHT))?;
+        let anchor = self.anchor(saved, self.height.unwrap_or(COMPACT_HEIGHT))?;
         let mut actual = RECT::default();
         if unsafe { GetWindowRect(hwnd as HWND, &mut actual) } == 0 {
             return Err(io::Error::last_os_error());
@@ -180,7 +181,7 @@ impl Tracker {
             corner,
             inset_x: anchor.inset(left.min(right)),
             inset_y: anchor.inset(top.min(bottom)),
-            follow_game: saved.follow_game,
+            ..saved
         })
     }
 
@@ -192,7 +193,7 @@ impl Tracker {
         visible: bool,
         height: u16,
     ) -> io::Result<bool> {
-        let anchor = self.anchor(p.follow_game, height)?;
+        let anchor = self.anchor(p, height)?;
         let (w, h) = (anchor.width, anchor.height);
         let (x, y) = anchor.origin(p);
         unsafe {

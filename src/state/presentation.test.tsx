@@ -33,12 +33,19 @@ describe('zone presentation', () => {
   it('labels optional objectives and recommends lasting rewards only in league-start mode', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_2', name: null, level: 2 } }
     const standard = renderToStaticMarkup(<Compact state={state}/>)
-    expect(standard).toContain('Story objective')
+    expect(standard).not.toContain('>Story objective<')
+    expect(standard).not.toContain('Connected')
+    expect(standard).not.toContain('>Ready<')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).toContain('File missing')
     expect(standard).toContain('Find the path into the Grelwood')
-    expect(standard).not.toContain('Defeat Beira for cold resistance')
+    expect(standard).toContain('Skip Mud Burrow. Head to the Grelwood.')
+    expect(standard).toContain('Hug the edge toward the Grelwood icon')
+    expect(standard).not.toContain('If the Grelwood icon is above')
+    expect(standard).toContain('Defeat Beira<span class="optional-reward">Cold resistance</span>')
     expect(standard).not.toContain('Recommended')
     const leagueStart = { ...state, settings: { ...state.settings, leagueStart: true } }
     expect(renderToStaticMarkup(<Compact state={{ ...leagueStart, detailsExpanded: true }}/>)).toContain('Recommended')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Hug the edge toward the Grelwood icon')
   })
   it('shows only optional objectives for a side area', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_3', name: null, level: 3 } }
@@ -57,16 +64,16 @@ describe('zone presentation', () => {
     const state = { ...snapshot, zone: { areaId: 'G3_2_2', name: null, level: 39 } }
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Cross the canals using the pressure pads')
-    expect(html).toContain('When the quest updates, portal to town and speak to Alva.')
-    expect(html).not.toContain('Take the detour to the Azak Bog')
+    expect(html).toContain('On quest update, portal to Alva.')
+    expect(html).toContain('Take the detour to the Azak Bog')
     expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'missing' }}/>)).not.toContain('Shortcut')
-    expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('Once the quest updates')
+    expect(describeZone({ areaId: null, name: 'The Matlan Waterways', level: null }).shortcut?.detail).toContain('wait for the quest to update')
     expect(describeZone({ areaId: 'G1_1', name: null, level: 1 }).shortcut).toBeNull()
   })
   it('keeps the Cemetery cue visible and shows the two tomb branches only in expanded directions', () => {
     const state: Snapshot = { ...snapshot, zone: { areaId: 'G1_7', name: null, level: 9 } }
     const collapsed = renderToStaticMarkup(<Compact state={state}/>)
-    expect(collapsed).toContain('Follow the perimeter and check both side walls')
+    expect(collapsed).toContain('Sweep the edges for both tombs')
     expect(collapsed).not.toContain('route-diagram')
     const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
     expect(expanded).toContain('Clear either tomb first')
@@ -88,7 +95,7 @@ describe('zone presentation', () => {
   })
   it('shows how to move in the Riverbank, town, and Clearfell apart from the objective list', () => {
     for (const [areaId, cue] of [
-      ['G1_1', 'Follow the path inland'], ['G1_town', 'Head toward the east side of town'],
+      ['G1_1', 'Follow the path inland'], ['G1_town', 'Exit to</span> <strong>Clearfell</strong>'],
       ['G1_2', 'If the Grelwood icon is above'],
     ]) {
       const state: Snapshot = { ...snapshot, zone: { areaId, name: null, level: 1 } }
@@ -151,10 +158,11 @@ describe('zone presentation', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_4', name: null, level: 4 } }
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Investigate the Tree of Souls')
-    expect(html).toContain('Glowing roots lead to the tree')
-    expect(html).not.toContain('Tag the Grim Tangle waypoint early')
-    expect(html).not.toContain('Defeat the Brambleghast')
-    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('Glowing roots')
+    expect(html).toContain('Follow glowing roots')
+    expect(html).toContain('Follow the river to the Red Vale')
+    expect(html).toContain('Tag the Grim Tangle waypoint if you find it early')
+    expect(html).toContain('Defeat the Brambleghast')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('Follow glowing roots')
     expect(describeZone({ areaId: null, name: 'The Riverbank', level: null }).route?.steps).toHaveLength(2)
     expect(describeZone({ areaId: 'UNKNOWN', name: 'The Riverbank', level: null }).route).toBeNull()
   })
@@ -162,7 +170,10 @@ describe('zone presentation', () => {
     const zone = { areaId: 'G1_4', name: null, level: 4 }
     const collapsed = renderToStaticMarkup(<Compact state={{ ...snapshot, zone }}/>)
     const expanded = renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>)
-    expect(collapsed).not.toContain('orange mushrooms')
+    expect(collapsed).toContain('aria-label="After the Red Vale"')
+    expect(collapsed).toContain('follow orange mushrooms')
+    expect(collapsed).toContain('Defeat the Brambleghast<span class="optional-reward">Skill Gem</span>')
+    expect(collapsed).toContain('Kill Areagne at the witch hut<span class="optional-reward">Support Gem</span>')
     expect(expanded).toContain('Follow the orange mushrooms after freeing the Hooded One and reporting to Una')
     expect(expanded).toContain('step inside to activate its waypoint')
     expect(expanded).toContain('Defeat the Brambleghast')
@@ -170,7 +181,7 @@ describe('zone presentation', () => {
   })
   it.each([
     ['G2_2', 'Look for the curved Six Sisters bridge', 'Yellow paper seals · Optional'],
-    ['G3_2_2', 'Cross each canal after stepping on its pressure pad', 'Azak Bog entrance · Optional'],
+    ['G3_2_2', 'Step on each pad to cross the canals.', 'Azak Bog entrance · Optional'],
     ['G4_4_1', 'Follow the path through three tests', 'Silent Hall · Optional'],
   ])('keeps the first route action visible with the details collapsed or expanded in %s', (areaId, cue, detour) => {
     const state = { ...snapshot, zone: { areaId, name: null, level: null } }
@@ -181,12 +192,65 @@ describe('zone presentation', () => {
     expect(expanded).toContain(cue)
     expect(expanded).toContain(detour)
   })
+  it.each([
+    ['G1_4', 'Tag its waypoint, then find the tree waypoint'],
+    ['G1_11', 'Tag its waypoint, then return for Crowbell or Freythorn'],
+    ['G1_12', 'Waypoint to the Farmlands if tagged'],
+    ['G1_15', 'Tag the checkpoint. Use it after Candlemass'],
+    ['G2_1', 'After Rathbreaker, portal to Zarka'],
+    ['G2_3', 'Respawn there if available'],
+    ['G2_3', 'After Jamanra retreats, take the stairs to the sandstorm before portaling'],
+    ['G2_3s', 'Trial on the Desert Map? Tag its waypoint for later'],
+    ['G2_4_1', 'Tag the Lost City entrance checkpoint'],
+    ['G2_4_3', 'After Azarian, take the Essence of Water. Portal to Zarka'],
+    ['G2_5_2', 'Take the Mastodon Tusks after both bosses. Portal to Zarka'],
+    ['G2_6', 'Tag the sealed Grotto door checkpoint first'],
+    ['G2_6', 'After seal 3, checkpoint back to the Grotto door'],
+    ['G2_7', 'After Zalmarath, take the Flame Ruby. Portal to Zarka'],
+    ['G2_9_2', 'Give Shambrin the Final Letter if found'],
+    ['G2_10_2', 'After Rudja, free and speak to Risu. Portal to Risu and Asala'],
+    ['G2_12', 'After Jamanra, portal to the Hooded One and Asala'],
+    ['G2_13', 'Tag the entrance waypoint if saving the trial for later'],
+    ['G3_3', 'Tag the Jungle Ruins waypoint before the Crypts'],
+    ['G3_4', 'Take the venom. Portal to Servi now or use the nearer exit'],
+    ['G3_2_1', 'Tag Alva’s waypoint before the Wetlands'],
+    ['G3_2_2', 'Take the Azak Bog side exit'],
+    ['G3_5', 'Temple of Chaos first? Tag its waypoint, then return to the Wetlands'],
+    ['G3_6_2', 'Power both generators. Checkpoint back to Zicoatl'],
+    ['G3_6_2', 'Take the Large Soul Core. Waypoint to Jungle Ruins and open the Waterways'],
+    ['G3_7', 'Tag the Bog waypoint if saving Ignagduk for later'],
+    ['G3_8', 'Doing both branches? Tag the Vault and Apex waypoints as you find them'],
+    ['G3_9', 'Take the Hammer of Kamasa. Checkpoint to the entrance for Apex'],
+    ['G3_9', 'Portal to Oswald with the hammer, then waypoint to Apex'],
+    ['G3_11', 'Take the idol. Checkpoint to Apex waypoint, then travel via Drowned City to Alva'],
+    ['G3_12', 'After Ketzuli, talk to Alva. Portal once the platform moves and the quest updates'],
+    ['G3_17', 'Loot after Doryani. Portal to the encampment for Doryani and Alva'],
+    ['G4_1_2', 'Use Return to Ship when offered. Freed Matiki? Check for Eye of Hinekora'],
+    ['G4_2_2', 'Tag the Journey&#x27;s End waypoint'],
+    ['G4_2_2', 'Portal to Dannig for spikes, then waypoint to Freya'],
+    ['G4_2_2', 'After Omniphobia, return to Tujen for passive points'],
+    ['G4_3_2', 'Use Return to Ship when offered. Freed Matiki? Check for Eye of Hinekora'],
+    ['G4_4_1', 'After test 3, check the checkpoint branch for Silent Hall'],
+    ['G4_4_3', 'Then Return to Ship'],
+    ['G4_5_1', 'Use any Chapel Key and claim the flask bonus before leaving'],
+    ['G4_5_2', 'Use Return to Ship when offered. Freed Matiki? Check for Eye of Hinekora'],
+    ['G4_7', 'Use Return to Ship when offered. Freed Matiki? Check for Eye of Hinekora'],
+    ['G4_8b', 'Tag the cliffside checkpoint. Check opposite branches for the bells'],
+    ['G4_10', 'After Benedictus, enter the forge. Finish Hooded One dialogue before portaling'],
+    ['G4_10', 'Portal to Kingsmarch. Sail with Rhodri'],
+    ['G4_11_2', 'After Tavakai, finish the scene and talk to him. Return to the Hooded One'],
+  ])('shows the campaign travel shortcut in compact mode for %s', (areaId, cue) => {
+    const zone = { areaId, name: null, level: null }
+    const markup = renderToStaticMarkup(<Compact state={{ ...snapshot, zone }}/>)
+    const steps = markup.match(/<ol class="quick-route"[^>]*>(.*?)<\/ol>/)?.[1]
+    expect(steps).toContain(cue)
+  })
   it('shows the portal after collecting the girdle and keeps longer instructions in details', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_5', name: null, level: 5 } }
     const compact = renderToStaticMarkup(<Compact state={state}/>)
-    const pickup = compact.indexOf('collect the final girdle')
+    const pickup = compact.indexOf('Take the final girdle')
     expect(pickup).toBeGreaterThan(-1)
-    expect(compact.indexOf('Portal to town and get the Runed Spikes')).toBeGreaterThan(pickup)
+    expect(compact.indexOf('Portal to Renly for the Runed Spikes')).toBeGreaterThan(pickup)
     expect(compact).not.toContain('Portal after collecting all three pieces')
     expect(compact).not.toContain('Objectives and exits')
     expect(compact).not.toContain('<kbd>')
@@ -272,7 +336,7 @@ describe('permanent reward recap', () => {
     for (const previousZone of [null, { areaId: 'G1_1', name: null, level: 1 }, { areaId: 'G1_2', name: null, level: 2 }]) {
       const markup = renderToStaticMarkup(<Compact state={state} previousZone={previousZone}/>)
       expect(markup).toContain('Leave the encampment and enter Clearfell')
-      expect(markup).toContain('Head toward the east side of town')
+      expect(markup).toContain('Exit to Clearfell.')
       expect(markup).not.toContain('Uncut Skill Gem')
       expect(markup).not.toContain('Mark claimed')
     }

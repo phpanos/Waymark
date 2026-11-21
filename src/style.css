@@ -18,11 +18,15 @@ button:focus-visible, input:focus-visible { outline: 2px solid #e4c78d; outline-
 button:disabled { opacity: .55; cursor: default }
 .overlay-window { overflow: hidden }
 .compact {
+  position: relative;
   min-height: calc(168px + var(--build-height, 0px) + var(--quest-reward-height, 0px)); margin: 2px; overflow: hidden; border: 1px solid #817452;
   background: linear-gradient(112deg,rgba(30,36,33,.95),rgba(17,22,22,.95));
   box-shadow: inset 0 0 0 3px #1b201df0, inset 0 0 0 4px #685e443d;
   padding: 0 16px 7px; user-select: none;
 }
+.resize-grip { position: absolute; bottom: 5px; width: 8px; height: 8px; border-bottom: 1px solid var(--gold); opacity: .55; pointer-events: none }
+.resize-grip.at-left { left: 5px; border-left: 1px solid var(--gold) }
+.resize-grip.at-right { right: 5px; border-right: 1px solid var(--gold) }
 .compact.with-build { --build-height: 22px }
 .compact.with-quest-reward:not(.expanded) {
   --quest-reward-height: 18px;
@@ -30,18 +34,17 @@ button:disabled { opacity: .55; cursor: default }
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--heading); letter-spacing: .19em; text-transform: uppercase; color: #dfc99d }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
-.compact-head { height: 42px; gap: 8px; border-bottom: 1px solid var(--line) }
+.compact-head { height: 42px; gap: 8px }
 .overlay-identity { display: grid; gap: 1px; min-width: 0 }
-.overlay-identity .brand { gap: 5px; font-size: 11px }
-.overlay-identity .brand img { width: 18px; height: 18px }
+.overlay-wordmark { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px }
+.overlay-wordmark img { width: 18px; height: 18px }
 .overlay-identity .status { font-size: 10px; line-height: 12px }
 .overlay-identity .status i { width: 4px; height: 4px }
-.act-timer { display: grid; grid-template-columns: auto auto; align-items: center; column-gap: 8px; row-gap: 1px; padding: 3px 6px; border: 1px solid #62604d; border-radius: 4px; background: #171d1a; color: var(--muted); font-size: 10px; line-height: 1.2; white-space: nowrap }
-.act-timer-label { color: #dfc99d; font-weight: 600 }
+.act-timer { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; line-height: 1.2; white-space: nowrap }
 .act-timer-state { color: var(--muted); font-size: 10px; white-space: nowrap }
-.act-timer[data-running="true"] .act-timer-state, .act-timer-state[data-running="true"] { color: #a2c6a5 }
 .act-timer-value { color: var(--paper); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums }
-.act-timer .act-timer-value { font-size: 16px; line-height: 1; text-align: right }
+.act-timer .act-timer-value { color: var(--muted); font-size: 12px }
+.act-timer[data-running="true"] .act-timer-value, .act-timer-state[data-running="true"] { color: #a2c6a5 }
 .act-timer-card { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--panel) }
 .act-timer-card-heading { display: flex; justify-content: space-between; align-items: baseline }
 .act-timer-card-heading .eyebrow, .act-timer-card :is(.actions, .hint) { margin: 0 }
@@ -55,11 +58,13 @@ button:disabled { opacity: .55; cursor: default }
 .status.watching { color: #a2c6a5 }
 .status.replaying, .status.replayComplete { color: #c3b1de }
 .status.readError { color: #e9a78c }
-.zone-block { padding: 7px 0 4px; height: 58px }
-.zone-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 5px }
-.zone-actions { display: flex; gap: 8px; align-items: baseline }
+.zone-block { padding: 0 0 5px }
+.zone-meta { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 24px }
+.zone-context { min-width: 0 }
+.zone-actions { display: flex; flex-shrink: 0; gap: 6px; align-items: center }
 .guide-navigation { display: flex; gap: 3px; margin: 0; padding: 0; border: 0 }
-.guide-navigation button { min-width: 24px; min-height: 22px; padding: 0 5px; font-size: 14px; line-height: 1 }
+.guide-navigation button { min-width: 24px; min-height: 22px; padding: 0 5px; border: 1px solid transparent; background: transparent; color: var(--muted); font-size: 16px; line-height: 1 }
+.guide-navigation button:enabled:hover { border-color: var(--line); color: var(--paper) }
 .guide-navigation button[data-reward-target="guide:live"] { font-size: 11px }
 .details-gesture { color: var(--muted); font: 11px/14px Barlow, sans-serif; white-space: nowrap }
 .details-gesture [aria-hidden] { color: var(--gold); margin-left: 2px }
@@ -68,24 +73,20 @@ button:disabled { opacity: .55; cursor: default }
 .eyebrow, .act { font: 600 10px/1.4 Barlow, sans-serif; letter-spacing: .15em; text-transform: uppercase; color: #b5ad96 }
 .act { color: #d3bd92 }
 .eyebrow .act { border-left: 1px solid #71664f; padding-left: 9px; margin-left: 9px }
-.zone-context .act:first-child { margin-left: 0; padding-left: 0; border-left: 0 }
-.zone-block h1 { font: 500 24px/1.5 var(--heading); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -.035em }
-.with-shortcut .zone-block, .with-route .zone-block { height: 50px; padding: 5px 0 2px }
-.with-shortcut .zone-block h1, .with-route .zone-block h1 { line-height: 1.2 }
-.with-route.with-shortcut .zone-block { height: 42px; padding: 2px 0 0 }
-.with-route.with-shortcut .zone-block h1 { font-size: 20px }
-.with-route.with-shortcut .objective { padding-top: 3px }
-.with-route.with-shortcut :is(.route-preview, .optional-preview) { line-height: 14px }
-.with-route.with-shortcut .story-objective { line-height: 18px }
-.with-route.with-shortcut .optional-label { line-height: 1.1 }
-.objective { border-top: 1px solid var(--line); padding-top: 5px }
-.story-objective { color: var(--paper); font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
-.story-objective[data-story-step] { white-space: normal }
-.optional-preview, .route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
+.zone-block h1 { color: var(--muted); font: 400 13px/1.25 Barlow, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.objective { border-top: 1px solid var(--line); padding-top: 7px }
+.story-objective { color: var(--paper); font-size: 17px; font-weight: 600; line-height: 1.25; overflow-wrap: anywhere }
+.route-preview { display: flex; align-items: baseline; gap: 6px; color: var(--muted); font-size: 11px; white-space: nowrap }
 .route-preview { color: var(--gold) }
 .route-preview.direction .optional-hint { font-weight: 600 }
 .quick-route { display: grid; gap: 2px; margin: 5px 0; padding-left: 19px; color: #d9e9df; font-size: 12px; line-height: 1.3 }
-.quick-route li::marker { color: #a8c8b6; font-weight: 600 }
+.quick-route li::marker { color: #a3aaa2 }
+.compact:not(.expanded) .zone-optional { margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.3 }
+.compact:not(.expanded) .zone-optional h2 { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em }
+.compact:not(.expanded) .zone-optional ul { margin: 0; padding-left: 16px }
+.optional-reward { margin-left: 5px; color: var(--gold); font-weight: 600 }
+.route-return { margin-top: 6px; padding-top: 4px; border-top: 1px solid var(--line) }
+.route-return h2 { color: var(--gold); font-size: 11px; font-weight: 600 }
 .optional-label { text-transform: uppercase; letter-spacing: .08em; font-size: 9px }
 .optional-hint { overflow: hidden; text-overflow: ellipsis }
 .quest-reward { display: flex; align-items: baseline; gap: 6px; min-height: 17px; color: #dfc99d; font-size: 12px; line-height: 1.35; overflow-wrap: anywhere }
@@ -118,7 +119,6 @@ button:disabled { opacity: .55; cursor: default }
 .route-landmarks li::before { content: ""; position: absolute; top: 8px; left: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--gold) }
 .route-landmarks p { color: var(--muted); font-size: 14px }
 .compact.expanded { height: auto; min-height: 168px; padding-bottom: 12px }
-.compact.expanded .story-objective { white-space: normal }
 .overlay-details { display: grid; gap: 6px; margin-top: 7px; font-size: 12px; line-height: 1.25 }
 .overlay-details .route-landmarks li { padding-left: 10px; padding-bottom: 5px }
 .overlay-details .route-landmarks li:last-child { padding-bottom: 0 }

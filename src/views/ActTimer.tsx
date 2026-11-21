@@ -31,9 +31,9 @@ export function OverlayActTimer({ state, act }: { state: Snapshot; act: number |
   const canStart = act !== null && state.status === 'watching' && state.replaySession === 0
   if (!clock && !canStart) return null
   return <div className="act-timer" data-running={running} aria-label={`Act ${clock?.act ?? act} timer ${running ? 'running' : 'stopped'}`}>
-    <span className="act-timer-label">Act {clock?.act ?? act} timer</span>
+    <span className="act-timer-label">Act {clock?.act ?? act}</span>
     <TimerValue clock={clock}/>
-    <span className="act-timer-state">{running ? 'Running' : clock ? 'Paused' : 'Ready'}</span>
+    {clock && !running && <span className="act-timer-state">Paused</span>}
   </div>
 }
 
