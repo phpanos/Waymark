@@ -38,6 +38,8 @@ pub enum Corner {
 
 pub(super) const MIN_OVERLAY_WIDTH: u16 = 328;
 pub(super) const MAX_OVERLAY_WIDTH: u16 = 720;
+pub(super) const MIN_OVERLAY_HEIGHT: u16 = 172;
+pub(super) const MAX_OVERLAY_HEIGHT: u16 = 720;
 
 fn default_overlay_width() -> u16 {
     MIN_OVERLAY_WIDTH
@@ -52,7 +54,14 @@ pub struct Placement {
     pub follow_game: bool,
     #[serde(default = "default_overlay_width")]
     pub width: u16,
+    #[serde(default = "default_overlay_height")]
+    pub min_height: u16,
 }
+
+fn default_overlay_height() -> u16 {
+    MIN_OVERLAY_HEIGHT
+}
+
 impl Default for Placement {
     fn default() -> Self {
         Self {
@@ -61,6 +70,7 @@ impl Default for Placement {
             inset_y: 20,
             follow_game: true,
             width: default_overlay_width(),
+            min_height: default_overlay_height(),
         }
     }
 }
@@ -72,6 +82,11 @@ impl Placement {
         if !(MIN_OVERLAY_WIDTH..=MAX_OVERLAY_WIDTH).contains(&self.width) {
             return Err(format!(
                 "Width must be between {MIN_OVERLAY_WIDTH} and {MAX_OVERLAY_WIDTH}."
+            ));
+        }
+        if !(MIN_OVERLAY_HEIGHT..=MAX_OVERLAY_HEIGHT).contains(&self.min_height) {
+            return Err(format!(
+                "Height must be between {MIN_OVERLAY_HEIGHT} and {MAX_OVERLAY_HEIGHT}."
             ));
         }
         Ok(())

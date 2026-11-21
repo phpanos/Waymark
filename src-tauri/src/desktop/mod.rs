@@ -8,7 +8,9 @@ mod window;
 
 use reward_click::{RewardClick, RewardTarget, RewardTargets};
 use serde::Serialize;
-use settings::{CampaignProfile, Placement, Settings, TownRewardStatus};
+use settings::{
+    CampaignProfile, Placement, Settings, TownRewardStatus, MAX_OVERLAY_HEIGHT, MIN_OVERLAY_HEIGHT,
+};
 use std::{
     path::PathBuf,
     sync::{
@@ -26,7 +28,6 @@ use waymark_log::parser::Zone;
 
 const CHANNEL: &str = "waymark://state-v1";
 const REWARD_ACTION: &str = "waymark://reward-action";
-const MAX_OVERLAY_HEIGHT: u16 = 720;
 const ACT_TIMER_SHORTCUT: &str = "Alt+Shift+T";
 const REWARD_SHORTCUTS: [(&str, &str, &str); 6] = [
     (
@@ -228,7 +229,7 @@ fn set_reward_targets(
 ) {
     if window.label() != "overlay"
         || targets.len() > 24
-        || !(window::COMPACT_HEIGHT..=MAX_OVERLAY_HEIGHT).contains(&height)
+        || !(1..=MAX_OVERLAY_HEIGHT).contains(&height)
     {
         return;
     }
@@ -309,7 +310,7 @@ fn apply_overlay(app: &AppHandle, hwnd: isize) {
 fn set_overlay_height(window: WebviewWindow, state: State<'_, Runtime>, height: u16) {
     if window.label() == "overlay" {
         state.overlay_height.store(
-            height.clamp(window::COMPACT_HEIGHT, MAX_OVERLAY_HEIGHT),
+            height.clamp(MIN_OVERLAY_HEIGHT, MAX_OVERLAY_HEIGHT),
             Ordering::Relaxed,
         );
     }
@@ -341,22 +342,27 @@ fn save_drag_position(app: &AppHandle, hwnd: isize) -> Result<(), String> {
 fn resize_overlay(
     app: &AppHandle,
     hwnd: isize,
-    placement: Placement,
+    mut placement: Placement,
+    origin: windows_sys::Win32::Foundation::RECT,
+    axes: (i32, i32),
     commit: bool,
 ) -> Result<(), String> {
     let state = app.state::<Runtime>();
-    if commit {
-        return state.edit(app, |settings| settings.placement.width = placement.width);
+    let height = state.overlay_height.load(Ordering::Relaxed);
+    if axes.1 != 0 && placement.min_height <= height {
+        placement.min_height = MIN_OVERLAY_HEIGHT;
     }
-    app.state::<Mutex<window::Tracker>>()
-        .lock()
-        .unwrap()
-        .apply(
-            hwnd,
-            placement,
-            true,
-            state.overlay_height.load(Ordering::Relaxed),
-        )
+    let tracker = app.state::<Mutex<window::Tracker>>();
+    let mut tracker = tracker.lock().unwrap();
+    let placement = tracker
+        .resize_placement(placement, height, origin, axes)
+        .map_err(|error| error.to_string())?;
+    if commit {
+        drop(tracker);
+        return state.edit(app, |settings| settings.placement = placement);
+    }
+    tracker
+        .apply(hwnd, placement, true, height)
         .map(|_| ())
         .map_err(|error| error.to_string())
 }
@@ -720,7 +726,7 @@ pub fn run() {
     app.manage(Mutex::new(window::Tracker::default()));
     app.manage(Runtime {
         file,
-        overlay_height: AtomicU16::new(window::COMPACT_HEIGHT),
+        overlay_height: AtomicU16::new(MIN_OVERLAY_HEIGHT),
         reward_targets: Mutex::new(RewardTargets::default()),
         snapshot: Mutex::new(Snapshot {
             version: 1,
