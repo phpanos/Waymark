@@ -90,7 +90,11 @@ try {
     })()`))
     console.log('Reward control point ' + point.join(' '))
   }
-  if (view !== 'replay' || argument === 'start') await expectText('Connected')
+  if (pageView === 'overlay') {
+    await waitFor('live log tracking', () => evaluate('!!document.querySelector(".compact[data-status=watching]")'))
+  } else if (view !== 'replay' || argument === 'start') {
+    await expectText('Connected')
+  }
   if (view === 'settings' || (view === 'overlay' && argument !== '1')) await expectText('Awaiting zone')
   if (view === 'timer') {
     const ready = argument === 'ready-one'
@@ -124,16 +128,17 @@ try {
     }
   } else if (view === 'quick-route') {
     await appendFile(log, 'Generating level 5 area "G1_5"\r\n')
-    await expectText('Find all three rust obelisks.', '.quick-route li:nth-child(1)')
-    await expectText('Defeat the Rust King and collect the final girdle.', '.quick-route li:nth-child(2)')
-    await expectText('Portal to town and get the Runed Spikes from Renly.', '.quick-route li:nth-child(3)')
+    await expectText('Sweep the wall for obelisks. Found one off a short spur? Check the central island.', '.quick-route li:nth-child(1)')
+    await expectText('Kill the Rust King. Take the final girdle.', '.quick-route li:nth-child(2)')
+    await expectText('Portal to Renly for the Runed Spikes.', '.quick-route li:nth-child(3)')
+    await expectText('Waypoint back to the Grelwood tree.', '.quick-route li:nth-child(4)')
     await waitFor('the ordered steps to fit without a duplicate shortcut', () => evaluate(`(() => {
       const panel = document.querySelector('.compact').getBoundingClientRect()
       return !document.querySelector('.shortcut-preview, .overlay-details') && panel.bottom <= innerHeight - 1
     })()`))
   } else if (view === 'diagram') {
     if (argument === 'collapsed') {
-      await expectText('Follow the perimeter and check both side walls', '.quick-route li:first-child')
+      await expectText('Sweep the edges for both tombs. Check the middle if needed.', '.quick-route li:first-child')
       await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
       await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
         const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
@@ -175,7 +180,8 @@ try {
           if (area === 'G1_1') {
             await expectText('Follow the path inland', '.direction-diagram [data-motion="forward"] p span')
           } else if (area === 'G1_town') {
-            await expectText('Clearfell', '.direction-diagram [data-motion="screen-right"] strong')
+            await expectText('Exit to', '.direction-diagram [data-motion="follow"] p span')
+            await expectText('Clearfell', '.direction-diagram [data-motion="follow"] strong')
           } else if (area === 'G1_2') {
             await expectText('Search the left edge', '.direction-diagram [data-motion="screen-left"] strong')
             await expectText('Search the right edge', '.direction-diagram [data-motion="screen-right"] strong')
@@ -316,7 +322,8 @@ try {
       }
     } else {
       await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
-      await expectText('Glowing roots lead to the tree', '.direction .optional-hint')
+      await expectText('Follow glowing roots. Activate the tree waypoint.', '.quick-route li:first-child')
+      await expectText('After the Red Vale', '.route-return h2')
       await waitFor('native window to match the compact overlay height', () => evaluate(`(() => {
         const panel = document.querySelector('.compact')
         const expectedHeight = Math.ceil(panel.getBoundingClientRect().height) + 4
@@ -491,7 +498,7 @@ try {
     await appendFile(log, '[INFO Client 42] : WaymarkSmoke (Warrior) is now level 20.\r\n')
     await waitFor('the last build milestone to clear', () => evaluate('!document.querySelector(".build-milestone")'))
     await appendFile(log, 'Generating level 39 area "G3_2_2"\r\n')
-    await expectText('Once the quest updates, use a town portal to the Ziggurat Encampment and speak to Alva to continue.', '.zone-shortcut p')
+    await expectText('If you are doing Ignagduk now, take the Azak Bog side exit before leaving. Walk through the pre-drained final stretch and wait for the quest to update before portaling to Alva in the Ziggurat Encampment.', '.zone-shortcut p')
     await appendFile(log, 'Generating level 40 area "G3_7"\r\n')
     await expectText('Level 10 Uncut Spirit Gem from Ignagduk. Bring her Ghastly Spear to Servi in town for a charm.', '.objective-loot')
     for (const [area, name, town, reward, claim] of [

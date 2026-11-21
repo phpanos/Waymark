@@ -1,4 +1,8 @@
-use super::{reward_click, Runtime};
+use super::{
+    reward_click,
+    settings::{Corner, Placement, MAX_OVERLAY_WIDTH, MIN_OVERLAY_WIDTH},
+    Runtime,
+};
 use std::{cell::RefCell, io, ptr::null_mut};
 use tauri::{AppHandle, Emitter, Manager};
 use windows_sys::Win32::{
@@ -19,8 +23,19 @@ thread_local! {
 type Point = (i32, i32);
 
 #[derive(Clone, Copy)]
+enum GestureMode {
+    Move(Point),
+    Resize {
+        placement: Placement,
+        width_pixels: i32,
+        dpi: i32,
+        direction: i32,
+    },
+}
+
+#[derive(Clone, Copy)]
 struct Gesture {
-    origin: Point,
+    mode: GestureMode,
     start: Point,
     preview: Point,
     button_up: u32,
@@ -161,19 +176,36 @@ impl Input {
 
         let hwnd = self.hwnd as HWND;
         let mut rect = RECT::default();
-        if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 }
-            || !header_contains(rect, unsafe { GetDpiForWindow(hwnd) }, cursor)
-        {
+        if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 } {
             return false;
         }
+        let dpi = unsafe { GetDpiForWindow(hwnd) };
+        let mode = if header_contains(rect, dpi, cursor) {
+            GestureMode::Move((rect.left, rect.top))
+        } else {
+            let state = self.app.state::<Runtime>();
+            let Ok(snapshot) = state.snapshot.try_lock() else {
+                return false;
+            };
+            let placement = snapshot.settings.placement;
+            let Some(direction) = resize_corner(rect, dpi, placement.corner, cursor) else {
+                return false;
+            };
+            GestureMode::Resize {
+                placement,
+                width_pixels: rect.right - rect.left,
+                dpi: dpi.max(96) as i32,
+                direction,
+            }
+        };
 
-        // Move and save outside the hook so it returns promptly to the input queue.
+        // Update the window and save outside the hook.
         self.timer = unsafe { SetTimer(null_mut(), 0, 16, Some(update_drag)) };
         if self.timer == 0 {
             return false;
         }
         self.gesture = Some(Gesture {
-            origin: (rect.left, rect.top),
+            mode,
             start: cursor,
             preview: cursor,
             button_up,
@@ -205,6 +237,41 @@ fn header_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
         && y < rect.bottom.min(rect.top + px(45))
 }
 
+fn resize_corner(rect: RECT, dpi: u32, anchor: Corner, (x, y): Point) -> Option<i32> {
+    let grip = (18 * dpi.max(96) as i32 + 48) / 96;
+    if y < rect.bottom - grip || y >= rect.bottom {
+        return None;
+    }
+    match anchor {
+        Corner::TopRight | Corner::BottomRight if (rect.left..rect.left + grip).contains(&x) => {
+            Some(-1)
+        }
+        Corner::TopLeft | Corner::BottomLeft if (rect.right - grip..rect.right).contains(&x) => {
+            Some(1)
+        }
+        _ => None,
+    }
+}
+
+fn move_header(hwnd: HWND, origin: Point, start: Point, cursor: Point) -> io::Result<()> {
+    let moved = unsafe {
+        SetWindowPos(
+            hwnd,
+            null_mut(),
+            origin.0 + (cursor.0 - start.0),
+            origin.1 + (cursor.1 - start.1),
+            0,
+            0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER,
+        )
+    };
+    if moved == 0 {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
 unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
     let frame = INPUT.with(|input| {
         let mut input = input.borrow_mut();
@@ -217,7 +284,8 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
             cursor
         } else {
             let mut cursor = POINT::default();
-            if gesture.cancelled || GetCursorPos(&mut cursor) == 0 {
+            // The low-level hook supplies physical screen points for press and release.
+            if gesture.cancelled || GetPhysicalCursorPos(&mut cursor) == 0 {
                 return None;
             }
             let cursor = (cursor.x, cursor.y);
@@ -235,35 +303,136 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
     if gesture.cancelled {
         return;
     }
+    let released = gesture.released_at.is_some();
     if cursor == gesture.start && gesture.preview == gesture.start {
-        if gesture.released_at.is_some() {
+        if released && matches!(gesture.mode, GestureMode::Move(_)) {
             super::toggle_details(&app);
         }
         return;
     }
-    let x = gesture.origin.0 + (cursor.0 - gesture.start.0);
-    let y = gesture.origin.1 + (cursor.1 - gesture.start.1);
-    let moved = SetWindowPos(
-        hwnd as HWND,
-        null_mut(),
-        x,
-        y,
-        0,
-        0,
-        SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOOWNERZORDER,
-    );
-    if gesture.released_at.is_some() {
-        let result = if moved == 0 {
-            Err(io::Error::last_os_error().to_string())
-        } else {
-            super::save_drag_position(&app, hwnd)
-        };
+
+    let dx = cursor.0 - gesture.start.0;
+    let result = match gesture.mode {
+        GestureMode::Move(origin) => move_header(hwnd as HWND, origin, gesture.start, cursor)
+            .map_err(|error| error.to_string())
+            .and_then(|()| {
+                if released {
+                    super::save_drag_position(&app, hwnd)
+                } else {
+                    Ok(())
+                }
+            }),
+        GestureMode::Resize {
+            mut placement,
+            width_pixels,
+            dpi,
+            direction,
+        } => {
+            if dx != 0 {
+                let width = ((width_pixels + dx * direction) * 96 + dpi / 2) / dpi;
+                placement.width =
+                    width.clamp(i32::from(MIN_OVERLAY_WIDTH), i32::from(MAX_OVERLAY_WIDTH)) as u16;
+            }
+            super::resize_overlay(&app, hwnd, placement, released)
+        }
+    };
+
+    if released {
         if let Err(error) = result {
-            super::report_notice(
-                &app,
-                format!("Overlay position could not be saved ({error})."),
-            );
+            super::report_notice(&app, format!("Overlay drag could not be saved ({error})."));
         }
         super::apply_overlay(&app, hwnd);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use windows_sys::core::w;
+
+    struct HiddenWindow(HWND);
+
+    impl Drop for HiddenWindow {
+        fn drop(&mut self) {
+            unsafe { DestroyWindow(self.0) };
+        }
+    }
+
+    impl HiddenWindow {
+        fn bounds(&self) -> RECT {
+            let mut rect = RECT::default();
+            assert_ne!(unsafe { GetWindowRect(self.0, &mut rect) }, 0);
+            rect
+        }
+    }
+
+    #[test]
+    fn header_hit_box_uses_scaled_bounds_on_either_monitor() {
+        for (left, dpi, height) in [(-900, 96, 45), (140, 144, 68)] {
+            let rect = RECT {
+                left,
+                top: 100,
+                right: left + 492,
+                bottom: 420,
+            };
+            assert!(header_contains(rect, dpi, (left + 20, rect.top + 20)));
+            assert!(header_contains(
+                rect,
+                dpi,
+                (left + 20, rect.top + height - 1)
+            ));
+            assert!(!header_contains(rect, dpi, (left + 20, rect.top + height)));
+            assert!(!header_contains(rect, dpi, (rect.right, rect.top + 20)));
+        }
+    }
+
+    #[test]
+    fn header_drag_moves_a_hidden_window_without_resizing() {
+        let hwnd = unsafe {
+            CreateWindowExW(
+                WS_EX_NOACTIVATE,
+                w!("STATIC"),
+                w!("Waymark header drag test"),
+                WS_POPUP,
+                140,
+                150,
+                420,
+                220,
+                null_mut(),
+                null_mut(),
+                GetModuleHandleW(std::ptr::null()),
+                std::ptr::null(),
+            )
+        };
+        assert!(!hwnd.is_null(), "{}", io::Error::last_os_error());
+        let window = HiddenWindow(hwnd);
+        let before = window.bounds();
+        let press = (before.left + 30, before.top + 20);
+        assert!(header_contains(
+            before,
+            unsafe { GetDpiForWindow(hwnd) },
+            press
+        ));
+
+        // Feed screen coordinates directly. The test never reads or moves the desktop cursor.
+        move_header(
+            hwnd,
+            (before.left, before.top),
+            press,
+            (press.0 + 48, press.1 + 64),
+        )
+        .unwrap();
+
+        let after = window.bounds();
+        assert_eq!(
+            (after.left, after.top, after.right, after.bottom),
+            (
+                before.left + 48,
+                before.top + 64,
+                before.right + 48,
+                before.bottom + 64
+            ),
+        );
+        assert_eq!(unsafe { IsWindowVisible(hwnd) }, 0);
     }
 }

@@ -100,11 +100,9 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const completed = completedObjectives(state.settings)
   const remaining = zone.optional.filter(objective => !completed.includes(objective.id))
   const showRecommendations = state.settings.leagueStart
-  const recommended = showRecommendations ? remaining.find(objective => objective.leagueStart) : undefined
-  const featuredOptional = recommended ?? remaining[0]
   const stale = state.status === 'missing' || state.status === 'readError'
   const shortcut = stale ? null : zone.shortcut
-  const route = !stale && (zone.objective || featuredOptional) ? zone.route : null
+  const route = !stale && (zone.objective || remaining.length > 0) ? zone.route : null
   const navigation = stale ? null : zone.navigation
   const direction = !stale && !previewStep?.objective && zone.areaId ? directionsByArea[zone.areaId] : undefined
   const showRouteLandmarks = route && !(direction && (route.diagram || direction.layout === 'landmarks'))
@@ -119,10 +117,12 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const townFeedback = !recap.showRecap && !preview && (town.undo || town.errorMessage)
   const hasDetails = hasDirections || recap.showRecap || !!milestone
   const expanded = state.detailsExpanded && hasDetails
-  const quickRoute = !expanded && !recap.showRecap && direction && !direction.layout &&
+  const quickRoute = !expanded && !recap.showRecap &&
     (!zone.arrivalReward?.objective || zone.arrivalReward.objectiveAfterClaim)
-    ? direction.quickSteps ?? direction.legs.map(([, instruction]) => instruction) : null
-  const optionalLoot = !expanded && !zone.objective ? featuredOptional?.loot : undefined
+    ? direction?.quickSteps ?? direction?.legs.map(([, instruction]) => instruction) ??
+      (shortcut ? [shortcut.cue] : null)
+    : null
+  const returnSteps = quickRoute ? direction?.returnSteps : undefined
   const next = navigation?.exits.length === 1 ? navigation.exits[0].landmark : null
   const adjacent = adjacentStoryObjectives(zone.areaId, previousAreaId, previewStep)
   const canBrowse = state.visible && state.status === 'watching' && state.replaySession === 0 && !recap.showRecap
@@ -144,21 +144,29 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     }).catch(console.error)
     return () => { disposed = true; stop?.() }
   }, [])
-  const optionalObjectives = remaining.length > 0 && <div className="zone-optional"><h2>Optional objectives</h2>
+  const optionalObjectives = remaining.length > 0 && <div className="zone-optional"><h2>{expanded ? 'Optional objectives' : 'Optional'}</h2>
     <ul>{remaining.map(objective => <li key={objective.id}>
-      {objective.hint}
+      {expanded ? objective.hint : objective.compactHint ?? objective.hint}
       {showRecommendations && objective.leagueStart && <span className="recommended"> · Recommended</span>}
-      {objective.loot && <span className="objective-loot">{objective.loot}</span>}
+      {expanded && objective.loot && <span className="objective-loot">{objective.loot}</span>}
+      {!expanded && objective.compactReward && <span className="optional-reward">{objective.compactReward}</span>}
     </li>)}</ul>
   </div>
-  return <main ref={panel} className={`compact${expanded && shortcut ? ' with-shortcut' : ''}${route || next || quickRoute ? ' with-route' : ''}${expanded ? ' expanded' : ''}${expanded && milestone ? ' with-build' : ''}${reward || optionalLoot || townFeedback ? ' with-quest-reward' : ''}`}>
+  const resizeSide = state.settings.placement.corner.endsWith('Right') ? 'left' : 'right'
+  return <main ref={panel} data-status={state.status} className={`compact${expanded ? ' expanded' : ''}${expanded && milestone ? ' with-build' : ''}${reward || townFeedback ? ' with-quest-reward' : ''}`}>
     <header className="compact-head">
-      <div className="overlay-identity"><span className="brand"><img src={compass} alt=""/>Waymark</span><StatusLight status={state.status}/></div>
+      <div className="overlay-identity">
+        <span className="overlay-wordmark"><img src={compass} alt=""/>Waymark</span>
+        {state.status !== 'watching' && <StatusLight status={state.status}/>}
+      </div>
       <OverlayActTimer state={state} act={liveZone.act}/>
     </header>
     <div className="zone-block">
       <div className="zone-meta">
-        <div className="eyebrow zone-context">{preview ? <span>Preview</span> : state.zone && stale && <span>Last zone</span>}{zone.act && <span className="act">Act {zone.act}</span>}</div>
+        <div className="zone-context">
+          {(preview || (state.zone && stale)) && <div className="eyebrow">{preview ? 'Preview' : 'Last zone'}</div>}
+          <h1 title={zone.title}>{zone.title}</h1>
+        </div>
         <div className="zone-actions">
           {hasDetails && <span className="details-gesture" data-expanded={expanded} title="Alt+click the header">Details <span aria-hidden="true">{expanded ? '▾' : '▸'}</span></span>}
           {canBrowse && (adjacent.previous || adjacent.next || preview) && <nav className="guide-navigation" aria-label="Story objectives">
@@ -170,15 +178,11 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
           </nav>}
         </div>
       </div>
-      <h1 title={zone.title}>{zone.title}</h1>
     </div>
     <footer className="objective">
-      {(zone.objective || !featuredOptional) && <>
-        <div className="eyebrow">{!zone.objective && zone.optional.length ? 'Optional objectives' : 'Story objective'}</div>
-        <p className="story-objective" data-story-step={previewStep?.objective ? '' : undefined} title={zone.objective ?? undefined}>
-          {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
-        </p>
-      </>}
+      {(zone.objective || remaining.length === 0) && <p className="story-objective">
+        {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
+      </p>}
       {reward && <div className={town.claimTarget ? 'quest-reward with-claim-control' : 'quest-reward'}>
         <span className="optional-label">{pinned ? 'Pinned reward' : zone.arrivalReward?.optional ? 'Optional reward' : 'Reward'}</span>
         <span className="quest-reward-copy"><strong>{reward}</strong>
@@ -201,16 +205,13 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
       {!expanded && !quickRoute && !route && navigation && next && <p className="route-preview" title={next}>
         <span className="optional-label">{navigation.label}</span><span className="optional-hint">{next}</span>
       </p>}
-      {!expanded && featuredOptional && !zone.objective && <div className="optional-preview" title={featuredOptional.hint}>
-        <span className="optional-label">Optional</span>
-        <span className="optional-hint">{featuredOptional.hint}</span>
-        {recommended && <span className="recommended">Recommended</span>}
-        {remaining.length > 1 && <span>+{remaining.length - 1}</span>}
-      </div>}
-      {optionalLoot && <p className="quest-reward">
-        <span className="optional-label">Reward</span>
-        <strong>{optionalLoot}</strong>
-      </p>}
+      {!expanded && !recap.showRecap && !stale && optionalObjectives}
+      {returnSteps && <section className="route-return" aria-label={returnSteps.heading}>
+        <h2>{returnSteps.heading}</h2>
+        <ol className="quick-route" role="list">
+          {returnSteps.steps.map(step => <li key={step}>{step}</li>)}
+        </ol>
+      </section>}
       {expanded && !recap.showRecap && !preview && town.source && <p className="town-reward-source" title={town.source.reward}>
         {town.sourcePinned ? <span>Pinned for {town.source.townName}</span>
           : <span>Pin for {town.source.townName} · {town.source.reward}</span>}
@@ -228,5 +229,6 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         </>}
       </section>}
     </footer>
+    <span className={`resize-grip at-${resizeSide}`} aria-hidden="true"/>
   </main>
 }

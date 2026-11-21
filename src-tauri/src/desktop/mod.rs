@@ -273,7 +273,7 @@ fn set_placement(
 ) -> Result<(), String> {
     placement.validate()?;
     if drag::active() {
-        return Err("Finish moving the overlay first.".into());
+        return Err("Finish the overlay drag first.".into());
     }
     state.edit(&app, |s| s.placement = placement)
 }
@@ -336,6 +336,29 @@ fn save_drag_position(app: &AppHandle, hwnd: isize) -> Result<(), String> {
         .capture(hwnd, saved)
         .map_err(|e| e.to_string())?;
     state.edit(app, |settings| settings.placement = placement)
+}
+
+fn resize_overlay(
+    app: &AppHandle,
+    hwnd: isize,
+    placement: Placement,
+    commit: bool,
+) -> Result<(), String> {
+    let state = app.state::<Runtime>();
+    if commit {
+        return state.edit(app, |settings| settings.placement.width = placement.width);
+    }
+    app.state::<Mutex<window::Tracker>>()
+        .lock()
+        .unwrap()
+        .apply(
+            hwnd,
+            placement,
+            true,
+            state.overlay_height.load(Ordering::Relaxed),
+        )
+        .map(|_| ())
+        .map_err(|error| error.to_string())
 }
 
 fn report_notice(app: &AppHandle, message: String) {

@@ -9,6 +9,8 @@ type OptionalObjective = {
   leagueStart?: boolean
   reward?: { name: string; direction: string }
   loot?: string
+  compactHint?: string
+  compactReward?: string
 }
 type RouteLandmark = { landmark: string; detail: string }
 export type Route = {

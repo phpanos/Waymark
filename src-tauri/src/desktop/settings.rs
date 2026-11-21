@@ -36,6 +36,13 @@ pub enum Corner {
     BottomRight,
 }
 
+pub(super) const MIN_OVERLAY_WIDTH: u16 = 328;
+pub(super) const MAX_OVERLAY_WIDTH: u16 = 720;
+
+fn default_overlay_width() -> u16 {
+    MIN_OVERLAY_WIDTH
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Placement {
@@ -43,6 +50,8 @@ pub struct Placement {
     pub inset_x: u16,
     pub inset_y: u16,
     pub follow_game: bool,
+    #[serde(default = "default_overlay_width")]
+    pub width: u16,
 }
 impl Default for Placement {
     fn default() -> Self {
@@ -51,6 +60,7 @@ impl Default for Placement {
             inset_x: 20,
             inset_y: 20,
             follow_game: true,
+            width: default_overlay_width(),
         }
     }
 }
@@ -58,6 +68,11 @@ impl Placement {
     pub fn validate(&self) -> Result<(), String> {
         if self.inset_x > 4096 || self.inset_y > 4096 {
             return Err("Insets must be between 0 and 4096.".into());
+        }
+        if !(MIN_OVERLAY_WIDTH..=MAX_OVERLAY_WIDTH).contains(&self.width) {
+            return Err(format!(
+                "Width must be between {MIN_OVERLAY_WIDTH} and {MAX_OVERLAY_WIDTH}."
+            ));
         }
         Ok(())
     }

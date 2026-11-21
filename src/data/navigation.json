@@ -79,7 +79,7 @@
   "G4_8a": { "waypoint": true, "exits": [{ "id": "G4_8b", "detail": "Continue through Arastas when the route opens" }] },
   "G4_8b": { "waypoint": true, "exits": [{ "id": "G4_10" }] },
   "G4_9_": { "waypoint": true, "label": "Return to", "exits": [{ "id": "G4_town" }] },
-  "G4_10": { "waypoint": true, "exits": [{ "id": "G4_11_1a", "detail": "Follow Tavakai and Makoru" }] },
+  "G4_10": { "waypoint": true, "label": "Return to", "exits": [{ "id": "G4_town", "detail": "Speak to Rhodri after finishing the forge scene" }] },
   "G4_11_1a": { "waypoint": true, "exits": [{ "id": "G4_11_1b", "detail": "Continue into the settlement when the route opens" }] },
   "G4_11_1b": { "waypoint": true, "exits": [{ "id": "G4_11_2" }] },
   "G4_11_2": { "waypoint": true, "label": "Return to", "exits": [{ "id": "G4_town" }] },

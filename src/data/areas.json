@@ -18,16 +18,16 @@
   },
   { "id": "G1_2", "name": "Clearfell", "act": 1, "bosses": ["Beira of the Rotten Pack"], "objective": "Find the path into the Grelwood",
     "route": { "cue": "Use the world map to find the exit side", "steps": [
-      { "landmark": "World map", "detail": "Open the world map and check which side of Clearfell The Grelwood is on. Search that side of the zone for the exit." },
+      { "landmark": "World map", "detail": "Skip Mud Burrow and go straight to the Grelwood. Open the world map and check which side of Clearfell the Grelwood is on. Search that side of the zone for the exit." },
       { "landmark": "Frozen logs · Optional", "detail": "Look for frozen logs around the Frostblood Ritual to find Beira and her permanent cold resistance reward." }
     ] },
     "optional": [
-      { "id": "G1_2:1", "hint": "Defeat Beira for cold resistance", "leagueStart": true, "reward": { "name": "Cold resistance", "direction": "Look for frozen logs around the Frostblood Ritual in Clearfell." } }
+      { "id": "G1_2:1", "compactHint": "Defeat Beira", "compactReward": "Cold resistance", "hint": "Defeat Beira for cold resistance", "leagueStart": true, "reward": { "name": "Cold resistance", "direction": "Look for frozen logs around the Frostblood Ritual in Clearfell." } }
     ]
   },
   { "id": "G1_3", "name": "Mud Burrow", "act": 1, "bosses": ["The Devourer"],
     "optional": [
-      { "id": "G1_3:1", "hint": "Defeat the Devourer for Finn", "loot": "Level 2 Uncut Skill Gem from the Devourer and an Uncut Support Gem from Renly" }
+      { "id": "G1_3:1", "compactReward": "Skill Gem 2 + Support Gem", "hint": "Defeat the Devourer for Finn", "loot": "Level 2 Uncut Skill Gem from the Devourer and an Uncut Support Gem from Renly" }
     ]
   },
   { "id": "G1_4", "name": "The Grelwood", "act": 1, "bosses": ["The Brambleghast"], "objective": "Investigate the Tree of Souls",
@@ -38,7 +38,8 @@
     ] },
     "shortcut": { "cue": "Tag the Grim Tangle waypoint early", "detail": "If you reach the Grim Tangle entrance while exploring the Grelwood, step inside to activate its waypoint. After finishing Una’s turn-in in town, use that waypoint to resume the route." },
     "optional": [
-      { "id": "G1_4:1", "hint": "Defeat the Brambleghast", "loot": "Uncut Skill Gem from the Brambleghast" }
+      { "id": "G1_4:1", "compactReward": "Skill Gem", "hint": "Defeat the Brambleghast", "loot": "Uncut Skill Gem from the Brambleghast" },
+      { "id": "G1_4:areagne", "compactReward": "Support Gem", "hint": "Kill Areagne at the witch hut", "loot": "Uncut Support Gem from Areagne" }
     ]
   },
   { "id": "ExpeditionSubArea_Kalguur_Act1", "name": "Lost Catacombs", "act": 1,
@@ -48,8 +49,8 @@
   },
   { "id": "G1_5", "name": "The Red Vale", "act": 1, "bosses": ["The Rust King"], "objective": "Recover the girdles from the rust obelisks",
     "questReward": "Level 3 Uncut Skill Gem from the Rust King. Get Runed Spikes from Renly in town.",
-    "route": { "cue": "Sweep for three rust obelisks", "steps": [
-      { "landmark": "Rust obelisks", "detail": "Sweep around the zone for the three obelisks. Check the ground near the blood river if you still need one." },
+    "route": { "cue": "Sweep the wall and check for a central island", "steps": [
+      { "landmark": "Rust obelisks", "detail": "Start along the outer wall. If a short side path leads directly to an obelisk, check the central island for all three." },
       { "landmark": "Third obelisk", "detail": "The last activation brings out the Rust King. Defeat him and collect the final quest piece." }
     ] },
     "shortcut": { "cue": "Portal after collecting all three pieces", "detail": "After defeating the Rust King and collecting all three obelisk quest items, open a portal to town. Get the Runed Spikes from Renly, then use the Grelwood waypoint to return to the Tree of Souls." }
@@ -61,7 +62,7 @@
     ] },
     "shortcut": { "cue": "Continue when Una’s roots open", "detail": "Summon Una by the roots. Once the path is open, head through toward the cemetery while she finishes singing." },
     "optional": [
-      { "id": "G1_6:1", "hint": "Defeat the Rotten Druid", "loot": "Uncut Support Gem from the Rotten Druid" }
+      { "id": "G1_6:1", "compactReward": "Support Gem", "hint": "Defeat the Rotten Druid", "loot": "Uncut Support Gem from the Rotten Druid" }
     ]
   },
   { "id": "G1_7", "name": "Cemetery of the Eternals", "act": 1, "bosses": ["Lachlann of Endless Lament"], "objective": "Recover both keys and confront Lachlann",
@@ -86,7 +87,7 @@
   },
   { "id": "G1_9", "name": "Tomb of the Consort", "act": 1, "bosses": ["Asinia, the Praetor's Consort"], "objective": "Defeat Asinia and take her key piece",
     "optional": [
-      { "id": "G1_9:1", "hint": "Search the Embattled Trove", "loot": "Uncut Support Gem from the Haunted Treasure" }
+      { "id": "G1_9:1", "compactReward": "Support Gem", "hint": "Search the Embattled Trove", "loot": "Uncut Support Gem from the Haunted Treasure" }
     ]
   },
   { "id": "G1_10", "name": "Root Hollow", "act": 1, "bosses": ["The Rotten Druid"],
@@ -100,7 +101,7 @@
       { "landmark": "Bloody tracks · Optional", "detail": "Follow the tracks through a narrow passage to find the Crowbell for passive points." }
     ] },
     "optional": [
-      { "id": "G1_11:1", "hint": "Defeat Crowbell for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Crowbell", "direction": "Follow the bloody tracks in Hunting Grounds to the narrow entrance to the arena." } },
+      { "id": "G1_11:1", "compactHint": "Defeat Crowbell", "compactReward": "Passive points", "hint": "Defeat Crowbell for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Crowbell", "direction": "Follow the bloody tracks in Hunting Grounds to the narrow entrance to the arena." } },
       { "id": "G1_11:2", "hint": "Take the side path to Freythorn", "leagueStart": true }
     ]
   },
@@ -110,39 +111,39 @@
       { "landmark": "Boss ritual", "detail": "After three rituals, activate the ritual in the boss arena to fight the King in the Mists." }
     ] },
     "optional": [
-      { "id": "G1_12:1", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true, "reward": { "name": "Spirit from the King in the Mists", "direction": "In Freythorn, follow the locusts between ritual sites. Finish three rituals to open the boss encounter." }, "loot": "Level 4 Uncut Spirit Gem from the King in the Mists" }
+      { "id": "G1_12:1", "compactReward": "Spirit + Spirit Gem 4", "hint": "Clear the rituals and defeat the King in the Mists for Spirit", "leagueStart": true, "reward": { "name": "Spirit from the King in the Mists", "direction": "In Freythorn, follow the locusts between ritual sites. Finish three rituals to open the boss encounter." }, "loot": "Level 4 Uncut Spirit Gem from the King in the Mists" }
     ]
   },
   { "id": "G1_13_1", "name": "Ogham Farmlands", "act": 1, "objective": "Continue to Ogham Village",
-    "route": { "cue": "Cross to the wall opposite the entrance", "steps": [
+    "route": { "cue": "Follow the road to the wagon barricade", "steps": [
       { "landmark": "Long hut and carts · Optional", "detail": "Go around the hut and the carts blocking the path to reach Una's hut and pick up her lute." },
-      { "landmark": "Opposite wall", "detail": "Cross away from the entrance. If the village door is out of sight, follow the far wall until you reach it." }
+      { "landmark": "Village exit", "detail": "After going around the wagons, use the road to orient. Check the far wall if you still need to find the village door." }
     ] },
     "shortcut": { "cue": "Turn in the lute on your next town trip", "detail": "Pick up Una’s lute on the way to Ogham Village. If you’re stopping in town for Renly’s tools, turn in the lute on the same visit." },
     "optional": [
-      { "id": "G1_13_1:1", "hint": "Recover Una’s lute for passive points", "leagueStart": true, "reward": { "name": "Passive points from Una’s lute", "direction": "Look behind the long hut and carts in Ogham Farmlands, then bring the lute back to Una." }, "loot": "Bring the lute to Una in Clearfell Encampment." }
+      { "id": "G1_13_1:1", "compactReward": "Passive points", "hint": "Recover Una’s lute for passive points", "leagueStart": true, "reward": { "name": "Passive points from Una’s lute", "direction": "Look behind the long hut and carts in Ogham Farmlands, then bring the lute back to Una." }, "loot": "Bring the lute to Una in Clearfell Encampment." }
     ]
   },
   { "id": "G1_13_2", "name": "Ogham Village", "act": 1, "bosses": ["The Executioner"], "objective": "Defeat the Executioner and rescue Leitis", "tip": "Fire resistance helps against the Executioner. Move clear when he winds up for a heavy slam.",
     "questReward": "Level 5 Uncut Skill Gem from Leitis in town",
-    "route": { "cue": "Keep the wall on your right", "steps": [
-      { "landmark": "Right-hand wall", "detail": "From the entrance, keep the wall on your right and follow it north toward the Executioner's arena." },
+    "route": { "cue": "Follow the road toward the blacksmith", "steps": [
+      { "landmark": "Road past the blacksmith", "detail": "Follow the road to the blacksmithing area, then check the world map for the direction of the Ramparts as a first guess for the Executioner's arena." },
       { "landmark": "Workshop checkpoint · Optional", "detail": "Look off the northern wall for a checkpoint beside the room with Renly's tools. If you reach the waypoint first, check back along the west side." }
     ] },
     "shortcut": { "cue": "Portal to turn in Renly’s tools", "detail": "If you pick up Renly’s Smithing Tools before the Executioner, portal to town to unlock the Salvage Bench. Make any vendor upgrades on the same trip, then use the portal to return to the village." },
     "optional": [
-      { "id": "G1_13_2:1", "hint": "Recover Renly’s tools for the Salvage Bench", "loot": "Bring the tools to Renly in Clearfell Encampment to unlock the Salvage Bench." }
+      { "id": "G1_13_2:1", "compactReward": "Salvage Bench", "hint": "Recover Renly’s tools for the Salvage Bench", "loot": "Bring the tools to Renly in Clearfell Encampment to unlock the Salvage Bench." }
     ]
   },
   { "id": "G1_14", "name": "The Manor Ramparts", "act": 1, "objective": "Find a way into Ogham Manor",
     "optional": [
-      { "id": "G1_14:gallows", "hint": "Search the Gallows", "loot": "Uncut Support Gem" }
+      { "id": "G1_14:gallows", "compactReward": "Support Gem", "hint": "Search the Gallows", "loot": "Uncut Support Gem" }
     ]
   },
   { "id": "G1_15", "name": "Ogham Manor", "act": 1, "bosses": ["Candlemass, the Living Rite", "Count Geonor"], "objective": "Defeat Count Geonor", "tip": "Bring cold resistance for Geonor. Beira in Clearfell offers a permanent boost.",
     "questReward": "Uncut Support Gem after Geonor. Speak to the Hooded One in town.",
     "optional": [
-      { "id": "G1_15:1", "hint": "Defeat Candlemass for maximum life", "leagueStart": true, "reward": { "name": "Maximum life from Candlemass", "direction": "Find Candlemass in Ogham Manor and use the reward dropped by the fight." } }
+      { "id": "G1_15:1", "compactHint": "Defeat Candlemass", "compactReward": "Maximum life", "hint": "Defeat Candlemass for maximum life", "leagueStart": true, "reward": { "name": "Maximum life from Candlemass", "direction": "On floor one, check both sides of the first bridge for the Grotesque Altar. Interact with the Psalm of Madness to summon Candlemass, then use Candlemass' Essence after the fight." } }
     ]
   },
   { "id": "G2_1", "name": "Vastiri Outskirts", "act": 2, "bosses": ["Rathbreaker"], "objective": "Defeat Rathbreaker to earn passage",
@@ -191,7 +192,7 @@
       { "landmark": "Partly buried round building · Optional", "detail": "Look for the Venom Pit checkpoint beside the round ruin to find Kabala. Fight serpent packs along the way if you still need the clan relic." }
     ] },
     "optional": [
-      { "id": "G2_4_1:1", "hint": "Defeat Kabala for passive points", "leagueStart": true, "reward": { "name": "Passive points from Kabala", "direction": "In Keth, look for the Venom Pit checkpoint beside a partly buried round building." } },
+      { "id": "G2_4_1:1", "compactHint": "Defeat Kabala", "compactReward": "Passive points", "hint": "Defeat Kabala for passive points", "leagueStart": true, "reward": { "name": "Passive points from Kabala", "direction": "In Keth, look for the Venom Pit checkpoint beside a partly buried round building." } },
       { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true }
     ]
   },
@@ -202,7 +203,7 @@
     ] },
     "optional": [
       { "id": "ancient-vows:kabala-relic", "hint": "Look for the Kabala Clan Relic", "leagueStart": true },
-      { "id": "G2_4_2:golden-tomb", "hint": "Open the Golden Tomb", "loot": "Uncut Spirit Gem" }
+      { "id": "G2_4_2:golden-tomb", "compactReward": "Spirit Gem", "hint": "Open the Golden Tomb", "loot": "Uncut Spirit Gem" }
     ]
   },
   { "id": "G2_4_3", "name": "Buried Shrines", "act": 2, "bosses": ["Azarian, the Forsaken Son"], "objective": "Defeat Azarian and recover the water essence", "tip": "Bring fire resistance for Azarian. The fire offering in the shrine gives you a Ruby Ring.",
@@ -248,7 +249,7 @@
       { "landmark": "Waypoint altar · Optional", "detail": "Place the Kabala and Sun Clan relics at the altar by the waypoint to finish Ancient Vows." }
     ] },
     "optional": [
-      { "id": "G2_6:1", "hint": "Use both clan relics at the altar", "leagueStart": true, "reward": { "name": "Ancient Vows charm bonus", "direction": "Bring the Kabala and Sun Clan relics to the altar by the Valley of the Titans waypoint." } }
+      { "id": "G2_6:1", "compactReward": "Charm bonus", "hint": "Use both clan relics at the altar", "leagueStart": true, "reward": { "name": "Ancient Vows charm bonus", "direction": "Bring the Kabala and Sun Clan relics to the altar by the Valley of the Titans waypoint." } }
     ]
   },
   { "id": "G2_7", "name": "The Titan Grotto", "act": 2, "bosses": ["Zalmarath, the Colossus"], "objective": "Defeat Zalmarath and recover the Flame Ruby",
@@ -264,7 +265,7 @@
       { "landmark": "Fallen Dekhara · Optional", "detail": "Check around the bases of the buildings for the body with the Final Letter. Bring the letter to Shambrin for passive points." }
     ] },
     "optional": [
-      { "id": "G2_8:1", "hint": "Retrieve the Final Letter for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Final Letter", "direction": "Search ruined buildings in Deshar for the Fallen Dekhara. Take the letter to Shambrin." }, "loot": "Bring the Final Letter to Shambrin on the Ardura Caravan." }
+      { "id": "G2_8:1", "compactReward": "Passive points", "hint": "Retrieve the Final Letter for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Final Letter", "direction": "Search ruined buildings in Deshar for the Fallen Dekhara. Take the letter to Shambrin." }, "loot": "Bring the Final Letter to Shambrin on the Ardura Caravan." }
     ]
   },
   { "id": "G2_8a", "name": "Deshar", "act": 2, "objective": "Find the Path of Mourning" },
@@ -274,7 +275,7 @@
       { "landmark": "Far edge", "detail": "Look for the exit to the Spires on the side opposite your entrance." }
     ] },
     "optional": [
-      { "id": "G2_9_1:urns", "hint": "Check the Hushed Urn encounter", "loot": "Uncut gem" }
+      { "id": "G2_9_1:urns", "compactReward": "Uncut Gem", "hint": "Check the Hushed Urn encounter", "loot": "Uncut gem" }
     ]
   },
   { "id": "G2_9_2", "name": "The Spires of Deshar", "act": 2, "bosses": ["Tor Gul, the Defiler"], "objective": "Defeat Tor Gul",
@@ -284,7 +285,7 @@
     ] },
     "shortcut": { "cue": "Finish in Deshar before you portal", "detail": "If you want the lightning resistance reward, visit the Sisters of Garukhan before leaving. After Tor Gul, portal to the caravan and speak to Asala to open the Dreadnought route." },
     "optional": [
-      { "id": "G2_9_2:1", "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true, "reward": { "name": "Lightning resistance", "direction": "Find the Sisters of Garukhan shrine on a side platform in the Spires of Deshar and interact with it." } }
+      { "id": "G2_9_2:1", "compactHint": "Touch the Sisters of Garukhan shrine", "compactReward": "Lightning resistance", "hint": "Visit the Sisters of Garukhan for lightning resistance", "leagueStart": true, "reward": { "name": "Lightning resistance", "direction": "Find the Sisters of Garukhan shrine on a side platform in the Spires of Deshar and interact with it." } }
     ]
   },
   { "id": "G2_10_1", "name": "Mawdun Quarry", "act": 2, "objective": "Find the entrance to Mawdun Mine",
@@ -317,7 +318,7 @@
   { "id": "G2_12", "name": "Dreadnought", "act": 2, "bosses": ["Jamanra, the Abomination"], "objective": "Defeat Jamanra, the Abomination", "tip": "Bring lightning resistance for Jamanra. Visit the Sisters of Garukhan in the Spires of Deshar for a permanent boost." },
   { "id": "G2_13", "name": "Trial of the Sekhemas", "act": 2, "tip": "For a first run, aim for character level 26–30. Equip relics with Honour resistance when available.",
     "optional": [
-      { "id": "G2_13:1", "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true, "reward": { "name": "Sekhemas Ascendancy points", "direction": "Take a qualifying Djinn Barya to the Trial of the Sekhemas and claim the points after the trial." } }
+      { "id": "G2_13:1", "compactReward": "Ascendancy points", "hint": "Finish the Sekhemas trial for Ascendancy", "leagueStart": true, "reward": { "name": "Sekhemas Ascendancy points", "direction": "Take a qualifying Djinn Barya to the Trial of the Sekhemas and claim the points after the trial." } }
     ]
   },
   { "id": "G3_1", "name": "Sandswept Marsh", "act": 3, "bosses": ["Rootdredge"], "objective": "Cross the marsh to the Ziggurat",
@@ -327,7 +328,7 @@
     ] },
     "optional": [
       { "id": "G3_1:1", "hint": "Search the Orok camp for supplies" },
-      { "id": "G3_1:rootdredge", "hint": "Defeat Rootdredge", "loot": "Uncut Skill Gem" }
+      { "id": "G3_1:rootdredge", "compactReward": "Skill Gem", "hint": "Defeat Rootdredge", "loot": "Uncut Skill Gem" }
     ]
   },
   { "id": "G3_town", "name": "Ziggurat Encampment", "act": 3, "objective": "Work with Alva to open the route below",
@@ -344,7 +345,7 @@
       { "landmark": "Canal Mechanism", "detail": "Later, bring Zicoatl's Large Soul Core back to the stone mechanism here to open the Matlan Waterways." }
     ] },
     "optional": [
-      { "id": "G3_3:1", "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true, "reward": { "name": "Passive points from Mighty Silverfist", "direction": "Find the clearing surrounded by broken pillars in the Jungle Ruins." } },
+      { "id": "G3_3:1", "compactHint": "Defeat Mighty Silverfist", "compactReward": "Passive points", "hint": "Defeat Mighty Silverfist for passive points", "leagueStart": true, "reward": { "name": "Passive points from Mighty Silverfist", "direction": "Find the clearing surrounded by broken pillars in the Jungle Ruins." } },
       { "id": "G3_3:2", "hint": "Detour into the Venom Crypts" }
     ]
   },
@@ -354,7 +355,7 @@
       { "landmark": "Second exit", "detail": "Once you have the venom, use the onward exit if it is nearer than backtracking. Turn the venom in on your next visit to the encampment." }
     ] },
     "optional": [
-      { "id": "G3_4:1", "hint": "Recover the corpse venom for Servi", "leagueStart": true, "reward": { "name": "Venom Draught", "direction": "Collect the venom from the Serpent Priestess corpse in the crypts and take it to Servi." }, "loot": "Permanent Venom Draught and Artificer’s Orb from Servi in town" }
+      { "id": "G3_4:1", "compactReward": "Venom Draught + Artificer’s Orb", "hint": "Recover the corpse venom for Servi", "leagueStart": true, "reward": { "name": "Venom Draught", "direction": "Collect the venom from the Serpent Priestess corpse in the crypts and take it to Servi." }, "loot": "Permanent Venom Draught and Artificer’s Orb from Servi in town" }
     ]
   },
   { "id": "G3_2_1", "name": "Infested Barrens", "act": 3, "objective": "Find the passage to the Chimeral Wetlands",
@@ -373,7 +374,7 @@
       { "landmark": "Pressure pads", "detail": "Walk over each pad along the main canal route to lower the water and open the next crossing." },
       { "landmark": "Azak Bog entrance · Optional", "detail": "Watch for the side exit to the Azak Bog as you cross. Take it to fight Ignagduk for the Spirit reward." }
     ] },
-    "shortcut": { "cue": "Portal after crossing the canals", "detail": "Once the quest updates, use a town portal to the Ziggurat Encampment and speak to Alva to continue." },
+    "shortcut": { "cue": "Portal after crossing the canals", "detail": "If you are doing Ignagduk now, take the Azak Bog side exit before leaving. Walk through the pre-drained final stretch and wait for the quest to update before portaling to Alva in the Ziggurat Encampment." },
     "optional": [
       { "id": "G3_2_2:1", "hint": "Take the detour to the Azak Bog" }
     ]
@@ -395,7 +396,7 @@
       { "landmark": "Blackjaw's sealed room · Optional", "detail": "Check the side doors in the second section. Spend spare cores to enter Blackjaw's arena and claim the permanent fire resistance reward." }
     ] },
     "optional": [
-      { "id": "G3_6_1:1", "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true, "reward": { "name": "Fire resistance", "direction": "Use Small Soul Cores to open Blackjaw’s side room in the second section of the Machinarium. Use the Flame Core after the fight." } }
+      { "id": "G3_6_1:1", "compactHint": "Defeat Blackjaw", "compactReward": "Fire resistance", "hint": "Defeat Blackjaw for fire resistance", "leagueStart": true, "reward": { "name": "Fire resistance", "direction": "Use Small Soul Cores to open Blackjaw’s side room in the second section of the Machinarium. Use the Flame Core after the fight." } }
     ]
   },
   { "id": "G3_6_2", "name": "Jiquani's Sanctum", "act": 3, "bosses": ["Zicoatl, Warden of the Core"], "objective": "Power the generators and defeat Zicoatl",
@@ -410,12 +411,12 @@
     ]
   },
   { "id": "G3_7", "name": "The Azak Bog", "act": 3, "bosses": ["Ignagduk, the Bog Witch"],
-    "route": { "cue": "Start with the upper-right paths", "steps": [
-      { "landmark": "Upper-right part of the map", "detail": "Start by searching here for Ignagduk. If the paths dead-end, sweep the surrounding walkways." },
+    "route": { "cue": "Sweep the outer walkways", "steps": [
+      { "landmark": "Outer walkways", "detail": "Follow an outer wall for Ignagduk and check inward at junctions if you pass the arena approach." },
       { "landmark": "Flameskin ritual · Optional", "detail": "If you find the ritual totems, activate them for a temporary fire resistance boost before fighting in the bog." }
     ] },
     "optional": [
-      { "id": "G3_7:1", "hint": "Defeat Ignagduk for Spirit", "leagueStart": true, "reward": { "name": "Spirit from Ignagduk", "direction": "Take the side exit off the Matlan Waterways to the Azak Bog. Defeat Ignagduk and use the Gemrot Skull." }, "loot": "Level 10 Uncut Spirit Gem from Ignagduk. Bring her Ghastly Spear to Servi in town for a charm." }
+      { "id": "G3_7:1", "compactHint": "Defeat Ignagduk", "compactReward": "Spirit + Spirit Gem 10", "hint": "Defeat Ignagduk for Spirit", "leagueStart": true, "reward": { "name": "Spirit from Ignagduk", "direction": "Take the side exit off the Matlan Waterways to the Azak Bog. Defeat Ignagduk and use the Gemrot Skull." }, "loot": "Level 10 Uncut Spirit Gem from Ignagduk. Bring her Ghastly Spear to Servi in town for a charm." }
     ]
   },
   { "id": "G3_8", "name": "The Drowned City", "act": 3, "objective": "Cross the ruins to the Apex of Filth",
@@ -435,7 +436,7 @@
     ] },
     "shortcut": { "cue": "Checkpoint back to the vault entrance", "detail": "After taking the Hammer of Kamasa from Mektul, use checkpoint travel to the vault entrance. Return to the Drowned City and continue toward Apex of Filth." },
     "optional": [
-      { "id": "G3_9:1", "hint": "Defeat Mektul and recover the forge treasure", "loot": "Level 11 Uncut Skill Gem and Reforging Bench from Oswald in town" }
+      { "id": "G3_9:1", "compactReward": "Reforging Bench + Skill Gem 11", "hint": "Defeat Mektul and recover the forge treasure", "loot": "Level 11 Uncut Skill Gem and Reforging Bench from Oswald in town" }
     ]
   },
   { "id": "G3_10_Airlock", "name": "The Temple of Chaos", "act": 3, "tip": "For the campaign Trial of Chaos, aim for character level 42–45 and high fire and lightning resistance.",
@@ -445,7 +446,7 @@
   },
   { "id": "G3_10", "name": "The Trial of Chaos", "act": 3, "bosses": ["Uxmal, the Beastlord", "Chetza, the Feathered Plague", "Bahlak, the Sky Seer", "The Trialmaster"], "tip": "For the campaign trial, aim for character level 42–45 and high fire and lightning resistance.",
     "optional": [
-      { "id": "G3_10:1", "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true, "reward": { "name": "Trial of Chaos Ascendancy points", "direction": "Use the Chimera’s Inscribed Ultimatum at the temple and claim the points at the end of the trial." } }
+      { "id": "G3_10:1", "compactReward": "Ascendancy points", "hint": "Complete the Trial of Chaos for Ascendancy", "leagueStart": true, "reward": { "name": "Trial of Chaos Ascendancy points", "direction": "Use the Chimera’s Inscribed Ultimatum at the temple and claim the points at the end of the trial." } }
     ]
   },
   { "id": "G3_11", "name": "Apex of Filth", "act": 3, "bosses": ["The Queen of Filth"], "objective": "Defeat the queen and take the temple idol",
@@ -487,7 +488,7 @@
       { "landmark": "Sacrificial Altar · Optional", "detail": "Look for the altar and the Sacrificial Dagger. Use them with the Sacrificial Heart to claim the passive points." }
     ] },
     "optional": [
-      { "id": "G3_16:1", "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Sacrificial Heart", "direction": "Bring the heart from a Vaal Goliath pack to Aggorat. Find the Sacrificial Altar and use the dagger there." } }
+      { "id": "G3_16:1", "compactReward": "Passive points", "hint": "Offer the Sacrificial Heart for passive points", "leagueStart": true, "reward": { "name": "Passive points from the Sacrificial Heart", "direction": "Bring the heart from a Vaal Goliath pack to Aggorat. Find the Sacrificial Altar and use the dagger there." } }
     ]
   },
   { "id": "G3_17", "name": "The Black Chambers", "act": 3, "bosses": ["Doryani, Royal Thaumaturge", "Doryani's Triumph"], "objective": "Defeat Doryani and advance the story", "tip": "Prioritize fire and lightning resistance for Doryani. Move away from the back of the machine when its lasers fire.",
@@ -516,7 +517,7 @@
     "optional": [
       { "id": "G4_1_1:1", "hint": "Defeat the Blind Beast" },
       { "id": "G4_1_1:2", "hint": "Recover a torn map piece" },
-      { "id": "G4_1_1:beast-pen", "hint": "Defeat Mimok in the Beast Pen", "loot": "Uncut Support Gem" }
+      { "id": "G4_1_1:beast-pen", "compactReward": "Support Gem", "hint": "Defeat Mimok in the Beast Pen", "loot": "Uncut Support Gem" }
     ]
   },
   { "id": "G4_1_2", "name": "Volcanic Warrens", "act": 4, "bosses": ["Krutog, Lord of Kin"], "objective": "Defeat Krutog and check the throne room",
@@ -541,7 +542,7 @@
       { "landmark": "Freya's ring of totems · Optional", "detail": "Have Dannig turn the ingots into spikes, then return to the totems near the entrance. Free Freya and finish the Omniphobia encounter for passive points." }
     ] },
     "optional": [
-      { "id": "G4_2_2:1", "hint": "Defeat Omniphobia for passive points", "leagueStart": true, "reward": { "name": "Passive points from Dark Mists", "direction": "Have Dannig turn Hartlin’s ingots into spikes, then free Freya at the ring of totems near the entrance. Finish the Omniphobia encounter." }, "loot": "Level 13 Uncut Skill Gem and passive points from Tujen in Kingsmarch" }
+      { "id": "G4_2_2:1", "compactHint": "Defeat Omniphobia", "compactReward": "Passive points + Skill Gem 13", "hint": "Defeat Omniphobia for passive points", "leagueStart": true, "reward": { "name": "Passive points from Dark Mists", "direction": "Have Dannig turn Hartlin’s ingots into spikes, then free Freya at the ring of totems near the entrance. Finish the Omniphobia encounter." }, "loot": "Level 13 Uncut Skill Gem and passive points from Tujen in Kingsmarch" }
     ]
   },
   { "id": "G4_3_1", "name": "Whakapanu Island", "act": 4, "bosses": ["Great White One"], "objective": "Find the Singing Caverns",
@@ -550,7 +551,7 @@
       { "landmark": "Shark Pit · Optional", "detail": "Defeat the Great White One for the fin to bring to Kaimana. Look for the Petrified Pirate along the coast if you also want the Torn Map Piece." }
     ] },
     "optional": [
-      { "id": "G4_3_1:1", "hint": "Defeat the Great White One for its fin", "leagueStart": true, "loot": "Permanent defensive bonus from Kaimana in Ngakanu, or at the Kingsmarch docks after Tavakai" },
+      { "id": "G4_3_1:1", "compactReward": "Shark Fin", "hint": "Defeat the Great White One for its fin", "leagueStart": true, "loot": "Permanent defensive bonus from Kaimana in Ngakanu, or at the Kingsmarch docks after Tavakai" },
       { "id": "G4_3_1:2", "hint": "Recover a torn map piece" }
     ]
   },
@@ -562,7 +563,7 @@
     ] },
     "shortcut": { "cue": "Return to the ship after Diamora", "detail": "After defeating Diamora, talk to the Hooded One and take the return route to the ship. You can save the Humming Pearl turn-in for your next planned town stop." },
     "optional": [
-      { "id": "G4_3_2:1", "hint": "Recover the pearl from the clam", "loot": "Pearlescent Amulet from Rog in Kingsmarch" }
+      { "id": "G4_3_2:1", "compactReward": "Pearlescent Amulet", "hint": "Recover the pearl from the clam", "loot": "Pearlescent Amulet from Rog in Kingsmarch" }
     ]
   },
   { "id": "G4_4_1", "name": "Eye of Hinekora", "act": 4,
@@ -572,8 +573,8 @@
     ] },
     "optional": [
       { "id": "G4_4_1:1", "hint": "Pass Hinekora’s trials" },
-      { "id": "G4_4_1:2", "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true, "reward": { "name": "Maximum mana from the Silent Hall", "direction": "Take the side branch after Hinekora’s third test. Pay your respects and speak to Navali in the Silent Hall." } },
-      { "id": "G4_4_1:waterfall", "hint": "Open the chest behind the waterfall", "loot": "Level 12 Uncut Spirit Gem" }
+      { "id": "G4_4_1:2", "compactHint": "Pay respects in Silent Hall", "compactReward": "Maximum mana", "hint": "Visit the Silent Hall for maximum mana", "leagueStart": true, "reward": { "name": "Maximum mana from the Silent Hall", "direction": "Take the side branch after Hinekora’s third test. Pay your respects and speak to Navali in the Silent Hall." } },
+      { "id": "G4_4_1:waterfall", "compactReward": "Spirit Gem 12", "hint": "Open the chest behind the waterfall", "loot": "Level 12 Uncut Spirit Gem" }
     ]
   },
   { "id": "G4_4_2", "name": "Halls of the Dead", "act": 4, "bosses": ["Yama The White"],
@@ -583,7 +584,7 @@
     ] },
     "optional": [
       { "id": "G4_4_2:1", "hint": "Defeat Yama to reach the trial", "leagueStart": true },
-      { "id": "G4_4_2:2", "hint": "Complete the three tattoo tests", "leagueStart": true, "reward": { "name": "Hinekora tattoo bonus", "direction": "Follow the outer paths in the Halls of the Dead to find the three totems. Complete the tests and choose a tattoo." } }
+      { "id": "G4_4_2:2", "compactReward": "Tattoo", "hint": "Complete the three tattoo tests", "leagueStart": true, "reward": { "name": "Hinekora tattoo bonus", "direction": "Follow the outer paths in the Halls of the Dead to find the three totems. Complete the tests and choose a tattoo." } }
     ]
   },
   { "id": "G4_4_3", "name": "Trial of the Ancestors", "act": 4,
@@ -591,7 +592,7 @@
       { "landmark": "Trial meeting area", "detail": "Go through the entrance past Yama and speak to Navali and Hinekora to claim your passive points before leaving." }
     ] },
     "optional": [
-      { "id": "G4_4_3:1", "hint": "Speak with Navali for passive points", "leagueStart": true, "reward": { "name": "Trial of the Ancestors passive points", "direction": "After defeating Yama, enter the Trial of the Ancestors and speak to Navali and Hinekora." } }
+      { "id": "G4_4_3:1", "compactHint": "Speak to Navali", "compactReward": "Passive points", "hint": "Speak with Navali for passive points", "leagueStart": true, "reward": { "name": "Trial of the Ancestors passive points", "direction": "After defeating Yama, enter the Trial of the Ancestors and speak to Navali and Hinekora." } }
     ]
   },
   { "id": "G4_5_1", "name": "Abandoned Prison", "act": 4, "objective": "Find the way into Solitary Confinement",
@@ -600,7 +601,7 @@
       { "landmark": "Locked chapel · Optional", "detail": "Enemies can drop the Chapel Key. Use it on the chapel door, defeat Forael, and choose a permanent life or mana flask recovery bonus at the Goddess of Justice." }
     ] },
     "optional": [
-      { "id": "G4_5_1:1", "hint": "Choose a flask bonus at the chapel", "leagueStart": true, "reward": { "name": "Permanent flask recovery bonus", "direction": "Use the Chapel Key in Abandoned Prison, defeat Forael, and choose a bonus at the Goddess of Justice." } }
+      { "id": "G4_5_1:1", "compactHint": "Choose a flask bonus at the chapel", "compactReward": "Flask recovery", "hint": "Choose a flask bonus at the chapel", "leagueStart": true, "reward": { "name": "Permanent flask recovery bonus", "direction": "Use the Chapel Key in Abandoned Prison, defeat Forael, and choose a bonus at the Goddess of Justice." } }
     ]
   },
   { "id": "G4_5_2", "name": "Solitary Confinement", "act": 4, "bosses": ["The Prisoner"], "objective": "Defeat the Prisoner using the ballistae",
@@ -643,7 +644,7 @@
       { "landmark": "Settlement · Optional", "detail": "Find Kaimana while the settlement is still accessible and hand in the shark fin if you have it." }
     ] },
     "optional": [
-      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." }, "loot": "Permanent defensive bonus from Kaimana" }
+      { "id": "tribal-medicine:shark-fin", "compactReward": "Defensive blessing", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." }, "loot": "Permanent defensive bonus from Kaimana" }
     ]
   },
   { "id": "G4_11_1b", "name": "Ngakanu", "act": 4, "objective": "Find the Heart of the Tribe",
@@ -652,7 +653,7 @@
       { "landmark": "Outer boundary", "detail": "Once through the fence, follow the boundary inland to reach the Heart of the Tribe." }
     ] },
     "optional": [
-      { "id": "tribal-medicine:shark-fin", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." }, "loot": "Permanent defensive bonus from Kaimana" }
+      { "id": "tribal-medicine:shark-fin", "compactReward": "Defensive blessing", "hint": "Bring the shark fin to Kaimana", "leagueStart": true, "reward": { "name": "Tribal Medicine blessing", "direction": "Take the Great White One’s fin to Kaimana. Look in the Ngakanu settlement, or check the Kingsmarch docks after Tavakai." }, "loot": "Permanent defensive bonus from Kaimana" }
     ]
   },
   { "id": "G4_11_2", "name": "Heart of the Tribe", "act": 4, "bosses": ["Tavakai, the Chieftain"], "objective": "Defeat Tavakai and return to Kingsmarch", "tip": "Tavakai uses fire, cold, and lightning across his phases. Prepare all three elemental resistances.",
