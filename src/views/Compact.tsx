@@ -155,10 +155,6 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
       {!expanded && objective.compactReward && <span className="optional-reward">{objective.compactReward}</span>}
     </li>)}</ul>
   </div>
-  const { corner } = state.settings.placement
-  const extraGrip = corner !== 'topLeft' && {
-    topRight: 'bottom left', bottomRight: 'top left', bottomLeft: 'top right',
-  }[corner]
   return <main ref={panel} data-status={state.status} className={`compact${expanded ? ' expanded' : ''}${reward || townFeedback ? ' with-quest-reward' : ''}`}>
     <div ref={content} className="compact-content">
       <header className="compact-head">
@@ -237,7 +233,6 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         </section>}
       </footer>
     </div>
-    <span className="resize-grip bottom right" aria-hidden="true"/>
-    {extraGrip && <span className={`resize-grip ${extraGrip}`} aria-hidden="true"/>}
+    <span className="resize-grip" aria-hidden="true"/>
   </main>
 }

@@ -19,7 +19,7 @@ const controls = [
   { title: 'Overlay', actions: [
     ['Alt+N', 'Show or hide Waymark'],
     ['Alt+drag header', 'Move the overlay'],
-    ['Alt+drag corner', 'Resize the overlay'],
+    ['Alt+drag bottom-right corner', 'Resize the overlay'],
     ['Alt+click header', 'Open or close route details'],
     ['Alt+Shift+T', 'Start or stop the act timer'],
   ] },
@@ -143,7 +143,7 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
     <label className="check"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)}/>Follow the game window</label>
     <p className="hint">Current anchor · {anchored ? 'Game client area' : 'Primary display work area'}</p>
     <p className="hint">Hold Alt and drag the Waymark header to move it. Release the mouse to save.</p>
-    <p className="hint">Hold Alt and drag a marked corner to change the width and height.</p>
+    <p className="hint">Hold Alt and drag the bottom-right corner to change the width and height.</p>
     <p className="hint">Alt+click the header to expand or collapse objective details.</p>
     <button className="primary" disabled={!dirty}>Save position</button>
   </form>

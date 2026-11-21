@@ -147,6 +147,8 @@ function Test-AltDrag($Hwnd) {
     if (![OverlayCheck]::GetPhysicalCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
     $x = $origin.Left + 110
     $distance = 64
+    # Leave room to drag the bottom-right grip outward in Test-AltResize.
+    $shiftX = -100
     $savedBefore = Get-Content -LiteralPath $settingsFile -Raw
     $altHeld = $false
     $buttonHeld = $false
@@ -162,24 +164,26 @@ function Test-AltDrag($Hwnd) {
             [OverlayCheck]::PrimaryButton($true)
             $buttonHeld = $true
             Start-Sleep -Milliseconds 70
-            if (![OverlayCheck]::SetPhysicalCursorPos($x, ($y + $distance))) { throw 'Could not move the drag cursor.' }
+            if (![OverlayCheck]::SetPhysicalCursorPos(($x + $shiftX), ($y + $distance))) { throw 'Could not move the drag cursor.' }
             if ($gesture -eq 'Alt header drag') {
                 try {
                     [void](Wait-For 'the overlay to follow the mouse during Alt-drag' {
                         $bounds = [OverlayCheck]::WindowBounds($Hwnd)
-                        [Math]::Abs($bounds.Top - ($origin.Top + $distance)) -le 2
+                        [Math]::Abs($bounds.Top - ($origin.Top + $distance)) -le 2 -and
+                            [Math]::Abs($bounds.Left - ($origin.Left + $shiftX)) -le 2
                     })
                 } catch {
                     $observed = [OverlayCheck]::WindowBounds($Hwnd)
                     $actualCursor = New-Object OverlayCheck+Point
                     [void][OverlayCheck]::GetPhysicalCursorPos([ref]$actualCursor)
-                    throw "Header drag expected window top $($origin.Top + $distance), observed $($observed.Top). Pointer expected ($x, $($y + $distance)), observed ($($actualCursor.X), $($actualCursor.Y)). $_"
+                    throw "Header drag expected window origin ($($origin.Left + $shiftX), $($origin.Top + $distance)), observed ($($observed.Left), $($observed.Top)). Pointer expected ($($x + $shiftX), $($y + $distance)), observed ($($actualCursor.X), $($actualCursor.Y)). $_"
                 }
                 Assert-PassiveOverlay $Hwnd
                 if ((Get-Content -LiteralPath $settingsFile -Raw) -ne $savedBefore) { throw 'Placement was saved before release.' }
             } else {
                 Start-Sleep -Milliseconds 250
-                if (([OverlayCheck]::WindowBounds($Hwnd)).Top -ne $origin.Top) { throw "$gesture moved the overlay." }
+                $bounds = [OverlayCheck]::WindowBounds($Hwnd)
+                if ($bounds.Top -ne $origin.Top -or $bounds.Left -ne $origin.Left) { throw "$gesture moved the overlay." }
             }
             [OverlayCheck]::PrimaryButton($false)
             $buttonHeld = $false
@@ -193,7 +197,8 @@ function Test-AltDrag($Hwnd) {
         })
         Assert-PassiveOverlay $Hwnd
         $saved = [OverlayCheck]::WindowBounds($Hwnd)
-        if ([Math]::Abs($saved.Top - ($origin.Top + $distance)) -gt 2) { throw 'The overlay snapped back after release.' }
+        if ([Math]::Abs($saved.Top - ($origin.Top + $distance)) -gt 2 -or
+            [Math]::Abs($saved.Left - ($origin.Left + $shiftX)) -gt 2) { throw 'The overlay snapped back after release.' }
         return $saved
     } finally {
         if ($buttonHeld) { [OverlayCheck]::PrimaryButton($false) }
@@ -208,12 +213,8 @@ function Test-AltResize($Hwnd) {
     if (![OverlayCheck]::GetPhysicalCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
     $savedBefore = Get-Content -LiteralPath $settingsFile -Raw
     $placement = ($savedBefore | ConvertFrom-Json).placement
-    $anchorRight = $placement.corner.EndsWith('Right')
-    $anchorBottom = $placement.corner.StartsWith('bottom')
-    $x = if ($anchorRight) { $origin.Left + 9 } else { $origin.Right - 9 }
-    $delta = if ($anchorRight) { -80 } else { 80 }
-    $y = if ($anchorBottom) { $origin.Top + 9 } else { $origin.Bottom - 9 }
-    $deltaY = if ($anchorBottom) { -64 } else { 64 }
+    $x = $origin.Right - 9
+    $y = $origin.Bottom - 9
     $altHeld = $false
     $buttonHeld = $false
     try {
@@ -224,7 +225,7 @@ function Test-AltResize($Hwnd) {
         [OverlayCheck]::PrimaryButton($true)
         $buttonHeld = $true
         Start-Sleep -Milliseconds 70
-        if (![OverlayCheck]::SetPhysicalCursorPos(($x + $delta), ($y + $deltaY))) { throw 'Could not drag the resize grip.' }
+        if (![OverlayCheck]::SetPhysicalCursorPos(($x + 80), ($y + 64))) { throw 'Could not drag the resize grip.' }
 
         [void](Wait-For 'the overlay to widen and grow taller during corner drag' {
             $bounds = [OverlayCheck]::WindowBounds($Hwnd)
@@ -243,10 +244,8 @@ function Test-AltResize($Hwnd) {
             $settings.placement.width -gt $placement.width -and $settings.placement.minHeight -gt 172
         })
         $bounds = [OverlayCheck]::WindowBounds($Hwnd)
-        if (($anchorRight -and $bounds.Right -ne $origin.Right) -or
-            (!$anchorRight -and $bounds.Left -ne $origin.Left) -or
-            ($anchorBottom -and $bounds.Bottom -ne $origin.Bottom) -or
-            (!$anchorBottom -and $bounds.Top -ne $origin.Top)) { throw 'Resizing moved the anchored corner.' }
+        if ([Math]::Abs($bounds.Left - $origin.Left) -gt 2 -or
+            [Math]::Abs($bounds.Top - $origin.Top) -gt 2) { throw 'Resizing moved the top-left corner.' }
         return $bounds
     } finally {
         if ($buttonHeld) { [OverlayCheck]::PrimaryButton($false) }

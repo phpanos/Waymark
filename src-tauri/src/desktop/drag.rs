@@ -1,8 +1,7 @@
 use super::{
     reward_click,
     settings::{
-        Corner, Placement, MAX_OVERLAY_HEIGHT, MAX_OVERLAY_WIDTH, MIN_OVERLAY_HEIGHT,
-        MIN_OVERLAY_WIDTH,
+        Placement, MAX_OVERLAY_HEIGHT, MAX_OVERLAY_WIDTH, MIN_OVERLAY_HEIGHT, MIN_OVERLAY_WIDTH,
     },
     Runtime,
 };
@@ -32,7 +31,6 @@ enum GestureMode {
         placement: Placement,
         origin: RECT,
         dpi: i32,
-        direction: Point,
     },
 }
 
@@ -183,22 +181,18 @@ impl Input {
             return false;
         }
         let dpi = unsafe { GetDpiForWindow(hwnd) };
-        let placement = {
+        let mode = if header_contains(rect, dpi, cursor) {
+            GestureMode::Move((rect.left, rect.top))
+        } else if resize_corner_contains(rect, dpi, cursor) {
             let state = self.app.state::<Runtime>();
             let Ok(snapshot) = state.snapshot.try_lock() else {
                 return false;
             };
-            snapshot.settings.placement
-        };
-        let mode = if let Some(direction) = resize_corner(rect, dpi, placement.corner, cursor) {
             GestureMode::Resize {
-                placement,
+                placement: snapshot.settings.placement,
                 origin: rect,
                 dpi: dpi.max(96) as i32,
-                direction,
             }
-        } else if header_contains(rect, dpi, cursor) {
-            GestureMode::Move((rect.left, rect.top))
         } else {
             return false;
         };
@@ -241,21 +235,9 @@ fn header_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
         && y < rect.bottom.min(rect.top + px(45))
 }
 
-fn resize_corner(rect: RECT, dpi: u32, anchor: Corner, (x, y): Point) -> Option<Point> {
+fn resize_corner_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
     let grip = (18 * dpi.max(96) as i32 + 48) / 96;
-    let right = (rect.right - grip..rect.right).contains(&x);
-    let bottom = (rect.bottom - grip..rect.bottom).contains(&y);
-    if right && bottom {
-        return Some((1, 1));
-    }
-    let left = (rect.left..rect.left + grip).contains(&x);
-    let top = (rect.top..rect.top + grip).contains(&y);
-    match anchor {
-        Corner::TopRight if left && bottom => Some((-1, 1)),
-        Corner::BottomRight if left && top => Some((-1, -1)),
-        Corner::BottomLeft if right && top => Some((1, -1)),
-        _ => None,
-    }
+    (rect.right - grip..rect.right).contains(&x) && (rect.bottom - grip..rect.bottom).contains(&y)
 }
 
 fn move_header(hwnd: HWND, origin: Point, start: Point, cursor: Point) -> io::Result<()> {
@@ -332,25 +314,20 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
             mut placement,
             origin,
             dpi,
-            direction,
         } => {
             let to_dip = |pixels| (pixels * 96 + dpi / 2) / dpi;
             if dx != 0 {
-                let width = to_dip(origin.right - origin.left + dx * direction.0);
+                let width = to_dip(origin.right - origin.left + dx);
                 placement.width =
                     width.clamp(i32::from(MIN_OVERLAY_WIDTH), i32::from(MAX_OVERLAY_WIDTH)) as u16;
             }
             if dy != 0 {
-                let height = to_dip(origin.bottom - origin.top + dy * direction.1);
+                let height = to_dip(origin.bottom - origin.top + dy);
                 placement.min_height = height
                     .clamp(i32::from(MIN_OVERLAY_HEIGHT), i32::from(MAX_OVERLAY_HEIGHT))
                     as u16;
             }
-            let axes = (
-                if dx == 0 { 0 } else { direction.0 },
-                if dy == 0 { 0 } else { direction.1 },
-            );
-            super::resize_overlay(&app, hwnd, placement, origin, axes, released)
+            super::resize_overlay(&app, hwnd, placement, origin, (dx != 0, dy != 0), released)
         }
     };
 
@@ -384,38 +361,23 @@ mod tests {
     }
 
     #[test]
-    fn resize_hit_boxes_include_bottom_right_and_the_free_corner() {
+    fn only_bottom_right_can_start_a_resize() {
         let rect = RECT {
             left: -600,
             top: 100,
             right: -108,
             bottom: 400,
         };
-        for anchor in [
-            Corner::TopLeft,
-            Corner::TopRight,
-            Corner::BottomLeft,
-            Corner::BottomRight,
+        assert!(resize_corner_contains(rect, 144, (-135, 373)));
+        for point in [
+            (-591, 391),
+            (-591, 109),
+            (-117, 109),
+            (-136, 373),
+            (-108, 399),
         ] {
-            assert_eq!(resize_corner(rect, 144, anchor, (-117, 391)), Some((1, 1)));
-            assert_eq!(resize_corner(rect, 144, anchor, (-350, 391)), None);
+            assert!(!resize_corner_contains(rect, 144, point));
         }
-        assert_eq!(
-            resize_corner(rect, 144, Corner::TopRight, (-609, 391)),
-            None
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::TopRight, (-591, 391)),
-            Some((-1, 1))
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::BottomRight, (-591, 109)),
-            Some((-1, -1))
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::BottomLeft, (-117, 109)),
-            Some((1, -1))
-        );
     }
 
     #[test]

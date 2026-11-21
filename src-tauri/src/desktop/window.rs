@@ -127,20 +127,14 @@ impl Anchor {
         &self,
         p: Placement,
         origin: RECT,
-        (horizontal, vertical): (i32, i32),
+        (horizontal, vertical): (bool, bool),
     ) -> Placement {
-        let x = if horizontal < 0 {
-            origin.right - self.width
-        } else {
-            origin.left
-        };
-        let y = if vertical < 0 {
-            origin.bottom - self.height
-        } else {
-            origin.top
-        };
-        let x = x.clamp(self.rect.left, self.rect.right - self.width);
-        let y = y.clamp(self.rect.top, self.rect.bottom - self.height);
+        let x = origin
+            .left
+            .clamp(self.rect.left, self.rect.right - self.width);
+        let y = origin
+            .top
+            .clamp(self.rect.top, self.rect.bottom - self.height);
         let inset_x = match p.corner {
             Corner::TopLeft | Corner::BottomLeft => x - self.rect.left,
             _ => self.rect.right - x - self.width,
@@ -150,15 +144,15 @@ impl Anchor {
             _ => self.rect.bottom - y - self.height,
         };
         Placement {
-            inset_x: if horizontal == 0 {
-                p.inset_x
-            } else {
+            inset_x: if horizontal {
                 self.inset(inset_x)
-            },
-            inset_y: if vertical == 0 {
-                p.inset_y
             } else {
+                p.inset_x
+            },
+            inset_y: if vertical {
                 self.inset(inset_y)
+            } else {
+                p.inset_y
             },
             ..p
         }
@@ -230,10 +224,10 @@ impl Tracker {
         placement: Placement,
         content_height: u16,
         origin: RECT,
-        (horizontal, vertical): (i32, i32),
+        axes: (bool, bool),
     ) -> io::Result<Placement> {
         let anchor = self.anchor(placement, content_height)?;
-        Ok(anchor.fit_resize(placement, origin, (horizontal, vertical)))
+        Ok(anchor.fit_resize(placement, origin, axes))
     }
 
     /// All coordinates are physical desktop pixels. The webview layout and insets use DIPs.
@@ -302,11 +296,15 @@ mod tests {
             height: 252,
             game: false,
         };
-        let standard = anchor.fit_resize(placement, origin, (1, 1));
+        let standard = anchor.fit_resize(placement, origin, (true, true));
         assert_eq!(anchor.origin(standard), (540, 20));
-        let free_corner = anchor.fit_resize(placement, origin, (-1, 1));
-        assert_eq!(anchor.origin(free_corner), (520, 20));
-        let vertical_only = anchor.fit_resize(placement, origin, (0, 1));
+        let with_room = RECT {
+            left: 500,
+            ..origin
+        };
+        let resized = anchor.fit_resize(placement, with_room, (true, true));
+        assert_eq!(anchor.origin(resized), (500, 20));
+        let vertical_only = anchor.fit_resize(placement, origin, (false, true));
         assert_eq!(vertical_only.inset_x, placement.inset_x);
     }
 }

@@ -25,11 +25,10 @@ button:disabled { opacity: .55; cursor: default }
   user-select: none;
 }
 .compact-content { min-height: calc(166px + var(--quest-reward-height, 0px)); padding: 0 16px 7px }
-.resize-grip { position: absolute; width: 8px; height: 8px; opacity: .55; pointer-events: none }
-.resize-grip.bottom { bottom: 5px; border-bottom: 1px solid var(--gold) }
-.resize-grip.top { top: 5px; border-top: 1px solid var(--gold) }
-.resize-grip.left { left: 5px; border-left: 1px solid var(--gold) }
-.resize-grip.right { right: 5px; border-right: 1px solid var(--gold) }
+.resize-grip {
+  position: absolute; bottom: 5px; right: 5px; width: 8px; height: 8px;
+  border-bottom: 1px solid var(--gold); border-right: 1px solid var(--gold); opacity: .55; pointer-events: none;
+}
 .compact.with-quest-reward:not(.expanded) {
   --quest-reward-height: 18px;
 }

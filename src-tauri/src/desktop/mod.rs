@@ -344,12 +344,12 @@ fn resize_overlay(
     hwnd: isize,
     mut placement: Placement,
     origin: windows_sys::Win32::Foundation::RECT,
-    axes: (i32, i32),
+    axes: (bool, bool),
     commit: bool,
 ) -> Result<(), String> {
     let state = app.state::<Runtime>();
     let height = state.overlay_height.load(Ordering::Relaxed);
-    if axes.1 != 0 && placement.min_height <= height {
+    if axes.1 && placement.min_height <= height {
         placement.min_height = MIN_OVERLAY_HEIGHT;
     }
     let tracker = app.state::<Mutex<window::Tracker>>();
