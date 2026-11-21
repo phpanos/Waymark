@@ -180,7 +180,8 @@ try {
           if (area === 'G1_1') {
             await expectText('Follow the path inland', '.direction-diagram [data-motion="forward"] p span')
           } else if (area === 'G1_town') {
-            await expectText('Clearfell', '.direction-diagram [data-motion="screen-right"] strong')
+            await expectText('Exit to', '.direction-diagram [data-motion="follow"] p span')
+            await expectText('Clearfell', '.direction-diagram [data-motion="follow"] strong')
           } else if (area === 'G1_2') {
             await expectText('Search the left edge', '.direction-diagram [data-motion="screen-left"] strong')
             await expectText('Search the right edge', '.direction-diagram [data-motion="screen-right"] strong')
