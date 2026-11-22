@@ -120,7 +120,7 @@ function Invoke-RewardShortcut([byte]$Key) {
     }
 }
 
-function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View = 'rewards') {
+function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View = 'rewards', [switch]$Alt) {
     $output = node $Check $Profile $Log $View $Target
     if ($LASTEXITCODE -ne 0) { throw "Could not locate the reward control $Target." }
     $point = $output | Where-Object { $_ -match '^Reward control point \d+ \d+$' } | Select-Object -Last 1
@@ -133,10 +133,15 @@ function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View
         if (![OverlayCheck]::SetPhysicalCursorPos(($bounds.Left + [int]$parts[3]), ($bounds.Top + [int]$parts[4]))) {
             throw 'Could not position the pointer over the reward control.'
         }
+        if ($Alt) {
+            [OverlayCheck]::Alt($true)
+            Start-Sleep -Milliseconds 70
+        }
         [OverlayCheck]::PrimaryButton($true)
         Start-Sleep -Milliseconds 70
     } finally {
         [OverlayCheck]::PrimaryButton($false)
+        if ($Alt) { [OverlayCheck]::Alt($false) }
         [void][OverlayCheck]::SetPhysicalCursorPos($cursor.X, $cursor.Y)
     }
 }
@@ -147,6 +152,8 @@ function Test-AltDrag($Hwnd) {
     if (![OverlayCheck]::GetPhysicalCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
     $x = $origin.Left + 110
     $distance = 64
+    # Leave room to drag the bottom-right grip outward in Test-AltResize.
+    $shiftX = -100
     $savedBefore = Get-Content -LiteralPath $settingsFile -Raw
     $altHeld = $false
     $buttonHeld = $false
@@ -162,24 +169,26 @@ function Test-AltDrag($Hwnd) {
             [OverlayCheck]::PrimaryButton($true)
             $buttonHeld = $true
             Start-Sleep -Milliseconds 70
-            if (![OverlayCheck]::SetPhysicalCursorPos($x, ($y + $distance))) { throw 'Could not move the drag cursor.' }
+            if (![OverlayCheck]::SetPhysicalCursorPos(($x + $shiftX), ($y + $distance))) { throw 'Could not move the drag cursor.' }
             if ($gesture -eq 'Alt header drag') {
                 try {
                     [void](Wait-For 'the overlay to follow the mouse during Alt-drag' {
                         $bounds = [OverlayCheck]::WindowBounds($Hwnd)
-                        [Math]::Abs($bounds.Top - ($origin.Top + $distance)) -le 2
+                        [Math]::Abs($bounds.Top - ($origin.Top + $distance)) -le 2 -and
+                            [Math]::Abs($bounds.Left - ($origin.Left + $shiftX)) -le 2
                     })
                 } catch {
                     $observed = [OverlayCheck]::WindowBounds($Hwnd)
                     $actualCursor = New-Object OverlayCheck+Point
                     [void][OverlayCheck]::GetPhysicalCursorPos([ref]$actualCursor)
-                    throw "Header drag expected window top $($origin.Top + $distance), observed $($observed.Top). Pointer expected ($x, $($y + $distance)), observed ($($actualCursor.X), $($actualCursor.Y)). $_"
+                    throw "Header drag expected window origin ($($origin.Left + $shiftX), $($origin.Top + $distance)), observed ($($observed.Left), $($observed.Top)). Pointer expected ($($x + $shiftX), $($y + $distance)), observed ($($actualCursor.X), $($actualCursor.Y)). $_"
                 }
                 Assert-PassiveOverlay $Hwnd
                 if ((Get-Content -LiteralPath $settingsFile -Raw) -ne $savedBefore) { throw 'Placement was saved before release.' }
             } else {
                 Start-Sleep -Milliseconds 250
-                if (([OverlayCheck]::WindowBounds($Hwnd)).Top -ne $origin.Top) { throw "$gesture moved the overlay." }
+                $bounds = [OverlayCheck]::WindowBounds($Hwnd)
+                if ($bounds.Top -ne $origin.Top -or $bounds.Left -ne $origin.Left) { throw "$gesture moved the overlay." }
             }
             [OverlayCheck]::PrimaryButton($false)
             $buttonHeld = $false
@@ -193,7 +202,8 @@ function Test-AltDrag($Hwnd) {
         })
         Assert-PassiveOverlay $Hwnd
         $saved = [OverlayCheck]::WindowBounds($Hwnd)
-        if ([Math]::Abs($saved.Top - ($origin.Top + $distance)) -gt 2) { throw 'The overlay snapped back after release.' }
+        if ([Math]::Abs($saved.Top - ($origin.Top + $distance)) -gt 2 -or
+            [Math]::Abs($saved.Left - ($origin.Left + $shiftX)) -gt 2) { throw 'The overlay snapped back after release.' }
         return $saved
     } finally {
         if ($buttonHeld) { [OverlayCheck]::PrimaryButton($false) }
@@ -208,12 +218,8 @@ function Test-AltResize($Hwnd) {
     if (![OverlayCheck]::GetPhysicalCursorPos([ref]$cursor)) { throw 'Could not read the cursor position.' }
     $savedBefore = Get-Content -LiteralPath $settingsFile -Raw
     $placement = ($savedBefore | ConvertFrom-Json).placement
-    $anchorRight = $placement.corner.EndsWith('Right')
-    $anchorBottom = $placement.corner.StartsWith('bottom')
-    $x = if ($anchorRight) { $origin.Left + 9 } else { $origin.Right - 9 }
-    $delta = if ($anchorRight) { -80 } else { 80 }
-    $y = if ($anchorBottom) { $origin.Top + 9 } else { $origin.Bottom - 9 }
-    $deltaY = if ($anchorBottom) { -64 } else { 64 }
+    $x = $origin.Right - 9
+    $y = $origin.Bottom - 9
     $altHeld = $false
     $buttonHeld = $false
     try {
@@ -224,7 +230,7 @@ function Test-AltResize($Hwnd) {
         [OverlayCheck]::PrimaryButton($true)
         $buttonHeld = $true
         Start-Sleep -Milliseconds 70
-        if (![OverlayCheck]::SetPhysicalCursorPos(($x + $delta), ($y + $deltaY))) { throw 'Could not drag the resize grip.' }
+        if (![OverlayCheck]::SetPhysicalCursorPos(($x + 80), ($y + 64))) { throw 'Could not drag the resize grip.' }
 
         [void](Wait-For 'the overlay to widen and grow taller during corner drag' {
             $bounds = [OverlayCheck]::WindowBounds($Hwnd)
@@ -243,10 +249,8 @@ function Test-AltResize($Hwnd) {
             $settings.placement.width -gt $placement.width -and $settings.placement.minHeight -gt 172
         })
         $bounds = [OverlayCheck]::WindowBounds($Hwnd)
-        if (($anchorRight -and $bounds.Right -ne $origin.Right) -or
-            (!$anchorRight -and $bounds.Left -ne $origin.Left) -or
-            ($anchorBottom -and $bounds.Bottom -ne $origin.Bottom) -or
-            (!$anchorBottom -and $bounds.Top -ne $origin.Top)) { throw 'Resizing moved the anchored corner.' }
+        if ([Math]::Abs($bounds.Left - $origin.Left) -gt 2 -or
+            [Math]::Abs($bounds.Top - $origin.Top) -gt 2) { throw 'Resizing moved the top-left corner.' }
         return $bounds
     } finally {
         if ($buttonHeld) { [OverlayCheck]::PrimaryButton($false) }
@@ -427,9 +431,11 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
             node $check $profile $log quick-route
             if ($LASTEXITCODE -ne 0) { throw 'The compact route did not show the ordered portal steps.' }
-            Invoke-RewardShortcut 0x54 # T
+            Invoke-RewardControlClick $hwnd $check $profile $log click-point timer -Alt
             node $check $profile $log timer running-one
-            if ($LASTEXITCODE -ne 0) { throw 'The Act 1 timer did not start.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not start the Act 1 timer.' }
+            node $check $profile $log quick-route story-return
+            if ($LASTEXITCODE -ne 0) { throw 'The Act 1 story did not advance after returning from Red Vale.' }
             node $check $profile $log replay start
             if ($LASTEXITCODE -ne 0) { throw 'The diagnostics fixture did not start.' }
             [IO.File]::AppendAllText($log, "Generating level 16 area `"G2_1`"`r`n", $utf8)
@@ -449,9 +455,9 @@ try {
             [IO.File]::AppendAllText($log, "Generating level 2 area `"G1_2`"`r`n", $utf8)
             node $check $profile $log timer backtracked
             if ($LASTEXITCODE -ne 0) { throw 'Backtracking moved the timer to an earlier act.' }
-            Invoke-RewardShortcut 0x54 # T
+            Invoke-RewardControlClick $hwnd $check $profile $log click-point timer -Alt
             node $check $profile $log timer stopped-two
-            if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not stop.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not stop the Act 2 timer.' }
 
             # Launch the same executable while the original instance owns the overlay.
             $settingsHwnd = [OverlayCheck]::FindWindow([NullString]::Value, 'Waymark settings')

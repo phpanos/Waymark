@@ -13,7 +13,7 @@ function formatDuration(milliseconds: number) {
     .map(part => String(part).padStart(2, '0')).join(':')
 }
 
-function TimerValue({ clock }: { clock?: ActClock | null }) {
+function TimerValue({ clock, overlayControl = false }: { clock?: ActClock | null; overlayControl?: boolean }) {
   const startedAt = clock?.startedAt
   const [now, setNow] = useState(Date.now)
   useEffect(() => {
@@ -22,7 +22,8 @@ function TimerValue({ clock }: { clock?: ActClock | null }) {
     return () => window.clearInterval(interval)
   }, [startedAt])
   const elapsed = (clock?.elapsedMs ?? 0) + (startedAt == null ? 0 : Math.max(0, now - startedAt))
-  return <span className="act-timer-value">{formatDuration(elapsed)}</span>
+  return <span className="act-timer-value" data-reward-target={overlayControl ? 'act-timer' : undefined}
+    title={overlayControl ? `Alt+click to ${startedAt == null ? 'start' : 'stop'} the act timer` : undefined}>{formatDuration(elapsed)}</span>
 }
 
 export function OverlayActTimer({ state, act }: { state: Snapshot; act: number | null }) {
@@ -32,7 +33,7 @@ export function OverlayActTimer({ state, act }: { state: Snapshot; act: number |
   if (!clock && !canStart) return null
   return <div className="act-timer" data-running={running} aria-label={`Act ${clock?.act ?? act} timer ${running ? 'running' : 'stopped'}`}>
     <span className="act-timer-label">Act {clock?.act ?? act}</span>
-    <TimerValue clock={clock}/>
+    <TimerValue clock={clock} overlayControl={running || canStart}/>
     {clock && !running && <span className="act-timer-state">Paused</span>}
   </div>
 }

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use windows_sys::Win32::Foundation::RECT;
 
 pub(super) const CHANNEL: &str = "waymark://reward-click";
+pub(super) const ACT_TIMER_TARGET: &str = "act-timer";
 
 #[derive(Clone, PartialEq, Eq, Serialize)]
 pub(super) struct RewardClick {
@@ -26,7 +27,7 @@ pub(super) struct RewardTargets {
 }
 
 impl RewardTargets {
-    pub fn hit(&self, rect: RECT, dpi: u32, (x, y): (i32, i32)) -> Option<RewardClick> {
+    pub fn hit(&self, rect: RECT, dpi: u32, (x, y): (i32, i32), alt: bool) -> Option<RewardClick> {
         if x < rect.left || x >= rect.right || y < rect.top || y >= rect.bottom {
             return None;
         }
@@ -37,7 +38,11 @@ impl RewardTargets {
         let x = f64::from(x - rect.left) / scale;
         let y = f64::from(y - rect.top) / scale;
         let target = self.targets.iter().find(|target| {
-            x >= target.left && x < target.right && y >= target.top && y < target.bottom
+            (target.id.as_deref() == Some(ACT_TIMER_TARGET)) == alt
+                && x >= target.left
+                && x < target.right
+                && y >= target.top
+                && y < target.bottom
         })?;
         Some(RewardClick {
             revision: self.revision,
@@ -52,7 +57,7 @@ mod tests {
 
     #[test]
     fn reward_target_respects_window_bounds_and_display_scale() {
-        let targets = RewardTargets {
+        let mut targets = RewardTargets {
             revision: 8,
             height: 200,
             targets: vec![RewardTarget {
@@ -69,11 +74,12 @@ mod tests {
             right: 42,
             bottom: 500,
         };
-        let hit = targets.hit(rect, 144, (-420, 380)).unwrap();
+        let hit = targets.hit(rect, 144, (-420, 380), false).unwrap();
         assert_eq!(hit.revision, 8);
         assert_eq!(hit.id.as_deref(), Some("G1_2:1"));
-        assert!(targets.hit(rect, 144, (-395, 380)).is_none());
-        assert!(targets.hit(rect, 144, (-420, 510)).is_none());
+        assert!(targets.hit(rect, 144, (-420, 380), true).is_none());
+        assert!(targets.hit(rect, 144, (-395, 380), false).is_none());
+        assert!(targets.hit(rect, 144, (-420, 510), false).is_none());
         assert!(targets
             .hit(
                 RECT {
@@ -81,8 +87,14 @@ mod tests {
                     ..rect
                 },
                 144,
-                (-420, 380)
+                (-420, 380),
+                false,
             )
             .is_none());
+
+        targets.targets[0].id = Some(ACT_TIMER_TARGET.into());
+        assert!(targets.hit(rect, 144, (-420, 380), false).is_none());
+        let hit = targets.hit(rect, 144, (-420, 380), true).unwrap();
+        assert_eq!(hit.id.as_deref(), Some(ACT_TIMER_TARGET));
     }
 }

@@ -3,7 +3,7 @@ import compass from '../assets/compass.png'
 import { directionsByArea } from '../data/directions'
 import { native } from '../native/bridge'
 import type { RewardClick, Snapshot, Status, Zone } from '../native/contract'
-import { adjacentStoryObjectives, completedObjectives, describeStoryStep, describeZone, reachedClearfell, statusText, townRewardProgress, type Route, type StoryStep, type ZoneNavigation } from '../state/presentation'
+import { adjacentStoryObjectives, completedObjectives, describeLiveZone, describeStoryStep, statusText, type Route, type StoryStep, type ZoneNavigation } from '../state/presentation'
 import { useBuildMilestone } from '../state/use-build-milestone'
 import { useTownRewards } from '../state/use-town-rewards'
 import { OverlayActTimer } from './ActTimer'
@@ -53,7 +53,9 @@ function AreaOverview({ navigation, fork, children }: {
   </section>
 }
 
-export function Compact({ state, previousZone = null }: { state: Snapshot; previousZone?: Zone | null }) {
+export function Compact({ state, previousZone = null, storyStep }: {
+  state: Snapshot; previousZone?: Zone | null; storyStep?: StoryStep
+}) {
   const panel = useRef<HTMLElement>(null)
   const content = useRef<HTMLDivElement>(null)
   const [previewStep, setPreviewStep] = useState<StoryStep | null>(null)
@@ -66,7 +68,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     const card = panel.current
     const body = content.current
     if (!card || !body) return
-    const controls = [...card.querySelectorAll<HTMLElement>('[data-reward-target]:enabled')]
+    const controls = [...card.querySelectorAll<HTMLElement>('[data-reward-target]:not(:disabled)')]
     const measure = () => {
       const height = Math.ceil(body.getBoundingClientRect().height) + 6
       if (height !== lastHeight.current) {
@@ -94,8 +96,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     }
   })
 
-  const previousAreaId = previousZone?.areaId ?? describeZone(previousZone).areaId
-  const liveZone = describeZone(state.zone, previousAreaId, townRewardProgress(state.settings), reachedClearfell(state.settings))
+  const liveZone = describeLiveZone(state, previousZone, storyStep)
   const preview = previewStep !== null
   const zone = previewStep ? describeStoryStep(previewStep) : liveZone
   const buildMilestone = useBuildMilestone(state)
@@ -107,7 +108,8 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
   const shortcut = stale ? null : zone.shortcut
   const route = !stale && (zone.objective || remaining.length > 0) ? zone.route : null
   const navigation = stale ? null : zone.navigation
-  const direction = !stale && !previewStep?.objective && zone.areaId ? directionsByArea[zone.areaId] : undefined
+  const contextual = previewStep ? !!previewStep.objective : liveZone.contextual
+  const direction = !stale && !contextual && zone.areaId ? directionsByArea[zone.areaId] : undefined
   const showRouteLandmarks = route && !(direction && (route.diagram || direction.layout === 'landmarks'))
   const tip = stale ? null : zone.tip
   const hasDiagram = navigation && (navigation.waypoint || navigation.exits.length || zone.objective || remaining.length)
@@ -127,7 +129,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     : null
   const returnSteps = quickRoute ? direction?.returnSteps : undefined
   const next = navigation?.exits.length === 1 ? navigation.exits[0].landmark : null
-  const adjacent = adjacentStoryObjectives(zone.areaId, previousAreaId, previewStep)
+  const adjacent = adjacentStoryObjectives(zone.areaId, liveZone.previousAreaId, previewStep ?? liveZone.storyStep)
   const canBrowse = state.visible && state.status === 'watching' && state.replaySession === 0 && !recap.showRecap
   const browseClick = useRef<(click: RewardClick) => void>(() => {})
   useLayoutEffect(() => {
@@ -155,10 +157,6 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
       {!expanded && objective.compactReward && <span className="optional-reward">{objective.compactReward}</span>}
     </li>)}</ul>
   </div>
-  const { corner } = state.settings.placement
-  const extraGrip = corner !== 'topLeft' && {
-    topRight: 'bottom left', bottomRight: 'top left', bottomLeft: 'top right',
-  }[corner]
   return <main ref={panel} data-status={state.status} className={`compact${expanded ? ' expanded' : ''}${reward || townFeedback ? ' with-quest-reward' : ''}`}>
     <div ref={content} className="compact-content">
       <header className="compact-head">
@@ -237,7 +235,6 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
         </section>}
       </footer>
     </div>
-    <span className="resize-grip bottom right" aria-hidden="true"/>
-    {extraGrip && <span className={`resize-grip ${extraGrip}`} aria-hidden="true"/>}
+    <span className="resize-grip" aria-hidden="true"/>
   </main>
 }

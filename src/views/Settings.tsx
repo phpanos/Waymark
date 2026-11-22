@@ -1,8 +1,8 @@
 import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
-import type { Corner, Placement, Snapshot } from '../native/contract'
-import { campaignAreas, completedObjectives, describeZone, searchCampaign } from '../state/presentation'
+import type { Corner, Placement, Snapshot, Zone } from '../native/contract'
+import { campaignAreas, completedObjectives, describeLiveZone, describeZone, searchCampaign, type StoryStep } from '../state/presentation'
 import { CharacterProfile } from './CharacterProfile'
 import { ActTimerSettings } from './ActTimer'
 import { RouteLandmarks, StatusLight } from './Compact'
@@ -19,7 +19,7 @@ const controls = [
   { title: 'Overlay', actions: [
     ['Alt+N', 'Show or hide Waymark'],
     ['Alt+drag header', 'Move the overlay'],
-    ['Alt+drag corner', 'Resize the overlay'],
+    ['Alt+drag bottom-right corner', 'Resize the overlay'],
     ['Alt+click header', 'Open or close route details'],
     ['Alt+Shift+T', 'Start or stop the act timer'],
   ] },
@@ -49,13 +49,16 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return <div className="field"><div className="eyebrow">{label}</div>{children}</div>
 }
 
-function Objectives({ zone, settings, run }: { zone: Snapshot['zone']; settings: Snapshot['settings']; run: Run }) {
+function Objectives({ state, previousZone, storyStep, run }: {
+  state: Snapshot; previousZone: Zone | null; storyStep?: StoryStep; run: Run
+}) {
+  const { zone, settings } = state
   const [browse, setBrowse] = useState<{ act: number; areaId: string | null } | null>(null)
   const [query, setQuery] = useState('')
   const results = searchCampaign(query)
   const completed = completedObjectives(settings)
   const profileIndex = settings.activeProfile
-  const current = describeZone(zone)
+  const current = describeLiveZone(state, previousZone, storyStep)
   const act = browse?.act ?? current.act
   const areaId = browse ? browse.areaId : current.areaId
   const choices = campaignAreas.filter(area => area.act === act)
@@ -143,13 +146,15 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
     <label className="check"><input type="checkbox" checked={follow} onChange={e => setFollow(e.target.checked)}/>Follow the game window</label>
     <p className="hint">Current anchor · {anchored ? 'Game client area' : 'Primary display work area'}</p>
     <p className="hint">Hold Alt and drag the Waymark header to move it. Release the mouse to save.</p>
-    <p className="hint">Hold Alt and drag a marked corner to change the width and height.</p>
+    <p className="hint">Hold Alt and drag the bottom-right corner to change the width and height.</p>
     <p className="hint">Alt+click the header to expand or collapse objective details.</p>
     <button className="primary" disabled={!dirty}>Save position</button>
   </form>
 }
 
-export function Settings({ state }: { state: Snapshot }) {
+export function Settings({ state, previousZone = null, storyStep }: {
+  state: Snapshot; previousZone?: Zone | null; storyStep?: StoryStep
+}) {
   const [tab, setTab] = useState<Tab>('Log source')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -179,7 +184,7 @@ export function Settings({ state }: { state: Snapshot }) {
       {tab === 'Position' &&
         <Position key={JSON.stringify(state.settings.placement)} saved={state.settings.placement} run={run} anchored={state.anchored}/>
       }
-      {tab === 'Objectives' && <Objectives zone={state.zone} settings={state.settings} run={run}/>}
+      {tab === 'Objectives' && <Objectives state={state} previousZone={previousZone} storyStep={storyStep} run={run}/>}
       {tab === 'Act timer' && <ActTimerSettings state={state} act={zone.act} run={run}/>}
       {tab === 'Build' && <Suspense fallback={<p role="status">Loading build guide…</p>}><Build state={state} run={run}/></Suspense>}
       {tab === 'Controls' && <Controls/>}

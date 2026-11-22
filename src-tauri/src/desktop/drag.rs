@@ -1,8 +1,7 @@
 use super::{
     reward_click,
     settings::{
-        Corner, Placement, MAX_OVERLAY_HEIGHT, MAX_OVERLAY_WIDTH, MIN_OVERLAY_HEIGHT,
-        MIN_OVERLAY_WIDTH,
+        Placement, MAX_OVERLAY_HEIGHT, MAX_OVERLAY_WIDTH, MIN_OVERLAY_HEIGHT, MIN_OVERLAY_WIDTH,
     },
     Runtime,
 };
@@ -32,7 +31,6 @@ enum GestureMode {
         placement: Placement,
         origin: RECT,
         dpi: i32,
-        direction: Point,
     },
 }
 
@@ -52,7 +50,7 @@ struct Input {
     hook: HHOOK,
     timer: usize,
     gesture: Option<Gesture>,
-    reward_pressed: Option<(u32, reward_click::RewardClick)>,
+    target_pressed: Option<(u32, bool, reward_click::RewardClick)>,
 }
 
 pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
@@ -71,7 +69,7 @@ pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
             hook,
             timer: 0,
             gesture: None,
-            reward_pressed: None,
+            target_pressed: None,
         });
     });
     Ok(())
@@ -136,16 +134,20 @@ unsafe extern "system" fn mouse_hook(code: i32, message: usize, data: isize) -> 
 
 impl Input {
     fn on_mouse(&mut self, message: u32, cursor: Point) -> bool {
-        if let Some((button_up, target)) = &self.reward_pressed {
+        if let Some((button_up, alt, target)) = &self.target_pressed {
             if message != *button_up {
                 return false;
             }
-            let activate = self.reward_at(cursor).as_ref() == Some(target);
-            let pressed = self.reward_pressed.take().unwrap().1;
+            let activate = self.target_at(cursor, *alt).as_ref() == Some(target);
+            let pressed = self.target_pressed.take().unwrap().2;
             if activate {
                 let handle = self.app.clone();
                 let _ = self.app.run_on_main_thread(move || {
-                    let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                    if pressed.id.as_deref() == Some(reward_click::ACT_TIMER_TARGET) {
+                        super::toggle_timer_with_notice(&handle, Some(pressed.revision));
+                    } else {
+                        let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                    }
                 });
             }
             return true;
@@ -169,11 +171,12 @@ impl Input {
         if message != button_down {
             return false;
         }
-        if unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } >= 0 {
-            if let Some(target) = self.reward_at(cursor) {
-                self.reward_pressed = Some((button_up, target));
-                return true;
-            }
+        let alt = unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } < 0;
+        if let Some(target) = self.target_at(cursor, alt) {
+            self.target_pressed = Some((button_up, alt, target));
+            return true;
+        }
+        if !alt {
             return false;
         }
 
@@ -183,22 +186,18 @@ impl Input {
             return false;
         }
         let dpi = unsafe { GetDpiForWindow(hwnd) };
-        let placement = {
+        let mode = if header_contains(rect, dpi, cursor) {
+            GestureMode::Move((rect.left, rect.top))
+        } else if resize_corner_contains(rect, dpi, cursor) {
             let state = self.app.state::<Runtime>();
             let Ok(snapshot) = state.snapshot.try_lock() else {
                 return false;
             };
-            snapshot.settings.placement
-        };
-        let mode = if let Some(direction) = resize_corner(rect, dpi, placement.corner, cursor) {
             GestureMode::Resize {
-                placement,
+                placement: snapshot.settings.placement,
                 origin: rect,
                 dpi: dpi.max(96) as i32,
-                direction,
             }
-        } else if header_contains(rect, dpi, cursor) {
-            GestureMode::Move((rect.left, rect.top))
         } else {
             return false;
         };
@@ -219,15 +218,18 @@ impl Input {
         true
     }
 
-    fn reward_at(&self, point: Point) -> Option<reward_click::RewardClick> {
+    fn target_at(&self, point: Point, alt: bool) -> Option<reward_click::RewardClick> {
         let hwnd = self.hwnd as HWND;
         let mut rect = RECT::default();
         if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 } {
             return None;
         }
-        self.app
-            .state::<Runtime>()
-            .reward_click_at(rect, unsafe { GetDpiForWindow(hwnd) }, point)
+        self.app.state::<Runtime>().overlay_target_at(
+            rect,
+            unsafe { GetDpiForWindow(hwnd) },
+            point,
+            alt,
+        )
     }
 }
 
@@ -241,21 +243,9 @@ fn header_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
         && y < rect.bottom.min(rect.top + px(45))
 }
 
-fn resize_corner(rect: RECT, dpi: u32, anchor: Corner, (x, y): Point) -> Option<Point> {
+fn resize_corner_contains(rect: RECT, dpi: u32, (x, y): Point) -> bool {
     let grip = (18 * dpi.max(96) as i32 + 48) / 96;
-    let right = (rect.right - grip..rect.right).contains(&x);
-    let bottom = (rect.bottom - grip..rect.bottom).contains(&y);
-    if right && bottom {
-        return Some((1, 1));
-    }
-    let left = (rect.left..rect.left + grip).contains(&x);
-    let top = (rect.top..rect.top + grip).contains(&y);
-    match anchor {
-        Corner::TopRight if left && bottom => Some((-1, 1)),
-        Corner::BottomRight if left && top => Some((-1, -1)),
-        Corner::BottomLeft if right && top => Some((1, -1)),
-        _ => None,
-    }
+    (rect.right - grip..rect.right).contains(&x) && (rect.bottom - grip..rect.bottom).contains(&y)
 }
 
 fn move_header(hwnd: HWND, origin: Point, start: Point, cursor: Point) -> io::Result<()> {
@@ -332,25 +322,20 @@ unsafe extern "system" fn update_drag(_: HWND, _: u32, timer: usize, _: u32) {
             mut placement,
             origin,
             dpi,
-            direction,
         } => {
             let to_dip = |pixels| (pixels * 96 + dpi / 2) / dpi;
             if dx != 0 {
-                let width = to_dip(origin.right - origin.left + dx * direction.0);
+                let width = to_dip(origin.right - origin.left + dx);
                 placement.width =
                     width.clamp(i32::from(MIN_OVERLAY_WIDTH), i32::from(MAX_OVERLAY_WIDTH)) as u16;
             }
             if dy != 0 {
-                let height = to_dip(origin.bottom - origin.top + dy * direction.1);
+                let height = to_dip(origin.bottom - origin.top + dy);
                 placement.min_height = height
                     .clamp(i32::from(MIN_OVERLAY_HEIGHT), i32::from(MAX_OVERLAY_HEIGHT))
                     as u16;
             }
-            let axes = (
-                if dx == 0 { 0 } else { direction.0 },
-                if dy == 0 { 0 } else { direction.1 },
-            );
-            super::resize_overlay(&app, hwnd, placement, origin, axes, released)
+            super::resize_overlay(&app, hwnd, placement, origin, (dx != 0, dy != 0), released)
         }
     };
 
@@ -384,38 +369,23 @@ mod tests {
     }
 
     #[test]
-    fn resize_hit_boxes_include_bottom_right_and_the_free_corner() {
+    fn only_bottom_right_can_start_a_resize() {
         let rect = RECT {
             left: -600,
             top: 100,
             right: -108,
             bottom: 400,
         };
-        for anchor in [
-            Corner::TopLeft,
-            Corner::TopRight,
-            Corner::BottomLeft,
-            Corner::BottomRight,
+        assert!(resize_corner_contains(rect, 144, (-135, 373)));
+        for point in [
+            (-591, 391),
+            (-591, 109),
+            (-117, 109),
+            (-136, 373),
+            (-108, 399),
         ] {
-            assert_eq!(resize_corner(rect, 144, anchor, (-117, 391)), Some((1, 1)));
-            assert_eq!(resize_corner(rect, 144, anchor, (-350, 391)), None);
+            assert!(!resize_corner_contains(rect, 144, point));
         }
-        assert_eq!(
-            resize_corner(rect, 144, Corner::TopRight, (-609, 391)),
-            None
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::TopRight, (-591, 391)),
-            Some((-1, 1))
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::BottomRight, (-591, 109)),
-            Some((-1, -1))
-        );
-        assert_eq!(
-            resize_corner(rect, 144, Corner::BottomLeft, (-117, 109)),
-            Some((1, -1))
-        );
     }
 
     #[test]

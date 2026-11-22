@@ -397,9 +397,9 @@ describe('permanent reward recap', () => {
 
   it.each([
     ['G1_town', 'G1_3', 'Speak with Renly and Una', 'Uncut Support Gem', 'Speak to Renly', true],
-    ['G2_town', 'G2_4_3', 'Speak with Asala and use the Desert Map', 'Uncut Support Gem', 'Essence of Water to Zarka', false],
+    ['G2_town', 'G2_4_3', 'Bring the Essence of Water to Zarka and travel to Mastodon Badlands', 'Uncut Support Gem', 'Essence of Water to Zarka', false],
     ['G3_town', 'G3_9', 'Work with Alva to open the route below', 'Level 11 Uncut Skill Gem', 'Hammer of Kamasa to Oswald', true],
-    ['G4_town', 'G4_2_2', 'Arrange passage with Makoru and investigate the islands', 'Level 13 Uncut Skill Gem', 'Talk to Tujen after defeating Omniphobia', true],
+    ['G4_town', 'G4_2_2', 'Speak with Makoru and sail to Arastas when the story opens it', 'Level 13 Uncut Skill Gem', 'Talk to Tujen after defeating Omniphobia', true],
   ] as const)('shows the relevant reward on arrival in %s while keeping the main task first', (town, from, objective, reward, claim, optional) => {
     const state: Snapshot = { ...snapshot, detailsExpanded: false, zone: { areaId: town, name: null, level: null } }
     const markup = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId: from, name: null, level: null }}/>)
@@ -455,7 +455,7 @@ describe('pinned town rewards', () => {
 })
 
 describe('snapshot handoff', () => {
-  beforeEach(() => useSession.setState({current:null, previousZone:null}))
+  beforeEach(() => useSession.setState({ current: null, previousZone: null, storyStep: undefined, storyVisits: new Map() }))
   it('keeps a newer live event when the initial command returns late', () => {
     const {accept} = useSession.getState()
     accept({...snapshot, revision:2, kind:'zoneChanged'})
@@ -479,5 +479,26 @@ describe('snapshot handoff', () => {
     expect(useSession.getState().previousZone).toEqual(riverbank)
     accept({ ...snapshot, revision: 3, activePath: 'Other Client.txt', zone: town })
     expect(useSession.getState().previousZone).toBeNull()
+  })
+
+  it('tracks the Renly turn-in and the second Grelwood visit through an optional detour', () => {
+    const { accept } = useSession.getState()
+    const settings = { ...snapshot.settings, defaultReachedClearfell: true }
+    function enter(revision: number, areaId: string | null, name: string | null = null) {
+      accept({ ...snapshot, revision, settings, kind: 'zoneChanged', zone: { areaId, name, level: null } })
+      const { current, previousZone, storyStep } = useSession.getState()
+      return renderToStaticMarkup(<Compact state={current!} previousZone={previousZone} storyStep={storyStep}/>)
+    }
+    expect(enter(1, 'G1_2')).toContain('Find the path into the Grelwood')
+    expect(enter(2, 'G1_4')).toContain('Investigate the Tree of Souls')
+    expect(enter(3, 'G1_5')).toContain('Recover the girdles from the rust obelisks')
+    const turnIn = enter(4, null, 'Clearfell Encampment')
+    expect(turnIn).toContain('Bring the girdles to Renly for the Runed Spikes')
+    expect(turnIn).not.toContain('Leave the encampment and enter Clearfell')
+    expect(enter(5, 'G1_3')).toContain('Defeat the Devourer')
+    expect(enter(6, 'G1_town')).toContain('Bring the girdles to Renly for the Runed Spikes')
+    expect(enter(7, 'G1_4')).toContain('Use the Runed Spikes at the Tree of Souls and free the Hooded One')
+    accept({ ...snapshot, revision: 8, settings, activePath: 'Other Client.txt', zone: { areaId: 'G1_town', name: null, level: null } })
+    expect(useSession.getState().storyStep).toBeUndefined()
   })
 })
