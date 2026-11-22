@@ -237,10 +237,14 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
     ["forward", "Tag the Drowned City waypoint. Cross the ambush into the ruins.", "Apex of Filth"],
     ["follow", "Doing both branches? Tag the Vault and Apex waypoints as you find them.", "Branch waypoints"],
   ] },
-  G3_9: { origin: "Vault entrance", legs: [
-    ["follow", "Follow the vault path to the molten channel", "Mektul"],
-    ["back", "Take the Hammer of Kamasa. Checkpoint to the entrance for Apex.", "Drowned City"],
-    ["back", "Apex tagged? Portal to Oswald with the hammer, then waypoint to Apex.", "Apex of Filth"],
+  G3_9: { origin: "Vault entrance", layout: "landmarks", quickSteps: [
+    "Follow the vault path to the molten channel",
+    "Take the Hammer of Kamasa. Checkpoint to the entrance for Apex.",
+    "Apex tagged? Portal to Oswald with the hammer, then waypoint to Apex.",
+  ], legs: [
+    ["follow", "Tag the channel checkpoint. Lead Mektul away from the lava.", "Molten channel"],
+    ["back", "Take the Hammer of Kamasa. Checkpoint back to the entrance.", "Drowned City"],
+    ["inward", "Use Frost Cores to open the vault’s gold chests.", "Optional loot"],
   ] },
   G3_11: { origin: "First open square", quickSteps: [
     "Find the narrow hourglass-shaped crossing.",

@@ -35,6 +35,7 @@ export interface Snapshot {
   visible: boolean
   detailsExpanded: boolean
   rewardRecap: boolean
+  updateCheckRequest?: number
   anchored: boolean
   logError: string | null
   windowError: string | null

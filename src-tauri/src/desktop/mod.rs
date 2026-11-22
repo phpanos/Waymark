@@ -71,6 +71,7 @@ struct Snapshot {
     visible: bool,
     details_expanded: bool,
     reward_recap: bool,
+    update_check_request: u32,
     anchored: bool,
     log_error: Option<String>,
     window_error: Option<String>,
@@ -678,6 +679,7 @@ pub fn run() {
             }
             let menu = MenuBuilder::new(app)
                 .text("settings", "Open settings…")
+                .text("check-updates", "Check for updates")
                 .text("toggle", "Show / hide overlay")
                 .text("details", "Expand / collapse overlay details")
                 .text("act-timer", "Start / stop act timer")
@@ -693,6 +695,15 @@ pub fn run() {
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "settings" => {
                         open_settings(app);
+                    }
+                    "check-updates" => {
+                        if open_settings(app) {
+                            app.state::<Runtime>().mutate(app, Kind::Snapshot, |state| {
+                                state.update_check_request =
+                                    state.update_check_request.wrapping_add(1).max(1);
+                                true
+                            });
+                        }
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
@@ -749,6 +760,7 @@ pub fn run() {
             visible: true,
             details_expanded: false,
             reward_recap: false,
+            update_check_request: 0,
             anchored: false,
             log_error: None,
             notices: notice.into_iter().collect(),

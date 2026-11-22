@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
 import Build from '../views/Build'
+import { Settings } from '../views/Settings'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
 import { adjacentStoryObjectives, campaignAreas, describeStoryStep, describeZone, searchCampaign, storyRoute, townRewards } from './presentation'
@@ -13,6 +14,12 @@ const snapshot: Snapshot = {
   activePath: null, characterLevel: null, visible: true, detailsExpanded: false, rewardRecap: false, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
   settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null, defaultCompleted: [] },
 }
+
+it('opens Updates when Settings first loads after a tray check was requested', () => {
+  const markup = renderToStaticMarkup(<Settings state={{ ...snapshot, updateCheckRequest: 1 }}/>)
+  expect(markup).toContain('aria-current="page">Updates</button>')
+  expect(markup).toContain('class="pane" aria-label="Updates"')
+})
 
 it('lets mid-campaign imports record any gem without advancing past earlier unowned gems', () => {
   const storage = new Map<string, string>()
