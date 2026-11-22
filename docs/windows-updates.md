@@ -1,6 +1,6 @@
 # Windows alpha updates
 
-Waymark checks a public GitHub update feed from the Settings window. It verifies the downloaded NSIS installer against the Tauri public key embedded in the signed build. Windows runs the installer and relaunches Waymark when the user chooses **Install and restart**.
+Right-click Waymark’s tray icon and choose **Check for updates** to open Settings and check its GitHub update feed. Waymark verifies the downloaded NSIS installer against the Tauri public key embedded in the signed build. Windows runs the installer and relaunches Waymark when the user chooses **Install and restart**.
 
 ## Set up signing
 

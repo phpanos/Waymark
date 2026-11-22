@@ -435,7 +435,7 @@
       { "landmark": "Molten channel", "detail": "Find the checkpoint at the approach to the channel. Follow Mektul away from the advancing lava during the fight and recover the Hammer of Kamasa." },
       { "landmark": "Frost Core chests · Optional", "detail": "Use Frost Cores on the vault's gold chests if you want the extra loot." }
     ] },
-    "shortcut": { "cue": "Checkpoint back to the vault entrance", "detail": "After taking the Hammer of Kamasa from Mektul, use checkpoint travel to the vault entrance. Return to the Drowned City and continue toward Apex of Filth." },
+    "shortcut": { "cue": "Checkpoint back to the vault entrance", "detail": "From the vault entrance, return through the Drowned City to Apex of Filth. If Apex is tagged, portal to Oswald with the hammer and waypoint to Apex." },
     "optional": [
       { "id": "G3_9:1", "compactReward": "Reforging Bench + Skill Gem 11", "hint": "Defeat Mektul and recover the forge treasure", "loot": "Level 11 Uncut Skill Gem and Reforging Bench from Oswald in town" }
     ]

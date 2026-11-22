@@ -191,12 +191,21 @@ try {
           await appendFile(log, `Generating level 40 area "${area}"\r\n`)
           await expectText(title, '.zone-block h1')
           await expectText(next, '.area-diagram-exits li:first-child strong')
-          await waitFor('waypoint and area diagram to fit in the overlay', () => evaluate(`(() => {
-            const panel = document.querySelector('.compact').getBoundingClientRect()
-            const diagram = document.querySelector('.area-diagram')
-            return !!diagram.querySelector('.area-diagram-waypoint') === ${waypoint} &&
-              diagram.getBoundingClientRect().bottom < panel.bottom && panel.bottom <= innerHeight - 1
-          })()`))
+          await waitFor(`${title} waypoint and area diagram to fit in the overlay`, async () => {
+            const layout = await evaluate(`(() => {
+              const panel = document.querySelector('.compact').getBoundingClientRect()
+              const diagram = document.querySelector('.area-diagram')
+              return {
+                hasWaypoint: !!diagram.querySelector('.area-diagram-waypoint'),
+                diagramBottom: diagram.getBoundingClientRect().bottom,
+                panelBottom: panel.bottom,
+                viewportHeight: innerHeight,
+              }
+            })()`)
+            if (layout.hasWaypoint !== waypoint || layout.diagramBottom >= layout.panelBottom ||
+                layout.panelBottom > layout.viewportHeight - 1) throw new Error(JSON.stringify(layout))
+            return true
+          })
           if (area === 'G1_1') {
             await expectText('Follow the path inland', '.direction-diagram [data-motion="forward"] p span')
           } else if (area === 'G1_town') {

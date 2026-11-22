@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, type FormEvent, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import compass from '../assets/compass.png'
 import { native } from '../native/bridge'
 import type { Corner, Placement, Snapshot, Zone } from '../native/contract'
@@ -154,7 +154,10 @@ function Position({ saved, run, anchored }: { saved: Placement; run: Run; anchor
 export function Settings({ state, previousZone = null, storyStep }: {
   state: Snapshot; previousZone?: Zone | null; storyStep?: StoryStep
 }) {
-  const [tab, setTab] = useState<Tab>('Log source')
+  const [tab, setTab] = useState<Tab>(state.updateCheckRequest ? 'Updates' : 'Log source')
+  useEffect(() => {
+    if (state.updateCheckRequest) setTab('Updates')
+  }, [state.updateCheckRequest])
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   async function run(task: () => Promise<void>) {
@@ -187,7 +190,7 @@ export function Settings({ state, previousZone = null, storyStep }: {
       {tab === 'Act timer' && <ActTimerSettings state={state} act={zone.act} run={run}/>}
       {tab === 'Build' && <Suspense fallback={<p role="status">Loading build guide…</p>}><Build state={state} run={run}/></Suspense>}
       {tab === 'Controls' && <Controls/>}
-      <div hidden={tab !== 'Updates'}><Updates/></div>
+      <div hidden={tab !== 'Updates'}><Updates checkRequest={state.updateCheckRequest}/></div>
       {tab === 'Diagnostics' && <>
         <Field label="Fixture replay"><p>Play a sample log through the zone detector. Live log observation continues in the background.</p></Field>
         <div className="actions"><button className="primary" onClick={() => run(() => native.replay(true))}>{replay ? 'Restart replay' : 'Replay fixture'}</button>

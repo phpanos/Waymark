@@ -402,7 +402,7 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery cue did not display on its own.' }
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log diagram expanded
-            if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not fit in the expanded overlay.' }
+            if ($LASTEXITCODE -ne 0) { throw 'An expanded area diagram did not fit in the overlay.' }
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log diagram collapsed
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
