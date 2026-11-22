@@ -108,6 +108,10 @@ try {
       return timer?.getAttribute('aria-label') === 'Act ${act} timer ${running ? 'running' : 'stopped'}' &&
         (timer.querySelector('.act-timer-value').innerText === '00:00:00') === ${ready}
     })()`))
+    if (argument === 'running-one') {
+      await waitFor('details to stay collapsed after clicking the timer', () =>
+        evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
+    }
   } else if (view === 'replay') {
     if (argument === 'start') {
       await click('Diagnostics')
@@ -128,6 +132,12 @@ try {
       await click('Stop timer')
       await expectText('Start timer', '.act-timer-settings button')
     }
+  } else if (view === 'quick-route' && argument === 'story-return') {
+    await appendFile(log, 'Generating level 2 area "G1_town"\r\n')
+    await expectText('Bring the girdles to Renly for the Runed Spikes', '.story-objective')
+    await expectText('The Grelwood', '.route-preview .optional-hint')
+    await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
+    await expectText('Use the Runed Spikes at the Tree of Souls and free the Hooded One', '.story-objective')
   } else if (view === 'quick-route') {
     await appendFile(log, 'Generating level 5 area "G1_5"\r\n')
     await expectText('Sweep the wall for obelisks. Found one off a short spur? Check the central island.', '.quick-route li:nth-child(1)')

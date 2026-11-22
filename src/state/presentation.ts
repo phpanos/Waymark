@@ -116,6 +116,8 @@ export const storyRoute: readonly StoryStep[] = storySteps.map((step, index) => 
 }))
 
 const storyVariants = new Map([['G2_3s', 'G2_3'], ['G2_8a', 'G2_8']])
+const repeatedStoryAreas = new Set(storyRoute.filter((step, index) =>
+  storyRoute.findIndex(other => other.areaId === step.areaId) !== index).map(step => step.areaId))
 const storyReturns = new Map<string, { areaId: string; from?: string }>([
   ['Abyss_Intro', { areaId: 'G2_5_1' }],
   ['Abyss_Hub', { areaId: 'G2_5_1' }],
@@ -131,6 +133,15 @@ function findStoryStep(areaId: string | null, from: string | null) {
   const previous = from && (storyVariants.get(from) ?? from)
   return storyRoute.find((step, index) => step.areaId === id && storyRoute[index - 1]?.areaId === previous)
     ?? storyRoute.find(step => step.areaId === id)
+}
+
+export function storyVisit(areaId: string | null, from: string | null, visits?: ReadonlyMap<string, StoryStep>) {
+  if (!areaId) return undefined
+  const id = storyVariants.get(areaId) ?? areaId
+  const previous = from && (storyVariants.get(from) ?? from)
+  const previousStep = (previous ? visits?.get(previous) : undefined) ?? findStoryStep(from, null)
+  const next = previousStep && storyRoute[previousStep.index + 1]
+  return next?.areaId === id ? next : visits?.get(id)
 }
 
 export function adjacentStoryObjectives(areaId: string | null, from: string | null = null, preview: StoryStep | null = null) {
@@ -149,7 +160,11 @@ export function adjacentStoryObjectives(areaId: string | null, from: string | nu
 export function describeStoryStep(step: StoryStep) {
   const previous = storyRoute[step.index - 1]
   const zone = describeZone({ areaId: step.areaId, name: null, level: null }, previous?.areaId)
-  if (!step.objective) return zone
+  return applyStoryStep(zone, step)
+}
+
+function applyStoryStep(zone: ReturnType<typeof describeZone>, step?: StoryStep) {
+  if (!step?.objective) return zone
 
   const next = storyRoute[step.index + 1]
   const nextArea = next && byId.get(next.areaId)
@@ -164,6 +179,15 @@ export function describeStoryStep(step: StoryStep) {
       exits: nextArea ? [{ landmark: nextArea.name, detail: '' }] : [],
     },
   }
+}
+
+export function describeLiveZone(state: Snapshot, previousZone: Zone | null, trackedStep?: StoryStep) {
+  const previousAreaId = previousZone?.areaId ?? describeZone(previousZone).areaId
+  const zone = describeZone(state.zone, previousAreaId, townRewardProgress(state.settings), reachedClearfell(state.settings))
+  const storyStep = trackedStep ?? storyVisit(zone.areaId, previousAreaId)
+  const contextual = !!storyStep?.objective && repeatedStoryAreas.has(storyStep.areaId) &&
+    zone.objective !== zone.arrivalReward?.objective
+  return { ...(contextual ? applyStoryStep(zone, storyStep) : zone), previousAreaId, storyStep, contextual }
 }
 
 export const statusText: Record<Status, string> = {

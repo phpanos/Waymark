@@ -434,8 +434,8 @@ try {
             Invoke-RewardControlClick $hwnd $check $profile $log click-point timer -Alt
             node $check $profile $log timer running-one
             if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not start the Act 1 timer.' }
-            node $check $profile $log diagram collapsed
-            if ($LASTEXITCODE -ne 0) { throw 'Alt-click on the timer opened objective details.' }
+            node $check $profile $log quick-route story-return
+            if ($LASTEXITCODE -ne 0) { throw 'The Act 1 story did not advance after returning from Red Vale.' }
             node $check $profile $log replay start
             if ($LASTEXITCODE -ne 0) { throw 'The diagnostics fixture did not start.' }
             [IO.File]::AppendAllText($log, "Generating level 16 area `"G2_1`"`r`n", $utf8)
