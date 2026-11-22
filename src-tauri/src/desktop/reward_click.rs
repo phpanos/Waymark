@@ -3,6 +3,7 @@ use windows_sys::Win32::Foundation::RECT;
 
 pub(super) const CHANNEL: &str = "waymark://reward-click";
 pub(super) const ACT_TIMER_TARGET: &str = "act-timer";
+pub(super) const ACT_REWARDS_TARGET: &str = "act-rewards";
 
 #[derive(Clone, PartialEq, Eq, Serialize)]
 pub(super) struct RewardClick {
@@ -38,7 +39,10 @@ impl RewardTargets {
         let x = f64::from(x - rect.left) / scale;
         let y = f64::from(y - rect.top) / scale;
         let target = self.targets.iter().find(|target| {
-            (target.id.as_deref() == Some(ACT_TIMER_TARGET)) == alt
+            matches!(
+                target.id.as_deref(),
+                Some(ACT_TIMER_TARGET | ACT_REWARDS_TARGET)
+            ) == alt
                 && x >= target.left
                 && x < target.right
                 && y >= target.top
@@ -92,9 +96,11 @@ mod tests {
             )
             .is_none());
 
-        targets.targets[0].id = Some(ACT_TIMER_TARGET.into());
-        assert!(targets.hit(rect, 144, (-420, 380), false).is_none());
-        let hit = targets.hit(rect, 144, (-420, 380), true).unwrap();
-        assert_eq!(hit.id.as_deref(), Some(ACT_TIMER_TARGET));
+        for id in [ACT_TIMER_TARGET, ACT_REWARDS_TARGET] {
+            targets.targets[0].id = Some(id.into());
+            assert!(targets.hit(rect, 144, (-420, 380), false).is_none());
+            let hit = targets.hit(rect, 144, (-420, 380), true).unwrap();
+            assert_eq!(hit.id.as_deref(), Some(id));
+        }
     }
 }

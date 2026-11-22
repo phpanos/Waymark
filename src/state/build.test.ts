@@ -1,6 +1,52 @@
 import { describe, expect, it } from 'vitest'
 import { guidanceAtLevel, nextBuildMilestone, parseBuild } from './build'
 import labels from '../data/build-labels.json'
+import extractMobalytics from '../../src-tauri/src/desktop/mobalytics.js?raw'
+import { gemQueue, gemVariantIndex, mobalyticsUrl, parseGemGuide } from './gem-priority'
+
+describe('Mobalytics gem priority', () => {
+  it('reads published variants and support order from the guide page', () => {
+    const skill = (gemSlug: string, name: string) => ({ activeSkill: { gemSlug, name } })
+    const support = (name: string, parentActiveSkillGemSlug: string) => ({ name, parentActiveSkillGemSlug, gemType: 'SUPPORT' })
+    const data = { queryResult: { name: 'Campaign guide', buildVariants: { values: [
+      { id: 'early', skillGems: {
+        gems: [skill('first', 'First skill'), skill('second', 'Second skill')],
+        priorityGems: [support('Shared support', 'first'), support('Shared support', 'second')],
+      } },
+      { id: 'late', skillGems: {
+        gems: [skill('replacement', 'Replacement skill'), skill('second', 'Second skill')],
+        priorityGems: [support('Shared support', 'replacement'), support('Another support', 'second')],
+      } },
+    ] } } }
+    const document = {
+      scripts: [{ textContent: `window.__PRELOADED_STATE__=${JSON.stringify(data)};` }],
+      querySelectorAll: () => [
+        { dataset: { key: 'early' }, textContent: 'lvl 1–19' },
+        { dataset: { key: 'late' }, textContent: 'lvl 20+' },
+      ],
+    }
+    const extract = new Function('document', `return ${extractMobalytics}`)
+    const guide = parseGemGuide(extract(document))!
+    expect(guide.variants.map(variant => variant.label)).toEqual(['lvl 1–19', 'lvl 20+'])
+    expect(gemVariantIndex(guide, 19)).toBe(0)
+    expect(gemVariantIndex(guide, 20)).toBe(1)
+
+    const early = gemQueue(guide.variants[0], [])
+    const cut = [early.gems[0].id, early.supports[0].id]
+    expect(gemQueue(guide.variants[0], cut).supports[0].skill).toBe('Second skill')
+    const later = gemQueue(guide.variants[1], cut)
+    expect(later.gems[0].name).toBe('Replacement skill')
+    expect(later.supports[0].name).toBe('Another support')
+  })
+
+  it('only accepts public Mobalytics build URLs and removes tracking data', () => {
+    expect(mobalyticsUrl('https://www.mobalytics.gg/poe-2/profile/author/builds/guide/?ref=share#section'))
+      .toBe('https://mobalytics.gg/poe-2/profile/author/builds/guide')
+    expect(() => mobalyticsUrl('https://mobalytics.gg.example.com/poe-2/builds/guide')).toThrow()
+    expect(() => mobalyticsUrl('https://mobalytics.gg/poe-2/planner/builds')).toThrow()
+    expect(parseGemGuide({ name: 'Incomplete guide', variants: [] })).toBeUndefined()
+  })
+})
 
 describe('.build exports', () => {
   const form = {

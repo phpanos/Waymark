@@ -19,6 +19,7 @@ export const native = {
   setRewardTargets: (revision: number, height: number, targets: RewardTarget[]) => invoke<void>('set_reward_targets', { revision, height, targets }),
   toggle: () => invoke<void>('toggle_overlay'),
   toggleActTimer: () => invoke<void>('toggle_act_timer'),
+  importMobalyticsGuide: (url: string) => invoke<unknown>('import_mobalytics_guide', { url }),
   overlayHeight: (height: number) => invoke<void>('set_overlay_height', { height }),
   replay: (enabled: boolean) => invoke<void>('replay_fixture', { enabled }),
   close: () => invoke<void>('close_settings'),

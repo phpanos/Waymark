@@ -5,7 +5,7 @@
   "G1_4",
   "G1_5",
   { "areaId": "G1_town", "objective": "Bring the girdles to Renly for the Runed Spikes" },
-  { "areaId": "G1_4", "objective": "Use the Runed Spikes at the Tree of Souls and free the Hooded One" },
+  { "areaId": "G1_4", "objective": "Use the Runed Spikes at the Tree of Souls and free the Hooded One", "travelTip": "Take the Grelwood waypoint, or follow the glowing roots back to the tree." },
   "G1_6",
   "G1_7",
   "G1_8",

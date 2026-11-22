@@ -138,9 +138,10 @@ try {
     await expectText('The Grelwood', '.route-preview .optional-hint')
     await appendFile(log, 'Generating level 4 area "G1_4"\r\n')
     await expectText('Use the Runed Spikes at the Tree of Souls and free the Hooded One', '.story-objective')
+    await expectText('Take the Grelwood waypoint, or follow the glowing roots back to the tree.', '.traversal-instruction')
   } else if (view === 'quick-route') {
     await appendFile(log, 'Generating level 5 area "G1_5"\r\n')
-    await expectText('Sweep the wall for obelisks. Found one off a short spur? Check the central island.', '.quick-route li:nth-child(1)')
+    await expectText('Sweep the wall for obelisks. Found one off a short spur? Check the central island.', '.traversal-instruction')
     await expectText('Kill the Rust King. Take the final girdle.', '.quick-route li:nth-child(2)')
     await expectText('Portal to Renly for the Runed Spikes.', '.quick-route li:nth-child(3)')
     await expectText('Waypoint back to the Grelwood tree.', '.quick-route li:nth-child(4)')
@@ -153,7 +154,7 @@ try {
     })()`))
   } else if (view === 'diagram') {
     if (argument === 'collapsed') {
-      await expectText('Circle the edge and watch for checkpoints on the minimap.', '.quick-route li:first-child')
+      await expectText('Circle the edge and watch for checkpoints on the minimap.', '.traversal-instruction')
       await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
       await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
         const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
@@ -292,24 +293,24 @@ try {
       `))
     }
   } else if (view === 'rewards') {
-    if (argument === 'opened') {
-      await expectText('5 rewards left', '.reward-count')
-      await expectText('Cold resistance', '.reward-list li[aria-current] strong')
-      await waitFor('reward recap to fit inside the overlay', () => evaluate(`
-        document.querySelector('.compact').getBoundingClientRect().bottom <= innerHeight - 1
-      `))
-    } else if (argument === 'selected') {
-      await expectText('5 rewards left', '.reward-count')
-      await expectText('Passive points from the Crowbell', '.reward-list li[aria-current] strong')
-    } else if (argument === 'completed') {
-      await expectText('4 rewards left', '.reward-count')
-      await expectText('Marked done · Passive points from the Crowbell', '.reward-feedback')
-    } else if (argument === 'checkbox-point' || argument === 'undo-point') {
-      const selector = argument === 'checkbox-point' ? '.reward-list li[aria-current] input:enabled' : '.reward-undo:enabled'
-      await rewardControlPoint(selector)
+    if (argument === 'toggle-point') {
+      await rewardControlPoint('.compact-footer .act-rewards-toggle:enabled')
+    } else if (argument === 'opened') {
+      await expectText('Act 1 permanent rewards', '.act-rewards h2')
+      await expectText('Cold resistance', '.reward-list li:first-child strong')
+      await expectText('Clearfell', '.reward-list li:first-child span')
+      await expectText('Look for frozen logs around the Frostblood Ritual in Clearfell.', '.reward-list li:first-child p')
+      await waitFor('the five Act 1 rewards to fit without checklist controls', () => evaluate(`(() => {
+        const list = document.querySelector('.reward-list')
+        return list.children.length === 5 && !list.querySelector('input, button') &&
+          document.querySelector('.act-rewards-toggle[aria-expanded=true]') &&
+          document.querySelector('.compact').getBoundingClientRect().bottom <= innerHeight - 1
+      })()`))
     } else {
-      await expectText('5 rewards left', '.reward-count')
-      await expectText('Restored · Passive points from the Crowbell', '.reward-feedback')
+      await expectText('Investigate the Tree of Souls', '.story-objective')
+      await waitFor('expanded directions to return', () => evaluate(`
+        !document.querySelector('.reward-list') && !!document.querySelector('.details-gesture[data-expanded=true]')
+      `))
     }
   } else if (view === 'details') {
     await expectText('The Grelwood')
@@ -341,8 +342,7 @@ try {
       }
     } else {
       await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
-      await expectText('Follow glowing roots. Activate the tree waypoint.', '.quick-route li:first-child')
-      await expectText('After the Red Vale', '.route-return h2')
+      await expectText('Follow the glowing roots to the Tree of Souls waypoint.', '.traversal-instruction')
       await waitFor('native window to match the compact overlay height', () => evaluate(`(() => {
         const panel = document.querySelector('.compact')
         const expectedHeight = Math.ceil(panel.getBoundingClientRect().height) + 4
@@ -418,9 +418,9 @@ try {
     await click('Position')
     await expectText('Hold Alt and drag the Waymark header to move it. Release the mouse to save.')
     await click('Controls')
-    await waitFor('the Controls tab to list the timer and permanent rewards hotkeys', () => evaluate(`(() => {
+    await waitFor('the Controls tab to list the timer hotkey and Rewards button gesture', () => evaluate(`(() => {
       const text = document.querySelector('.control-guide')?.innerText
-      return text?.includes('Alt+Shift+T') && text.includes('Alt+Shift+R')
+      return text?.includes('Alt+Shift+T') && text.includes('Alt+click Rewards')
     })()`))
     await click('Objectives')
     const fill = (selector, value) => evaluate(`(() => {

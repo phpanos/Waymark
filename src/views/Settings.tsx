@@ -21,13 +21,13 @@ const controls = [
     ['Alt+drag header', 'Move the overlay'],
     ['Alt+drag bottom-right corner', 'Resize the overlay'],
     ['Alt+click header', 'Open or close route details'],
+    ['Alt+click Rewards', 'Show or hide the act reward list'],
     ['Alt+Shift+T', 'Start or stop the act timer'],
   ] },
-  { title: 'Rewards', actions: [
-    ['Alt+Shift+R', 'Open or close permanent rewards'],
-    ['Alt+Shift+N', 'Select the next reward or town pin'],
-    ['Alt+Shift+D', 'Mark a permanent reward done or a town reward claimed'],
-    ['Alt+Shift+U', 'Undo the last reward action'],
+  { title: 'Town rewards', actions: [
+    ['Alt+Shift+N', 'Select the next pinned town reward'],
+    ['Alt+Shift+D', 'Mark a town reward claimed'],
+    ['Alt+Shift+U', 'Undo the last town reward action'],
     ['Alt+Shift+P', 'Pin a town reward from its quest area'],
     ['Alt+Shift+X', 'Dismiss the selected town pin'],
   ] },
@@ -41,7 +41,6 @@ function Controls() {
         <dt>{action}</dt><dd><kbd>{keys}</kbd></dd>
       </div>)}</dl>
     </section>)}
-    <p className="hint">In the permanent reward recap, click a checkbox to mark a reward done. Click Undo to restore it.</p>
   </div>
 }
 

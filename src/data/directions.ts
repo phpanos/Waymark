@@ -7,7 +7,6 @@ export type DirectionGuide = {
   legs: readonly Leg[]
   layout?: 'worldMap' | 'landmarks'
   quickSteps?: readonly string[]
-  returnSteps?: { heading: string; steps: readonly string[] }
 }
 
 const islandReturnLegs = [
@@ -40,17 +39,11 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
     ["left-wall", "Try the left wall for the Devourer.", "Devourer’s nest"],
   ] },
   G1_4: { origin: "Grelwood landmarks", layout: "landmarks", quickSteps: [
-    "Follow glowing roots. Activate the tree waypoint.",
-    "Tag the Grim Tangle waypoint if you find it early.",
+    "Follow the glowing roots to the Tree of Souls waypoint.",
     "Follow the river to the Red Vale.",
-    "Red Vale first? Tag its waypoint, then find the tree waypoint.",
-  ], returnSteps: {
-    heading: "After the Red Vale",
-    steps: [
-      "Waypoint to the tree. Place Renly’s Runed Spikes.",
-      "Portal to Una. Return via the Grim Tangle waypoint or follow orange mushrooms.",
-    ],
-  }, legs: [
+    "Tag the Grim Tangle waypoint if you find it early.",
+    "Found the Red Vale first? Tag its waypoint, then find the tree.",
+  ], legs: [
     ["follow", "Follow the glowing roots and activate the nearby waypoint", "Tree of Souls"],
     ["follow", "The main landmarks form a rough diamond. Use the world map to pick a side and follow the river", "The Red Vale"],
     ["follow", "Follow the orange mushrooms after freeing the Hooded One and reporting to Una", "The Grim Tangle"],

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Snapshot } from '../native/contract'
 import { nextBuildMilestone, parseBuild } from './build'
-import { buildLevel, buildStorageKey, loadBuilds } from './build-storage'
+import { buildGemPriority, buildLevel, buildStorageKey, loadBuilds, markGemCut } from './build-storage'
 
 export function useBuildMilestone(state: Snapshot) {
   const [saved, setSaved] = useState(loadBuilds)
@@ -20,5 +20,13 @@ export function useBuildMilestone(state: Snapshot) {
     try { return parseBuild(source) } catch { return null }
   }, [source])
   const { effective } = buildLevel(state, saved)
-  return useMemo(() => guide && nextBuildMilestone(guide, effective), [guide, effective])
+  const milestone = useMemo(() => guide && nextBuildMilestone(guide, effective), [guide, effective])
+  const gemPriority = buildGemPriority(state, saved)
+  return {
+    milestone,
+    gemPriority,
+    cutGem(id: string) {
+      if (gemPriority) setSaved(markGemCut(state, gemPriority.scope, id))
+    },
+  }
 }

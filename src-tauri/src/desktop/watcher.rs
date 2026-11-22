@@ -173,9 +173,6 @@ pub(super) fn run(app: AppHandle, hwnd: isize) {
                 if v.replay_session != session || live != (session == 0) {
                     return progress_changed.then_some(Kind::Snapshot);
                 }
-                if matches!(kind, Kind::ZoneChanged) {
-                    v.reward_recap = false;
-                }
                 v.zone = Some(z);
                 v.status = status;
                 v.active_path.clone_from(&path);
