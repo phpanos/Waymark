@@ -581,10 +581,13 @@ fn open_settings(app: &AppHandle) -> bool {
     let Some(window) = app.get_webview_window("settings") else {
         return false;
     };
-    let _ = window.show();
     if window.is_minimized().unwrap_or(false) {
         let _ = window.unminimize();
     }
+    if !window.is_maximized().unwrap_or(false) {
+        let _ = window.center();
+    }
+    let _ = window.show();
     let _ = window.set_focus();
     true
 }

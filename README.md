@@ -31,7 +31,7 @@ With the default Cargo target directory, the executable is `target\release\wayma
 
 ## Use the overlay
 
-1. Launch Waymark. The compact window appears at the top right. Launch it again to open Settings in the running instance. The compass icon in the Windows notification area opens a menu with **Open settings**, **Show / hide overlay**, and **Quit Waymark**. Windows may put the icon under the overflow arrow.
+1. Launch Waymark. The compact window appears at the top right. Launch it again to open Settings in the running instance. Right-click the compass icon in the Windows notification area for **Open settings**, **Check for updates**, and other Waymark controls. Windows may put the icon under the overflow arrow. Settings opens centered on its monitor and stays maximized if you left it maximized.
 2. Open PoE 2 in **Windowed Fullscreen** and enter a zone. **Connected** means the file is readable. **Awaiting zone** lasts until a supported *new* record arrives. Starting the app in the middle of a zone may require another transition.
 3. In **Settings → Log source**, check the selected path. Auto-detection checks standalone install locations and Steam libraries, including custom libraries declared in `libraryfolders.vdf`. Use **Choose Client.txt…** for a custom install. **Use auto-detection** clears a manual selection.
 4. **Alt+N** toggles the compact window globally. If Windows refuses registration, the settings window shows the error and the tray toggle remains available.
