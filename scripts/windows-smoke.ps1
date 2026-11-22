@@ -13,12 +13,17 @@ public static class OverlayCheck {
     public struct Rect { public int Left, Top, Right, Bottom; }
     [StructLayout(LayoutKind.Sequential)]
     public struct Point { public int X, Y; }
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MonitorInfo { public uint Size; public Rect Monitor, Work; public uint Flags; }
     [DllImport("user32.dll")] public static extern int GetWindowLong(IntPtr hwnd, int index);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hwnd);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string className, string title);
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint processId);
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll", SetLastError=true)] private static extern bool GetWindowRect(IntPtr hwnd, out Rect rect);
+    [DllImport("user32.dll")] private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint flags);
+    [DllImport("user32.dll", CharSet=CharSet.Unicode, SetLastError=true)] private static extern bool GetMonitorInfo(IntPtr monitor, ref MonitorInfo info);
+    [DllImport("user32.dll", SetLastError=true)] private static extern bool SetWindowPos(IntPtr hwnd, IntPtr after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] private static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
     [DllImport("user32.dll", SetLastError=true)] public static extern bool GetPhysicalCursorPos(out Point point);
     [DllImport("user32.dll", SetLastError=true)] public static extern bool SetPhysicalCursorPos(int x, int y);
@@ -36,6 +41,37 @@ public static class OverlayCheck {
             Rect rect;
             if (!GetWindowRect(hwnd, out rect)) throw new Win32Exception();
             return rect;
+        } finally {
+            if (previous != IntPtr.Zero) SetThreadDpiAwarenessContext(previous);
+        }
+    }
+
+    private static Rect WorkArea(IntPtr hwnd) {
+        var info = new MonitorInfo { Size = (uint)Marshal.SizeOf(typeof(MonitorInfo)) };
+        if (!GetMonitorInfo(MonitorFromWindow(hwnd, 2), ref info)) throw new Win32Exception();
+        return info.Work;
+    }
+
+    public static void MoveAwayFromCenter(IntPtr hwnd) {
+        IntPtr previous = SetThreadDpiAwarenessContext(new IntPtr(-4));
+        try {
+            Rect work = WorkArea(hwnd);
+            const uint noSizeNoZOrderNoActivate = 0x15;
+            if (!SetWindowPos(hwnd, IntPtr.Zero, work.Left + 4, work.Top + 4, 0, 0, noSizeNoZOrderNoActivate))
+                throw new Win32Exception();
+        } finally {
+            if (previous != IntPtr.Zero) SetThreadDpiAwarenessContext(previous);
+        }
+    }
+
+    public static bool IsCentered(IntPtr hwnd) {
+        IntPtr previous = SetThreadDpiAwarenessContext(new IntPtr(-4));
+        try {
+            Rect work = WorkArea(hwnd);
+            Rect window = WindowBounds(hwnd);
+            // The invisible resize border can shift the outer center by a few pixels.
+            return Math.Abs((window.Left + window.Right) - (work.Left + work.Right)) <= 24 &&
+                Math.Abs((window.Top + window.Bottom) - (work.Top + work.Bottom)) <= 24;
         } finally {
             if (previous != IntPtr.Zero) SetThreadDpiAwarenessContext(previous);
         }
@@ -439,6 +475,8 @@ try {
             # Launch the same executable while the original instance owns the overlay.
             $settingsHwnd = [OverlayCheck]::FindWindow([NullString]::Value, 'Waymark settings')
             if ([OverlayCheck]::IsWindowVisible($settingsHwnd)) { throw 'Settings was already visible before the second launch.' }
+            [OverlayCheck]::MoveAwayFromCenter($settingsHwnd)
+            if ([OverlayCheck]::IsCentered($settingsHwnd)) { throw 'Could not move the hidden Settings window off center.' }
             $second = [Diagnostics.Process]::Start($start)
             try {
                 if (!$second.WaitForExit(15000) -or $second.ExitCode -ne 0) {
@@ -451,6 +489,9 @@ try {
                         [void][OverlayCheck]::GetWindowThreadProcessId($settingsHwnd, [ref]$owner)
                         $owner -eq $process.Id -and [OverlayCheck]::IsWindowVisible($settingsHwnd)
                     }
+                })
+                [void](Wait-For 'Settings to center on its monitor when reopened' {
+                    [OverlayCheck]::IsCentered($settingsHwnd)
                 })
                 Assert-PassiveOverlay $hwnd
             } finally {
