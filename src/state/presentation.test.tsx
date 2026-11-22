@@ -81,7 +81,9 @@ describe('zone presentation', () => {
     expect(expanded).toContain('Draven · 1 key piece')
     expect(expanded).toContain('Asinia · 1 key piece')
     expect(expanded).toContain('Bring both key pieces to Lachlann')
+    expect(expanded).toContain('Check open alcoves along or just inside the edge.')
     expect(expanded).toContain('fenced grass with trees and tombstones')
+    expect(expanded).not.toContain('class="direction-diagram"')
     expect(expanded).toContain('Activate the checkpoint at each tomb entrance as you find it.')
     for (const areaId of ['G1_8', 'G1_9']) {
       const returning = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId, name: null, level: 8 }}/>)

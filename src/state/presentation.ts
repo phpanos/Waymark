@@ -16,7 +16,7 @@ type RouteLandmark = { landmark: string; detail: string }
 export type Route = {
   cue: string
   steps: readonly RouteLandmark[]
-  diagram?: { caption: string; branches: readonly RouteLandmark[]; destination: RouteLandmark }
+  diagram?: { caption: string; branches: readonly (RouteLandmark & { cue: string })[]; destination: RouteLandmark }
 }
 type ArrivalReward = {
   id?: string

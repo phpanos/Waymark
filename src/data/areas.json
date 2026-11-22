@@ -70,8 +70,8 @@
     "route": { "cue": "Sweep the edges for both tomb doors", "diagram": {
       "caption": "Clear either tomb first",
       "branches": [
-        { "landmark": "Mausoleum of the Praetor", "detail": "Draven · 1 key piece" },
-        { "landmark": "Tomb of the Consort", "detail": "Asinia · 1 key piece" }
+        { "landmark": "Mausoleum of the Praetor", "detail": "Draven · 1 key piece", "cue": "Check open alcoves along or just inside the edge." },
+        { "landmark": "Tomb of the Consort", "detail": "Asinia · 1 key piece", "cue": "Check edge alcoves, then look for fenced grass with trees and tombstones near the middle." }
       ],
       "destination": { "landmark": "Memorial Gate", "detail": "Bring both key pieces to Lachlann" }
     }, "steps": [
