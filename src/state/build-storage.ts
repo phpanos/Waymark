@@ -53,11 +53,13 @@ export function buildGemPriority(state: Snapshot, saved: SavedBuilds) {
   return { scope, variant, cut, ...gemQueue(variant, cut) }
 }
 
-export function markGemCut(state: Snapshot, scope: string, id: string) {
+export function setGemCut(state: Snapshot, scope: string, id: string, checked: boolean) {
   const saved = loadBuilds()
   const priority = buildGemPriority(state, saved)
-  if (priority?.scope !== scope || ![priority.gems[0]?.id, priority.supports[0]?.id].includes(id)) return saved
-  const updated = { ...saved, gemCuts: { ...saved.gemCuts, [scope]: [...priority.cut, id] } }
+  if (priority?.scope !== scope || priority.cut.includes(id) === checked ||
+      ![...priority.all.gems, ...priority.all.supports].some(gem => gem.id === id)) return saved
+  const cut = checked ? [...priority.cut, id] : priority.cut.filter(cutId => cutId !== id)
+  const updated = { ...saved, gemCuts: { ...saved.gemCuts, [scope]: cut } }
   saveBuilds(updated)
   return updated
 }

@@ -57,8 +57,13 @@ export function gemQueue(variant: GemVariant, cut: readonly string[]) {
     copies.set(kind + key, copy)
     return { id: JSON.stringify([kind, key, copy]), name, skill }
   }
+  const all = {
+    gems: variant.skills.map(name => add('gem', name)),
+    supports: variant.supports.map(([name, skill]) => add('support', name, skill)),
+  }
   return {
-    gems: variant.skills.map(name => add('gem', name)).filter(gem => !cut.includes(gem.id)),
-    supports: variant.supports.map(([name, skill]) => add('support', name, skill)).filter(gem => !cut.includes(gem.id)),
+    all,
+    gems: all.gems.filter(gem => !cut.includes(gem.id)),
+    supports: all.supports.filter(gem => !cut.includes(gem.id)),
   }
 }

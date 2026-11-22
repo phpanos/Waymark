@@ -4,10 +4,9 @@ import { native } from '../native/bridge'
 import type { Snapshot } from '../native/contract'
 import { guidanceAtLevel, maximumBuildBytes, parseBuild } from '../state/build'
 import { buildLabel } from '../state/build-label'
-import { buildGemPriority, buildLevel, buildStorageKey, loadBuilds, markGemCut, saveBuilds, type BuildLevel, type SavedBuilds } from '../state/build-storage'
+import { buildGemPriority, buildLevel, buildStorageKey, loadBuilds, saveBuilds, setGemCut, type BuildLevel, type SavedBuilds } from '../state/build-storage'
 import { mobalyticsUrl, parseGemGuide } from '../state/gem-priority'
 import { CharacterProfile } from './CharacterProfile'
-import { GemPriority } from './GemPriority'
 
 function Note({ text }: { text: string }) {
   return text && <span className="build-note">{text}</span>
@@ -161,10 +160,29 @@ export default function Build({ state, run }: {
         </select>
       </label>
       <p className="hint">Using {priority.variant.label}</p>
-      <GemPriority gem={priority.gems[0]} support={priority.supports[0]} onCut={id => {
-        try { setSaved(markGemCut(state, priority.scope, id)) }
-        catch { setError('Waymark could not save gem progress.') }
-      }}/>
+      <section className="gem-collection" aria-labelledby="gem-collection-title">
+        <h3 id="gem-collection-title">Gem priority</h3>
+        <p className="hint">Check the gems you already have.</p>
+        {[{ label: 'Gems', gems: priority.all.gems }, { label: 'Supports', gems: priority.all.supports }]
+          .filter(group => group.gems.length > 0).map(({ label, gems }) => <div key={label}>
+            <h4>{label}</h4>
+            <ol>
+              {gems.map(gem => <li key={gem.id}>
+                <label>
+                  <input type="checkbox" checked={priority.cut.includes(gem.id)} onChange={event => {
+                    try {
+                      setSaved(setGemCut(state, priority.scope, gem.id, event.target.checked))
+                      setError('')
+                    } catch {
+                      setError('Waymark could not save gem progress.')
+                    }
+                  }}/>
+                  <span>{gem.name}{gem.skill && <small> for {gem.skill}</small>}</span>
+                </label>
+              </li>)}
+            </ol>
+          </div>)}
+      </section>
       {priority.cut.length > 0 && <button type="button" onClick={() => {
         const current = loadBuilds()
         const latest = buildGemPriority(state, current)

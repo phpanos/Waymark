@@ -109,7 +109,14 @@ button:disabled { opacity: .55; cursor: default }
 .compact.expanded .build-milestone-change { white-space: normal; overflow-wrap: anywhere }
 .build-milestone-more { margin: 2px 0 0; padding-left: 20px; overflow-wrap: anywhere }
 .gem-priority { display: grid; gap: 3px; padding: 5px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.25 }
-.build-controls .gem-priority { flex-basis: 100% }
+.gem-collection { flex-basis: 100%; border-top: 1px solid var(--line); padding-top: 8px }
+.gem-collection :is(h3, h4) { margin: 0 }
+.gem-collection h4 { margin-top: 8px; color: var(--gold); font-size: 12px }
+.gem-collection ol { margin: 2px 0 0; padding-left: 23px; font-size: 13px }
+.gem-collection li::marker { color: var(--muted) }
+.gem-collection label { display: flex; align-items: baseline; gap: 6px; cursor: pointer; padding: 2px 0; overflow-wrap: anywhere }
+.gem-collection input { flex-shrink: 0; margin: 0; accent-color: var(--gold) }
+.gem-collection small { color: var(--muted); font-size: inherit }
 .gem-priority-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px }
 .gem-priority-row p { overflow-wrap: anywhere }
 .gem-priority-row span { color: var(--muted) }
