@@ -68,6 +68,8 @@ The Waterways and island directions also use the [0.5.5 campaign walkthrough](ht
 
 **Alt+click Rewards** in the overlay footer to see the current act’s permanent rewards, their zones, and where to find them. Alt+click the button again to return to your objective. The **Town rewards** tray menu and **Settings → Controls** list the actions for pinned quest rewards.
 
+When the overlay has more content than fits on screen, Alt+click the footer arrows to scroll.
+
 ## Build-aware leveling
 
 Paste a public Mobalytics PoE 2 build link into **Settings → Build → Mobalytics build link** and choose **Import guide**. Waymark reads the guide’s leveling variants and gem priority from the page. It switches variants based on the guide’s level labels, or you can select one in **Gem variant**. The full priority list in Build settings lets you check or uncheck gems in any order. The overlay shows the next unchecked gem and support. Click **Mark cut** in the overlay when you get a gem. Reimport the link to refresh the guide.

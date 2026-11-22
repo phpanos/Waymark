@@ -19,25 +19,27 @@ button:disabled { opacity: .55; cursor: default }
 .overlay-window { overflow: hidden }
 .compact {
   position: relative;
-  min-height: calc(100vh - 4px); margin: 2px; overflow: hidden; border: 1px solid #817452;
+  height: calc(100vh - 4px); margin: 2px; overflow: hidden; border: 1px solid #817452;
   background: linear-gradient(112deg,rgba(30,36,33,.95),rgba(17,22,22,.95));
   box-shadow: inset 0 0 0 3px #1b201df0, inset 0 0 0 4px #685e443d;
   user-select: none;
 }
-.compact-content { display: flex; flex-direction: column; min-height: calc(166px + var(--quest-reward-height, 0px)); padding: 0 16px 7px }
+.compact-content { display: flex; flex-direction: column; height: 100%; padding: 0 16px 7px }
+.compact-content > :not(.overlay-scroll) { flex: none }
+.overlay-scroll { flex: 1 1 auto; min-height: 0; overflow: hidden }
+.overlay-scroll-content { display: flow-root; overflow-wrap: anywhere }
 .resize-grip {
   position: absolute; bottom: 5px; right: 5px; width: 8px; height: 8px;
   border-bottom: 1px solid var(--gold); border-right: 1px solid var(--gold); opacity: .55; pointer-events: none;
-}
-.compact.with-quest-reward:not(.expanded) {
-  --quest-reward-height: 18px;
 }
 .brand { display: inline-flex; align-items: center; gap: 8px; font: 500 12px var(--heading); letter-spacing: .19em; text-transform: uppercase; color: #dfc99d }
 .brand img { width: 25px; height: 25px }
 .compact-head, .readout-head, .settings-footer { display: flex; align-items: center; justify-content: space-between }
 .compact-head { height: 42px; gap: 8px }
 .compact-footer { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin-top: auto; padding-top: 6px }
-.compact-footer .act-rewards-toggle { padding: 3px 7px; font-size: 12px; line-height: 1.2 }
+.compact-footer button { min-height: 23px; padding: 3px 7px; font-size: 12px; line-height: 1.2 }
+.overlay-scroll-controls { display: flex; gap: 3px; margin-right: auto }
+.overlay-scroll-controls button { min-width: 26px }
 .compact-footer .act-rewards-toggle[aria-expanded="true"] { border-color: var(--gold); color: var(--gold) }
 .overlay-identity { display: grid; gap: 1px; min-width: 0 }
 .overlay-wordmark { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px }

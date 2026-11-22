@@ -22,6 +22,7 @@ const controls = [
     ['Alt+drag bottom-right corner', 'Resize the overlay'],
     ['Alt+click header', 'Open or close route details'],
     ['Alt+click Rewards', 'Show or hide the act reward list'],
+    ['Alt+click ↑ or ↓', 'Scroll the overlay when the footer arrows appear'],
     ['Alt+Shift+T', 'Start or stop the act timer'],
   ] },
   { title: 'Town rewards', actions: [

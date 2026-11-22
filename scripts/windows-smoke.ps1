@@ -460,6 +460,16 @@ try {
         } else {
             node $check $profile $log town restart
             if ($LASTEXITCODE -ne 0) { throw 'The pinned town reward did not survive restart.' }
+            if ($launch -eq 3) {
+                node $check $profile $log all-areas-fit
+                if ($LASTEXITCODE -ne 0) { throw 'An expanded zone did not fit at the smallest width.' }
+                Invoke-RewardControlClick $hwnd $check $profile $log down-point all-areas-fit -Alt
+                node $check $profile $log all-areas-fit scrolled
+                if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not scroll down in the expanded overlay.' }
+                Invoke-RewardControlClick $hwnd $check $profile $log up-point all-areas-fit -Alt
+                node $check $profile $log all-areas-fit at-top
+                if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not scroll back to the first details.' }
+            }
         }
         $process.Kill()
         $process.WaitForExit()

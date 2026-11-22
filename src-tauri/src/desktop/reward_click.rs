@@ -4,6 +4,8 @@ use windows_sys::Win32::Foundation::RECT;
 pub(super) const CHANNEL: &str = "waymark://reward-click";
 pub(super) const ACT_TIMER_TARGET: &str = "act-timer";
 pub(super) const ACT_REWARDS_TARGET: &str = "act-rewards";
+const PAGE_UP_TARGET: &str = "overlay:page-up";
+const PAGE_DOWN_TARGET: &str = "overlay:page-down";
 
 #[derive(Clone, PartialEq, Eq, Serialize)]
 pub(super) struct RewardClick {
@@ -41,7 +43,7 @@ impl RewardTargets {
         let target = self.targets.iter().find(|target| {
             matches!(
                 target.id.as_deref(),
-                Some(ACT_TIMER_TARGET | ACT_REWARDS_TARGET)
+                Some(ACT_TIMER_TARGET | ACT_REWARDS_TARGET | PAGE_UP_TARGET | PAGE_DOWN_TARGET)
             ) == alt
                 && x >= target.left
                 && x < target.right
@@ -96,7 +98,7 @@ mod tests {
             )
             .is_none());
 
-        for id in [ACT_TIMER_TARGET, ACT_REWARDS_TARGET] {
+        for id in [ACT_TIMER_TARGET, ACT_REWARDS_TARGET, PAGE_UP_TARGET, PAGE_DOWN_TARGET] {
             targets.targets[0].id = Some(id.into());
             assert!(targets.hit(rect, 144, (-420, 380), false).is_none());
             let hit = targets.hit(rect, 144, (-420, 380), true).unwrap();
