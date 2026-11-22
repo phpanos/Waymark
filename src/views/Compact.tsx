@@ -61,6 +61,9 @@ export function Compact({ state, previousZone = null, storyStep }: {
 }) {
   const panel = useRef<HTMLElement>(null)
   const content = useRef<HTMLDivElement>(null)
+  const scrollArea = useRef<HTMLDivElement>(null)
+  const scrollContent = useRef<HTMLDivElement>(null)
+  const [scroll, setScroll] = useState({ up: false, down: false })
   const [previewStep, setPreviewStep] = useState<StoryStep | null>(null)
   useEffect(() => {
     setPreviewStep(null)
@@ -70,17 +73,32 @@ export function Compact({ state, previousZone = null, storyStep }: {
   useLayoutEffect(() => {
     const card = panel.current
     const body = content.current
-    if (!card || !body) return
+    const viewport = scrollArea.current
+    const flow = scrollContent.current
+    if (!card || !body || !viewport || !flow) return
     const controls = [...card.querySelectorAll<HTMLElement>('[data-reward-target]:not(:disabled)')]
     const measure = () => {
-      const height = Math.ceil(body.getBoundingClientRect().height) + 6
+      const bounds = viewport.getBoundingClientRect()
+      // Report the layout's full height even when the native window caps the viewport.
+      const naturalHeight = body.getBoundingClientRect().height - bounds.height + flow.getBoundingClientRect().height
+      const minHeight = card.matches('.with-quest-reward:not(.expanded)') ? 190 : 0
+      const height = Math.max(minHeight, Math.ceil(naturalHeight) + 6)
       if (height !== lastHeight.current) {
         lastHeight.current = height
         void native.overlayHeight(height).catch(console.error)
       }
-      const targets = controls.map(control => {
-        const { left, top, right, bottom } = control.getBoundingClientRect()
-        return { id: control.dataset.rewardTarget || null, left, top, right, bottom }
+      const up = viewport.scrollTop > 1
+      const down = viewport.scrollTop + viewport.clientHeight < viewport.scrollHeight - 1
+      setScroll(previous => previous.up === up && previous.down === down ? previous : { up, down })
+      const targets = controls.flatMap(control => {
+        let { left, top, right, bottom } = control.getBoundingClientRect()
+        if (viewport.contains(control)) {
+          left = Math.max(left, bounds.left)
+          top = Math.max(top, bounds.top)
+          right = Math.min(right, bounds.right)
+          bottom = Math.min(bottom, bounds.bottom)
+        }
+        return right > left && bottom > top ? [{ id: control.dataset.rewardTarget || null, left, top, right, bottom }] : []
       })
       const viewportHeight = window.innerHeight
       const key = JSON.stringify([state.revision, viewportHeight, targets])
@@ -91,11 +109,15 @@ export function Compact({ state, previousZone = null, storyStep }: {
     measure()
     const resize = new ResizeObserver(measure)
     resize.observe(body)
+    resize.observe(viewport)
+    resize.observe(flow)
     for (const control of controls) resize.observe(control)
     window.addEventListener('resize', measure)
+    viewport.addEventListener('scroll', measure, { passive: true })
     return () => {
       resize.disconnect()
       window.removeEventListener('resize', measure)
+      viewport.removeEventListener('scroll', measure)
     }
   })
 
@@ -136,10 +158,22 @@ export function Compact({ state, previousZone = null, storyStep }: {
   const next = navigation?.exits.length === 1 ? navigation.exits[0].landmark : null
   const adjacent = adjacentStoryObjectives(zone.areaId, liveZone.previousAreaId, previewStep ?? liveZone.storyStep)
   const canBrowse = state.visible && state.status === 'watching' && state.replaySession === 0 && !showRewards
-  const browseClick = useRef<(click: RewardClick) => void>(() => {})
   useLayoutEffect(() => {
-    browseClick.current = ({ revision, id }) => {
-      if (!canBrowse || revision !== state.revision) return
+    if (scrollArea.current) scrollArea.current.scrollTop = 0
+  }, [zone.areaId, zone.title, liveZone.storyStep, previewStep, showRewards, expanded, state.settings.activeProfile])
+
+  function scrollPage(direction: number) {
+    const viewport = scrollArea.current
+    if (viewport) viewport.scrollBy({ top: direction * Math.max(1, viewport.clientHeight - 32) })
+  }
+
+  const overlayClick = useRef<(click: RewardClick) => void>(() => {})
+  useLayoutEffect(() => {
+    overlayClick.current = ({ revision, id }) => {
+      if (!state.visible || revision !== state.revision) return
+      if (id === 'overlay:page-up') scrollPage(-1)
+      if (id === 'overlay:page-down') scrollPage(1)
+      if (!canBrowse) return
       if (gemPriority && id?.startsWith('build:cut:')) build.cutGem(id.slice('build:cut:'.length))
       if (id === 'guide:previous' && adjacent.previous) setPreviewStep(adjacent.previous)
       if (id === 'guide:next' && adjacent.next) setPreviewStep(adjacent.next)
@@ -149,7 +183,7 @@ export function Compact({ state, previousZone = null, storyStep }: {
   useEffect(() => {
     let disposed = false
     let stop: (() => void) | undefined
-    void native.listenRewardClicks(click => browseClick.current(click)).then(unlisten => {
+    void native.listenRewardClicks(click => overlayClick.current(click)).then(unlisten => {
       if (disposed) unlisten()
       else stop = unlisten
     }).catch(console.error)
@@ -163,7 +197,8 @@ export function Compact({ state, previousZone = null, storyStep }: {
       {!expanded && objective.compactReward && <span className="optional-reward">{objective.compactReward}</span>}
     </li>)}</ul>
   </div>
-  return <main ref={panel} data-status={state.status} className={`compact${expanded ? ' expanded' : ''}${!showRewards && (reward || townFeedback) ? ' with-quest-reward' : ''}`}>
+  return <main ref={panel} data-status={state.status} data-area-id={zone.areaId ?? undefined}
+    className={`compact${expanded ? ' expanded' : ''}${!showRewards && (reward || townFeedback) ? ' with-quest-reward' : ''}`}>
     <div ref={content} className="compact-content">
       <header className="compact-head">
         <div className="overlay-identity">
@@ -190,54 +225,64 @@ export function Compact({ state, previousZone = null, storyStep }: {
           </div>
         </div>
       </div>
-      {showRewards ? <ActRewards act={zone.act} rewards={rewards}/> : <div className="objective">
-        {(zone.objective || remaining.length === 0) && <p className="story-objective">
-          {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
-        </p>}
-        {reward && <div className={town.claimTarget ? 'quest-reward with-claim-control' : 'quest-reward'}>
-          <span className="optional-label">{pinned ? 'Pinned reward' : zone.arrivalReward?.optional ? 'Optional reward' : 'Reward'}</span>
-          <span className="quest-reward-copy"><strong>{reward}</strong>
-            {claim && <span className="reward-claim">{claim}</span>}
-          </span>
-          {town.claimTarget && <button type="button" className="reward-claim-button" data-reward-target={town.claimTarget} onClick={town.claim}>Mark claimed</button>}
-        </div>}
-        {!preview && town.undo && <div className="town-reward-actions" role="status">
-          <p className="reward-feedback">{town.undo.status === 'claimed' ? 'Claimed' : 'Dismissed'} · {town.undo.reward.reward}</p>
-          {town.undoTarget && <button type="button" className="reward-undo" data-reward-target={town.undoTarget} onClick={town.restore}>Undo</button>}
-        </div>}
-        {!preview && town.errorMessage && <p className="reward-feedback" role="status">{town.errorMessage}</p>}
-        {quickRoute && <ol className="quick-route" aria-label="Route steps" role="list">
-          {quickRoute.map((step, index) => <li key={step}>
-            {index === 0 && (direction || storyTravelTip) ? <div className="traversal-tip">
-              <span className="optional-label">Start here</span><span className="traversal-instruction">{step}</span>
-            </div> : step}
-          </li>)}
-        </ol>}
-        {route && !quickRoute && <p className="route-preview direction" title={route.cue}>
-          <span className="optional-label">Route</span>
-          <span className="optional-hint">{route.cue}</span>
-        </p>}
-        {!expanded && !quickRoute && !route && navigation && next && <p className="route-preview" title={next}>
-          <span className="optional-label">{navigation.label}</span><span className="optional-hint">{next}</span>
-        </p>}
-        {!expanded && !stale && optionalObjectives}
-        {expanded && !preview && town.source && <p className="town-reward-source" title={town.source.reward}>
-          {town.sourcePinned ? <span>Pinned for {town.source.townName}</span>
-            : <span>Pin for {town.source.townName} · {town.source.reward}</span>}
-        </p>}
-        {gemPriority && <GemPriority gem={gemPriority.gems[0]} support={gemPriority.supports[0]} onCut={build.cutGem}/>}
-        {expanded && milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
-        {expanded && hasDirections && <section className="overlay-details" aria-label="Objective details">
-          {direction && !route?.diagram && <DirectionDiagram guide={direction}/>}
-          {shortcut && <aside className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></aside>}
-          {hasDiagram && navigation ? <AreaOverview navigation={navigation} fork={route?.diagram}>
-            {optionalObjectives}
-          </AreaOverview> : optionalObjectives}
-          {showRouteLandmarks && <RouteLandmarks route={route}/>}
-          {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
-        </section>}
-      </div>}
+      <div className="overlay-scroll" ref={scrollArea}>
+        <div className="overlay-scroll-content" ref={scrollContent}>
+          {showRewards ? <ActRewards act={zone.act} rewards={rewards}/> : <div className="objective">
+            {(zone.objective || remaining.length === 0) && <p className="story-objective">
+              {zone.objective ?? (zone.optional.length ? 'Optional objectives complete' : 'No objective assigned')}
+            </p>}
+            {reward && <div className={town.claimTarget ? 'quest-reward with-claim-control' : 'quest-reward'}>
+              <span className="optional-label">{pinned ? 'Pinned reward' : zone.arrivalReward?.optional ? 'Optional reward' : 'Reward'}</span>
+              <span className="quest-reward-copy"><strong>{reward}</strong>
+                {claim && <span className="reward-claim">{claim}</span>}
+              </span>
+              {town.claimTarget && <button type="button" className="reward-claim-button" data-reward-target={town.claimTarget} onClick={town.claim}>Mark claimed</button>}
+            </div>}
+            {!preview && town.undo && <div className="town-reward-actions" role="status">
+              <p className="reward-feedback">{town.undo.status === 'claimed' ? 'Claimed' : 'Dismissed'} · {town.undo.reward.reward}</p>
+              {town.undoTarget && <button type="button" className="reward-undo" data-reward-target={town.undoTarget} onClick={town.restore}>Undo</button>}
+            </div>}
+            {!preview && town.errorMessage && <p className="reward-feedback" role="status">{town.errorMessage}</p>}
+            {quickRoute && <ol className="quick-route" aria-label="Route steps" role="list">
+              {quickRoute.map((step, index) => <li key={step}>
+                {index === 0 && (direction || storyTravelTip) ? <div className="traversal-tip">
+                  <span className="optional-label">Start here</span><span className="traversal-instruction">{step}</span>
+                </div> : step}
+              </li>)}
+            </ol>}
+            {route && !quickRoute && <p className="route-preview direction" title={route.cue}>
+              <span className="optional-label">Route</span>
+              <span className="optional-hint">{route.cue}</span>
+            </p>}
+            {!expanded && !quickRoute && !route && navigation && next && <p className="route-preview" title={next}>
+              <span className="optional-label">{navigation.label}</span><span className="optional-hint">{next}</span>
+            </p>}
+            {!expanded && !stale && optionalObjectives}
+            {expanded && !preview && town.source && <p className="town-reward-source" title={town.source.reward}>
+              {town.sourcePinned ? <span>Pinned for {town.source.townName}</span>
+                : <span>Pin for {town.source.townName} · {town.source.reward}</span>}
+            </p>}
+            {gemPriority && <GemPriority gem={gemPriority.gems[0]} support={gemPriority.supports[0]} onCut={build.cutGem}/>}
+            {expanded && milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
+            {expanded && hasDirections && <section className="overlay-details" aria-label="Objective details">
+              {direction && !route?.diagram && <DirectionDiagram guide={direction}/>}
+              {shortcut && <aside className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></aside>}
+              {hasDiagram && navigation ? <AreaOverview navigation={navigation} fork={route?.diagram}>
+                {optionalObjectives}
+              </AreaOverview> : optionalObjectives}
+              {showRouteLandmarks && <RouteLandmarks route={route}/>}
+              {tip && <div><h2>Encounter tip</h2><p>{tip}</p></div>}
+            </section>}
+          </div>}
+        </div>
+      </div>
       <footer className="compact-footer">
+        {(scroll.up || scroll.down) && <nav className="overlay-scroll-controls" aria-label="Scroll the overlay">
+          <button type="button" data-reward-target="overlay:page-up" aria-label="Scroll up"
+            title="Alt+click to scroll up" disabled={!scroll.up} onClick={() => scrollPage(-1)}>↑</button>
+          <button type="button" data-reward-target="overlay:page-down" aria-label="Scroll down"
+            title="Alt+click to scroll down" disabled={!scroll.down} onClick={() => scrollPage(1)}>↓</button>
+        </nav>}
         <button type="button" className="act-rewards-toggle" data-reward-target="act-rewards"
           title="Alt+click to toggle act rewards" aria-expanded={showRewards} aria-controls={showRewards ? 'act-rewards' : undefined}
           disabled={rewards.length === 0}>Rewards</button>

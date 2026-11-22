@@ -21,7 +21,7 @@ async function waitFor(description, probe) {
   throw new Error(`Timed out waiting for ${description}. ${lastError?.message ?? ''}`)
 }
 
-const pageView = ['overlay', 'details', 'rewards', 'town', 'miller', 'guide', 'diagram', 'timer', 'quick-route'].includes(view) ? 'overlay' : 'settings'
+const pageView = ['overlay', 'details', 'rewards', 'town', 'miller', 'guide', 'diagram', 'timer', 'quick-route', 'all-areas-fit'].includes(view) ? 'overlay' : 'settings'
 const target = await waitFor(`local ${view} page`, async () => {
   // The port file may briefly contain the previous process's port after a restart.
   const files = await readdir(profile, { recursive: true })
@@ -59,7 +59,7 @@ try {
       }
       socket.addEventListener('message', onMessage)
       socket.send(JSON.stringify({ id, method: 'Runtime.evaluate', params: {
-        expression, returnByValue: true
+        expression, returnByValue: true, awaitPromise: true
       } }))
     })
   }
@@ -90,13 +90,82 @@ try {
     })()`))
     console.log('Reward control point ' + point.join(' '))
   }
+  const visibleBodyFits = `(() => {
+    const body = document.querySelector('.overlay-scroll')
+    return body.scrollHeight <= body.clientHeight + 1
+  })()`
+  const revealDiagram = `diagram => {
+    if (!diagram) return false
+    const body = diagram.closest('.overlay-scroll')
+    const viewport = body.getBoundingClientRect()
+    const bounds = diagram.getBoundingClientRect()
+    if (bounds.top < viewport.top || bounds.bottom > viewport.bottom + 1) {
+      body.scrollTop += bounds.bottom - viewport.bottom
+    }
+    const visible = diagram.getBoundingClientRect()
+    return visible.top >= viewport.top - 1 && visible.bottom <= viewport.bottom + 1
+  }`
   if (pageView === 'overlay') {
     await waitFor('live log tracking', () => evaluate('!!document.querySelector(".compact[data-status=watching]")'))
   } else if (view !== 'replay' || argument === 'start') {
     await expectText('Connected')
   }
   if (view === 'settings' || (view === 'overlay' && argument !== '1')) await expectText('Awaiting zone')
-  if (view === 'timer' && argument === 'click-point') {
+  if (view === 'all-areas-fit') {
+    if (argument === 'down-point' || argument === 'up-point') {
+      await rewardControlPoint(`[data-reward-target="overlay:page-${argument.split('-')[0]}"]:enabled`)
+    } else if (argument === 'scrolled' || argument === 'at-top') {
+      await waitFor(`the overlay to be ${argument}`, () => evaluate(
+        `(document.querySelector('.overlay-scroll').scrollTop > 1) === ${argument === 'scrolled'}`))
+    } else {
+      const areas = JSON.parse(await readFile(new URL('../src/data/areas.json', import.meta.url), 'utf8'))
+      const placement = await evaluate(`window.__TAURI_INTERNALS__.invoke('snapshot').then(state =>
+        window.__TAURI_INTERNALS__.invoke('set_placement', { placement: {
+          ...state.settings.placement, width: 328, minHeight: 172, followGame: false,
+        } }).then(() => 328))`)
+      let overflowingArea
+      for (const { id, name } of areas) {
+        await appendFile(log, `Generating level 40 area "${id}"\r\n`)
+        const overflow = await waitFor(`${name} (${id}) to fit at the smallest width`, async () => {
+          const layout = await evaluate(`(() => {
+            const panel = document.querySelector('.compact')
+            const body = panel.querySelector('.overlay-scroll')
+            const flow = body.querySelector('.overlay-scroll-content')
+            const frame = panel.querySelector('.compact-content')
+            const rewards = panel.querySelector('.act-rewards-toggle')
+            const bounds = panel.getBoundingClientRect()
+            const bodyBounds = body.getBoundingClientRect()
+            const footerBounds = rewards.getBoundingClientRect()
+            const needed = Math.ceil(frame.getBoundingClientRect().height - bodyBounds.height +
+              flow.getBoundingClientRect().height) + 6
+            return {
+              area: panel.dataset.areaId, expanded: panel.classList.contains('expanded'),
+              width: innerWidth, height: innerHeight, needed,
+              limit: Math.min(720, screen.availHeight), bottom: bounds.bottom,
+              bodyBottom: bodyBounds.bottom, rewardsTop: footerBounds.top, rewardsBottom: footerBounds.bottom,
+              scrolled: body.scrollTop, clipped: body.scrollHeight > body.clientHeight + 1,
+              canScrollDown: !!panel.querySelector('[data-reward-target="overlay:page-down"]:enabled'),
+              horizontalOverflow: flow.scrollWidth > body.clientWidth + 1,
+            }
+          })()`)
+          if (layout.area !== id || !layout.expanded || Math.abs(layout.width - placement) > 1 ||
+              Math.abs(layout.height - Math.min(layout.limit, Math.max(172, layout.needed))) > 1 ||
+              layout.bottom > layout.height - 1 || layout.rewardsTop < layout.bodyBottom ||
+              layout.rewardsBottom >= layout.bottom || layout.horizontalOverflow || layout.scrolled > 1 ||
+              layout.clipped !== layout.canScrollDown) throw new Error(JSON.stringify(layout))
+          return { clipped: layout.clipped }
+        })
+        if (overflow.clipped && id !== areas.at(-1).id) overflowingArea ??= id
+      }
+      if (!overflowingArea) throw new Error('No expanded area exercised the overflow controls.')
+      await appendFile(log, `Generating level 40 area "${overflowingArea}"\r\n`)
+      await waitFor('the overflowing area to return', () => evaluate(`
+        document.querySelector('.compact').dataset.areaId === ${JSON.stringify(overflowingArea)} &&
+        !!document.querySelector('[data-reward-target="overlay:page-down"]:enabled')
+      `))
+      console.log(`Verified all ${areas.length} expanded areas at 328 px, including the Rewards footer.`)
+    }
+  } else if (view === 'timer' && argument === 'click-point') {
     await rewardControlPoint('[data-reward-target="act-timer"]')
   } else if (view === 'timer') {
     const ready = argument === 'ready-one'
@@ -173,6 +242,7 @@ try {
       `))
       await waitFor('both branches and the destination to fit in the overlay', () => evaluate(`(() => {
         const panel = document.querySelector('.compact').getBoundingClientRect()
+        if (!(${revealDiagram})(document.querySelector('.route-diagram'))) return false
         const [left, right, gate] = [...document.querySelectorAll('.route-diagram li, .route-diagram-destination')]
           .map(node => node.getBoundingClientRect())
         return left.right < right.left && left.top === right.top && gate.top > left.bottom && gate.top > right.bottom &&
@@ -196,13 +266,14 @@ try {
               const panel = document.querySelector('.compact').getBoundingClientRect()
               const diagram = document.querySelector('.area-diagram')
               return {
+                visible: (${revealDiagram})(diagram),
                 hasWaypoint: !!diagram.querySelector('.area-diagram-waypoint'),
                 diagramBottom: diagram.getBoundingClientRect().bottom,
                 panelBottom: panel.bottom,
                 viewportHeight: innerHeight,
               }
             })()`)
-            if (layout.hasWaypoint !== waypoint || layout.diagramBottom >= layout.panelBottom ||
+            if (!layout.visible || layout.hasWaypoint !== waypoint || layout.diagramBottom >= layout.panelBottom ||
                 layout.panelBottom > layout.viewportHeight - 1) throw new Error(JSON.stringify(layout))
             return true
           })
@@ -331,7 +402,7 @@ try {
         const cue = panel?.querySelector('.direction .optional-hint')
         const expectedHeight = Math.ceil(panel.getBoundingClientRect().height) + 4
         return panel?.classList.contains('expanded') && Math.abs(innerHeight - expectedHeight) <= 1 &&
-          cue?.scrollWidth <= cue?.clientWidth
+          cue?.scrollWidth <= cue?.clientWidth && ${visibleBodyFits}
       })()`))
       await expectDetailsToFit()
       if (argument === 'expanded') {
