@@ -27,9 +27,3 @@ export function permanentRewards(act: number | null): PermanentReward[] {
   const rewards = act == null ? undefined : byAct.get(act)
   return rewards ? [...rewards.values()] : []
 }
-
-export function selectedReward(rewards: PermanentReward[], selection: string | undefined, areaId: string | null) {
-  return rewards.find(reward => reward.id === selection)
-    ?? rewards.find(reward => reward.areas.some(area => area.id === areaId))
-    ?? rewards[0]
-}

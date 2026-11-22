@@ -1,10 +1,13 @@
-import { useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react'
 import labels from '../data/build-labels.json'
+import { native } from '../native/bridge'
 import type { Snapshot } from '../native/contract'
 import { guidanceAtLevel, maximumBuildBytes, parseBuild } from '../state/build'
 import { buildLabel } from '../state/build-label'
-import { buildLevel, loadBuilds, saveBuilds, type BuildLevel, type SavedBuilds } from '../state/build-storage'
+import { buildGemPriority, buildLevel, buildStorageKey, loadBuilds, markGemCut, saveBuilds, type BuildLevel, type SavedBuilds } from '../state/build-storage'
+import { mobalyticsUrl, parseGemGuide } from '../state/gem-priority'
 import { CharacterProfile } from './CharacterProfile'
+import { GemPriority } from './GemPriority'
 
 function Note({ text }: { text: string }) {
   return text && <span className="build-note">{text}</span>
@@ -17,6 +20,14 @@ export default function Build({ state, run }: {
   const [saved, setSaved] = useState(loadBuilds)
   const [error, setError] = useState('')
   const [importing, setImporting] = useState(false)
+  const [guideUrl, setGuideUrl] = useState('')
+  useEffect(() => {
+    const refresh = (event: StorageEvent) => {
+      if (event.key === buildStorageKey || event.key === null) setSaved(loadBuilds())
+    }
+    window.addEventListener('storage', refresh)
+    return () => window.removeEventListener('storage', refresh)
+  }, [])
   const { profile, profileKey, preferences: level, logged, effective: characterLevel } = buildLevel(state, saved)
   const [preview, setPreview] = useState<{ scope: string; level: number } | null>(null)
   const scope = JSON.stringify([profileKey, saved.active])
@@ -24,10 +35,11 @@ export default function Build({ state, run }: {
   const effective = previewLevel ?? characterLevel
   const stage = saved.stages.find(item => item.filename === saved.active)
   const guide = useMemo(() => {
-    if (!stage) return null
+    if (!stage || stage.gemGuide) return null
     try { return parseBuild(stage.source) } catch { return null }
   }, [stage])
-  const readError = stage && !guide ? 'Import this build file again to open it.' : ''
+  const readError = stage && !guide && !stage.gemGuide ? 'Import this build file again to open it.' : ''
+  const priority = buildGemPriority(state, saved)
   const guidance = guide && guidanceAtLevel(guide, effective)
   const nextLevel = guidance?.nextLevel ?? null
 
@@ -59,9 +71,10 @@ export default function Build({ state, run }: {
           throw new Error(`${file.name}: ${detail}`)
         }
       }))
-      const stages = new Map(saved.stages.map(item => [item.filename, item]))
+      const current = loadBuilds()
+      const stages = new Map(current.stages.map(item => [item.filename, item]))
       for (const item of imported) stages.set(item.filename, item)
-      save({ ...saved, stages: [...stages.values()], active: imported[0].filename })
+      save({ ...current, stages: [...stages.values()], active: imported[0].filename })
     } catch (cause) {
       setError((cause as Error).message)
     } finally {
@@ -69,25 +82,53 @@ export default function Build({ state, run }: {
     }
   }
 
+  async function importGuide(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setImporting(true)
+    setError('')
+    try {
+      const url = mobalyticsUrl(guideUrl)
+      const gemGuide = parseGemGuide(await native.importMobalyticsGuide(url))
+      if (!gemGuide) throw new Error('This guide does not contain an importable gem list.')
+      const current = loadBuilds()
+      const stages = new Map(current.stages.map(item => [item.filename, item]))
+      stages.set(url, { filename: url, source: '', gemGuide })
+      save({ ...current, stages: [...stages.values()], active: url })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause))
+    } finally {
+      setImporting(false)
+    }
+  }
+
   function setLevel(next: BuildLevel) {
     setPreview(null)
-    save({ ...saved, levels: { ...saved.levels, [profileKey]: next } })
+    const current = loadBuilds()
+    save({ ...current, levels: { ...current.levels, [profileKey]: next } })
   }
 
   return <>
+    <form className="field build-controls" onSubmit={event => void importGuide(event)}>
+      <label className="settings-field">Mobalytics build link
+        <input type="url" value={guideUrl} onChange={event => setGuideUrl(event.target.value)} disabled={importing}
+          placeholder="https://mobalytics.gg/poe-2/…" required/>
+      </label>
+      <button type="submit" disabled={importing}>{importing ? 'Importing…' : 'Import guide'}</button>
+    </form>
     <label className="settings-field field">Import build files
       <input type="file" accept=".build" multiple disabled={importing} onChange={importFiles}/>
     </label>
     <p className="hint">Choose a .build export from Path of Building or Mobalytics. Import multiple files to switch between stages.</p>
     {saved.stages.length > 0 && <div className="build-controls field">
       <label className="settings-field">Build file
-        <select value={saved.active} disabled={importing} onChange={e => save({ ...saved, active: e.target.value })}>
-          {saved.stages.map(item => <option key={item.filename}>{item.filename}</option>)}
+        <select value={saved.active} disabled={importing} onChange={e => save({ ...loadBuilds(), active: e.target.value })}>
+          {saved.stages.map(item => <option key={item.filename} value={item.filename}>{item.gemGuide?.name ?? item.filename}</option>)}
         </select>
       </label>
       <button type="button" disabled={importing} onClick={() => {
-        const stages = saved.stages.filter(item => item.filename !== saved.active)
-        save({ ...saved, stages, active: stages[0]?.filename ?? '' })
+        const current = loadBuilds()
+        const stages = current.stages.filter(item => item.filename !== current.active)
+        save({ ...current, stages, active: stages[0]?.filename ?? '' })
       }}>Remove build</button>
     </div>}
     {(error || readError) && <p className="issues" role="alert">{error || readError}</p>}
@@ -107,6 +148,31 @@ export default function Build({ state, run }: {
       </label>
       <p className="hint">Using level {effective} ({previewLevel !== null ? 'preview' : logged === null ? 'manual' : 'Client.txt'})</p>
     </div>
+    {stage?.gemGuide && priority && <div className="field build-controls">
+      <label className="settings-field">Gem variant
+        <select value={stage.gemVariant ?? ''} onChange={event => {
+          const index = event.target.value === '' ? undefined : Number(event.target.value)
+          const current = loadBuilds()
+          save({ ...current, stages: current.stages.map(item =>
+            item.filename === stage.filename ? { ...item, gemVariant: index } : item) })
+        }}>
+          <option value="">Automatic by level</option>
+          {stage.gemGuide.variants.map((variant, index) => <option key={index} value={index}>{variant.label}</option>)}
+        </select>
+      </label>
+      <p className="hint">Using {priority.variant.label}</p>
+      <GemPriority gem={priority.gems[0]} support={priority.supports[0]} onCut={id => {
+        try { setSaved(markGemCut(state, priority.scope, id)) }
+        catch { setError('Waymark could not save gem progress.') }
+      }}/>
+      {priority.cut.length > 0 && <button type="button" onClick={() => {
+        const current = loadBuilds()
+        const latest = buildGemPriority(state, current)
+        if (latest?.scope === priority.scope) {
+          save({ ...current, gemCuts: { ...current.gemCuts, [latest.scope]: latest.cut.slice(0, -1) } })
+        }
+      }}>Undo last cut</button>}
+    </div>}
     {guide && guidance && <article className="build-guide">
       <h2>{guide.name}</h2>
       {(guide.author || guide.ascendancy) && <p className="hint">{[guide.ascendancy, guide.author && `by ${guide.author}`].filter(Boolean).join(' · ')}</p>}

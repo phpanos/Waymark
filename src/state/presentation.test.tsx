@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
 import { adjacentStoryObjectives, campaignAreas, describeStoryStep, describeZone, searchCampaign, storyRoute, townRewards } from './presentation'
-import { permanentRewards, selectedReward } from './rewards'
+import { permanentRewards } from './rewards'
 import { useSession } from './session'
 
 const snapshot: Snapshot = {
@@ -166,11 +166,11 @@ describe('zone presentation', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_4', name: null, level: 4 } }
     const html = renderToStaticMarkup(<Compact state={state}/>)
     expect(html).toContain('Investigate the Tree of Souls')
-    expect(html).toContain('Follow glowing roots')
+    expect(html).toContain('<span class="traversal-instruction">Follow the glowing roots to the Tree of Souls waypoint.</span>')
     expect(html).toContain('Follow the river to the Red Vale')
     expect(html).toContain('Tag the Grim Tangle waypoint if you find it early')
     expect(html).toContain('Defeat the Brambleghast')
-    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('Follow glowing roots')
+    expect(renderToStaticMarkup(<Compact state={{ ...state, status: 'readError' }}/>)).not.toContain('class="traversal-tip"')
     expect(describeZone({ areaId: null, name: 'The Riverbank', level: null }).route?.steps).toHaveLength(2)
     expect(describeZone({ areaId: 'UNKNOWN', name: 'The Riverbank', level: null }).route).toBeNull()
   })
@@ -178,8 +178,7 @@ describe('zone presentation', () => {
     const zone = { areaId: 'G1_4', name: null, level: 4 }
     const collapsed = renderToStaticMarkup(<Compact state={{ ...snapshot, zone }}/>)
     const expanded = renderToStaticMarkup(<Compact state={{ ...snapshot, zone, detailsExpanded: true }}/>)
-    expect(collapsed).toContain('aria-label="After the Red Vale"')
-    expect(collapsed).toContain('follow orange mushrooms')
+    expect(collapsed).not.toContain('After the Red Vale')
     expect(collapsed).toContain('Defeat the Brambleghast<span class="optional-reward">Skill Gem</span>')
     expect(collapsed).toContain('Kill Areagne at the witch hut<span class="optional-reward">Support Gem</span>')
     expect(expanded).toContain('Follow the orange mushrooms after freeing the Hooded One and reporting to Una')
@@ -201,7 +200,7 @@ describe('zone presentation', () => {
     expect(expanded).toContain(detour)
   })
   it.each([
-    ['G1_4', 'Tag its waypoint, then find the tree waypoint'],
+    ['G1_4', 'Tag its waypoint, then find the tree'],
     ['G1_11', 'Tag its waypoint, then return for Crowbell or Freythorn'],
     ['G1_12', 'Waypoint to the Farmlands if tagged'],
     ['G1_15', 'Tag the checkpoint. Use it after Candlemass'],
@@ -288,7 +287,7 @@ describe('zone presentation', () => {
   })
 })
 
-describe('permanent reward recap', () => {
+describe('act reward list', () => {
   it('counts the reward once even when multiple variants share the objective', () => {
     expect([1, 2, 3, 4].map(act => permanentRewards(act).length)).toEqual([5, 5, 6, 6])
     expect(permanentRewards(4).find(reward => reward.id === 'tribal-medicine:shark-fin')?.areas.map(area => area.id))
@@ -296,30 +295,25 @@ describe('permanent reward recap', () => {
     expect(permanentRewards(2).map(reward => reward.id)).not.toContain('ancient-vows:kabala-relic')
   })
 
-  it('highlights a nearby reward until the player chooses another', () => {
-    const rewards = permanentRewards(1)
-    expect(selectedReward(rewards, undefined, 'G1_12')?.id).toBe('G1_12:1')
-    expect(selectedReward(rewards, 'G1_11:1', 'G1_12')?.id).toBe('G1_11:1')
-    expect(selectedReward(rewards, 'missing', 'G1_12')?.id).toBe('G1_12:1')
-  })
-
-  it('uses the saved default checklist separately from named characters', () => {
+  it('lists every permanent reward with its location even if it was marked complete', () => {
     const state: Snapshot = {
       ...snapshot,
       zone: { areaId: 'G1_town', name: null, level: null },
-      detailsExpanded: true,
       rewardRecap: true,
       settings: { ...snapshot.settings, defaultCompleted: ['G1_2:1'], profiles: [
         { character: 'Exile', league: 'One', completed: [] },
       ] },
     }
-    const fallback = renderToStaticMarkup(<Compact state={state}/>)
-    expect(fallback).toContain('4 rewards left')
-    expect(fallback).not.toContain('Cold resistance')
-    expect(fallback).toContain('bloody tracks')
-    const named = renderToStaticMarkup(<Compact state={{ ...state, settings: { ...state.settings, activeProfile: 0 } }}/>)
-    expect(named).toContain('5 rewards left')
-    expect(named).toContain('Frostblood Ritual')
+    const markup = renderToStaticMarkup(<Compact state={state}/>)
+    for (const reward of permanentRewards(1)) {
+      expect(markup).toContain(reward.name)
+      expect(markup).toContain(reward.areas[0].name)
+      expect(markup).toContain(renderToStaticMarkup(<p>{reward.direction}</p>))
+    }
+    expect(markup).toContain('<footer class="compact-footer"><button type="button" class="act-rewards-toggle" data-reward-target="act-rewards"')
+    expect(markup).toContain('aria-expanded="true"')
+    expect(markup).not.toContain('type="checkbox"')
+    expect(markup).not.toContain('story-objective')
   })
 
   it('prioritizes Renly’s skill gem after the Riverbank and keeps the act-wide list on demand', () => {
@@ -515,7 +509,9 @@ describe('snapshot handoff', () => {
     expect(turnIn).not.toContain('Leave the encampment and enter Clearfell')
     expect(enter(5, 'G1_3')).toContain('Defeat the Devourer')
     expect(enter(6, 'G1_town')).toContain('Bring the girdles to Renly for the Runed Spikes')
-    expect(enter(7, 'G1_4')).toContain('Use the Runed Spikes at the Tree of Souls and free the Hooded One')
+    const treeReturn = enter(7, 'G1_4')
+    expect(treeReturn).toContain('Use the Runed Spikes at the Tree of Souls and free the Hooded One')
+    expect(treeReturn).toContain('<span class="traversal-instruction">Take the Grelwood waypoint, or follow the glowing roots back to the tree.</span>')
     accept({ ...snapshot, revision: 8, settings, activePath: 'Other Client.txt', zone: { areaId: 'G1_town', name: null, level: null } })
     expect(useSession.getState().storyStep).toBeUndefined()
   })

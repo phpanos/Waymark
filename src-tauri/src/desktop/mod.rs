@@ -1,6 +1,7 @@
 mod act_timer;
 mod discovery;
 mod drag;
+mod mobalytics;
 mod reward_click;
 mod settings;
 mod watcher;
@@ -29,15 +30,10 @@ use waymark_log::parser::Zone;
 const CHANNEL: &str = "waymark://state-v1";
 const REWARD_ACTION: &str = "waymark://reward-action";
 const ACT_TIMER_SHORTCUT: &str = "Alt+Shift+T";
-const REWARD_SHORTCUTS: [(&str, &str, &str); 6] = [
-    (
-        "Alt+Shift+R",
-        "recap",
-        "Switch between directions and rewards",
-    ),
-    ("Alt+Shift+N", "next", "Select next reward"),
-    ("Alt+Shift+D", "done", "Mark selected reward done"),
-    ("Alt+Shift+U", "undo", "Undo last reward change"),
+const TOWN_REWARD_SHORTCUTS: [(&str, &str, &str); 5] = [
+    ("Alt+Shift+N", "next", "Select next town reward"),
+    ("Alt+Shift+D", "done", "Mark town reward claimed"),
+    ("Alt+Shift+U", "undo", "Undo last town reward change"),
     ("Alt+Shift+P", "pin", "Pin reward for town"),
     ("Alt+Shift+X", "dismiss", "Dismiss pinned reward"),
 ];
@@ -331,8 +327,21 @@ fn toggle_details(app: &AppHandle) {
         if !state.visible {
             return false;
         }
-        state.details_expanded = !state.details_expanded;
-        state.reward_recap = false;
+        if state.reward_recap {
+            state.reward_recap = false;
+        } else {
+            state.details_expanded = !state.details_expanded;
+        }
+        true
+    });
+}
+
+fn toggle_act_rewards(app: &AppHandle, revision: u64) {
+    app.state::<Runtime>().mutate(app, Kind::Snapshot, |state| {
+        if !state.visible || state.revision != revision {
+            return false;
+        }
+        state.reward_recap = !state.reward_recap;
         true
     });
 }
@@ -522,17 +531,6 @@ fn set_town_reward(
 
 fn send_reward_action(app: &AppHandle, action: &str) {
     let runtime = app.state::<Runtime>();
-    if action == "recap" {
-        runtime.mutate(app, Kind::Snapshot, |state| {
-            if !state.visible {
-                return false;
-            }
-            state.reward_recap = !state.details_expanded || !state.reward_recap;
-            state.details_expanded = true;
-            true
-        });
-        return;
-    }
     let state = runtime.read();
     if state.visible {
         if let Err(error) = app.emit(REWARD_ACTION, action) {
@@ -603,6 +601,7 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .invoke_handler(tauri::generate_handler![
+            mobalytics::import_mobalytics_guide,
             snapshot,
             set_placement,
             pick_log,
@@ -632,7 +631,7 @@ pub fn run() {
                         true
                     });
             }
-            for (shortcut, action, _) in REWARD_SHORTCUTS {
+            for (shortcut, action, _) in TOWN_REWARD_SHORTCUTS {
                 if let Err(error) =
                     app.global_shortcut()
                         .on_shortcut(shortcut, move |app, _, event| {
@@ -644,7 +643,7 @@ pub fn run() {
                     report_notice(
                         app.handle(),
                         format!(
-                            "{shortcut} unavailable ({error}). Use the Campaign rewards tray menu."
+                            "{shortcut} unavailable ({error}). Use the Town rewards tray menu."
                         ),
                     );
                 }
@@ -673,8 +672,8 @@ pub fn run() {
                     format!("Alt-drag unavailable ({e}). Use the Position settings."),
                 );
             }
-            let mut rewards = SubmenuBuilder::new(app, "Campaign rewards");
-            for (_, action, label) in REWARD_SHORTCUTS {
+            let mut rewards = SubmenuBuilder::new(app, "Town rewards");
+            for (_, action, label) in TOWN_REWARD_SHORTCUTS {
                 rewards = rewards.text(action, label);
             }
             let menu = MenuBuilder::new(app)
@@ -698,7 +697,7 @@ pub fn run() {
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
                     "act-timer" => toggle_timer_with_notice(app, None),
-                    action @ ("recap" | "next" | "done" | "undo" | "pin" | "dismiss") => {
+                    action @ ("next" | "done" | "undo" | "pin" | "dismiss") => {
                         send_reward_action(app, action)
                     }
                     "quit" => app.exit(0),

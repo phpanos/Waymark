@@ -142,13 +142,19 @@ impl Input {
             let pressed = self.target_pressed.take().unwrap().2;
             if activate {
                 let handle = self.app.clone();
-                let _ = self.app.run_on_main_thread(move || {
-                    if pressed.id.as_deref() == Some(reward_click::ACT_TIMER_TARGET) {
-                        super::toggle_timer_with_notice(&handle, Some(pressed.revision));
-                    } else {
-                        let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
-                    }
-                });
+                let _ = self
+                    .app
+                    .run_on_main_thread(move || match pressed.id.as_deref() {
+                        Some(reward_click::ACT_TIMER_TARGET) => {
+                            super::toggle_timer_with_notice(&handle, Some(pressed.revision));
+                        }
+                        Some(reward_click::ACT_REWARDS_TARGET) => {
+                            super::toggle_act_rewards(&handle, pressed.revision);
+                        }
+                        _ => {
+                            let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                        }
+                    });
             }
             return true;
         }

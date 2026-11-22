@@ -339,9 +339,7 @@ try {
                 if ($LASTEXITCODE -ne 0) { throw "Campaign route did not show $($step.View)." }
             }
         }
-        # The recap shortcut expands the panel, and switching back leaves directions expanded.
-        Invoke-RewardShortcut 0x52 # R
-        Invoke-RewardShortcut 0x52 # R
+        Invoke-AltHeaderClick $hwnd
         node $check $profile $log overlay $launch
         if ($LASTEXITCODE -ne 0) { throw "Rendered overlay check failed on launch $launch." }
         if ($launch -eq 1) {
@@ -359,33 +357,12 @@ try {
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details reopened
             if ($LASTEXITCODE -ne 0) { throw 'The overlay did not expand again after Alt-click.' }
-            Invoke-RewardShortcut 0x52 # R
+            Invoke-RewardControlClick $hwnd $check $profile $log toggle-point rewards -Alt
             node $check $profile $log rewards opened
-            if ($LASTEXITCODE -ne 0) { throw 'Reward recap shortcut failed.' }
-            Invoke-RewardShortcut 0x4E # N
-            node $check $profile $log rewards selected
-            if ($LASTEXITCODE -ne 0) { throw 'Reward selection shortcut failed.' }
-            Invoke-RewardShortcut 0x44 # D
-            node $check $profile $log rewards completed
-            if ($LASTEXITCODE -ne 0) { throw 'Reward completion shortcut failed.' }
-            if ('G1_11:1' -notin (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
-                throw 'Reward completion was not saved.'
-            }
-            Invoke-RewardShortcut 0x55 # U
-            node $check $profile $log rewards undone
-            if ($LASTEXITCODE -ne 0) { throw 'Reward undo shortcut failed.' }
-            if ('G1_11:1' -in (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
-                throw 'Undo did not restore the saved reward.'
-            }
-            Invoke-RewardControlClick $hwnd $check $profile $log 'checkbox-point'
-            node $check $profile $log rewards completed
-            if ($LASTEXITCODE -ne 0) { throw 'Clicking the reward checkbox did not mark it done.' }
-            Invoke-RewardControlClick $hwnd $check $profile $log 'undo-point'
-            node $check $profile $log rewards undone
-            if ($LASTEXITCODE -ne 0) { throw 'Clicking Undo did not restore the reward.' }
-            if ('G1_11:1' -in (Get-Content $settingsFile -Raw | ConvertFrom-Json).profiles[0].completed) {
-                throw 'Clicking Undo did not persist the restored reward.'
-            }
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not open the act reward list.' }
+            Invoke-RewardControlClick $hwnd $check $profile $log toggle-point rewards -Alt
+            node $check $profile $log rewards closed
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not restore the expanded directions.' }
             Assert-PassiveOverlay $hwnd
             Invoke-AltHeaderClick $hwnd
             node $check $profile $log details collapsed

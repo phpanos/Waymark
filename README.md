@@ -66,11 +66,11 @@ To start or stop the act timer, **Alt+click** the time in the overlay, press **A
 
 The Waterways and island directions also use the [0.5.5 campaign walkthrough](https://pathofexile.gg/campaign/), the [0.5.5 Act 3 route](https://worstguidesever.com/poe2-act-3-campaign-guide/), and the [0.5.5 Act 4 guide](https://domistae.github.io/poe2-leveling/poe2_act4_guide.html).
 
-The overlay shows how many permanent rewards remain in the current act. Use **Alt+Shift+R** to open the recap or return to the current objective. Click a checkbox to mark a reward done, and click **Undo** to restore the last completion in the current session. The recap shows the rewards, their zones, and directions to the highlighted reward. **Alt+Shift+N** selects the next reward, **Alt+Shift+D** marks it done, and **Alt+Shift+U** undoes the last completion. The **Campaign rewards** tray menu offers the same keyboard actions.
-
-Quick completion updates the same checklist as Settings. It uses the selected character and league, or saves to a separate default checklist when no character is selected.
+**Alt+click Rewards** in the overlay footer to see the current act’s permanent rewards, their zones, and where to find them. Alt+click the button again to return to your objective. The **Town rewards** tray menu and **Settings → Controls** list the actions for pinned quest rewards.
 
 ## Build-aware leveling
+
+Paste a public Mobalytics PoE 2 build link into **Settings → Build → Mobalytics build link** and choose **Import guide**. Waymark reads the guide’s leveling variants and gem priority from the page. It switches variants based on the guide’s level labels, or you can select one in **Gem variant**. The overlay shows the next planned gem and support. Click **Mark cut** when you have the gem, and use **Undo last cut** in Build settings if you need to correct it. Reimport the link to refresh the guide.
 
 Open **Settings → Build** and choose a local PoE 2 `.build` export. If the guide offers multiple leveling stages, import the files together and select the stage you want. Waymark shows skills, supports, passive recommendations and gear notes for the selected level. **Preview level** shows the next level with new guidance. Imported files and level preferences are stored locally. [Build Planner format](https://www.pathofexile.com/developer/docs/game#buildplanner), [Path of Building export](https://github.com/PathOfBuildingCommunity/PathOfBuilding-PoE2/blob/dev/src/Classes/ImportTab.lua), [Mobalytics exports](https://mobalytics.gg/poe-2/guides/build-files).
 

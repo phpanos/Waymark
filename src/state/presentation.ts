@@ -110,7 +110,7 @@ export function reachedClearfell(settings: Snapshot['settings']) {
   return settings.activeProfile === null ? settings.defaultReachedClearfell : activeProfile(settings)?.reachedClearfell
 }
 
-export type StoryStep = { areaId: string; objective?: string; index: number }
+export type StoryStep = { areaId: string; objective?: string; travelTip?: string; index: number }
 export const storyRoute: readonly StoryStep[] = storySteps.map((step, index) => ({
   ...(typeof step === 'string' ? { areaId: step } : step), index,
 }))
