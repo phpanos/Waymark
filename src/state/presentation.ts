@@ -185,7 +185,7 @@ export function describeLiveZone(state: Snapshot, previousZone: Zone | null, tra
   const previousAreaId = previousZone?.areaId ?? describeZone(previousZone).areaId
   const zone = describeZone(state.zone, previousAreaId, townRewardProgress(state.settings), reachedClearfell(state.settings))
   const storyStep = trackedStep ?? storyVisit(zone.areaId, previousAreaId)
-  const contextual = !!storyStep?.objective && repeatedStoryAreas.has(storyStep.areaId) &&
+  const contextual = !!storyStep?.objective && repeatedStoryAreas.has(storyStep.areaId) && !zone.route?.diagram &&
     zone.objective !== zone.arrivalReward?.objective
   return { ...(contextual ? applyStoryStep(zone, storyStep) : zone), previousAreaId, storyStep, contextual }
 }

@@ -73,14 +73,20 @@ describe('zone presentation', () => {
   it('keeps the Cemetery cue visible and shows the two tomb branches only in expanded directions', () => {
     const state: Snapshot = { ...snapshot, zone: { areaId: 'G1_7', name: null, level: 9 } }
     const collapsed = renderToStaticMarkup(<Compact state={state}/>)
-    expect(collapsed).toContain('Sweep the edges for both tombs')
+    expect(collapsed).toContain('Circle the edge and watch for checkpoints on the minimap.')
+    expect(collapsed).toContain('Clear whichever tomb you find first.')
     expect(collapsed).not.toContain('route-diagram')
     const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
     expect(expanded).toContain('Clear either tomb first')
     expect(expanded).toContain('Draven · 1 key piece')
     expect(expanded).toContain('Asinia · 1 key piece')
     expect(expanded).toContain('Bring both key pieces to Lachlann')
-    expect(expanded).toContain('activate the checkpoints at both tomb entrances')
+    expect(expanded).toContain('fenced grass with trees and tombstones')
+    expect(expanded).toContain('Activate the checkpoint at each tomb entrance as you find it.')
+    for (const areaId of ['G1_8', 'G1_9']) {
+      const returning = renderToStaticMarkup(<Compact state={state} previousZone={{ areaId, name: null, level: 8 }}/>)
+      expect(returning).toContain('Recover both keys and confront Lachlann')
+    }
     expect(renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true, status: 'missing' }}/>))
       .not.toContain('route-diagram')
   })

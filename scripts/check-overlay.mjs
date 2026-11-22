@@ -150,7 +150,7 @@ try {
     })()`))
   } else if (view === 'diagram') {
     if (argument === 'collapsed') {
-      await expectText('Sweep the edges for both tombs. Check the middle if needed.', '.quick-route li:first-child')
+      await expectText('Circle the edge and watch for checkpoints on the minimap.', '.quick-route li:first-child')
       await waitFor('the collapsed details control', () => evaluate('!!document.querySelector(".details-gesture[data-expanded=false]")'))
       await waitFor('the route cue without the diagram at the collapsed window size', () => evaluate(`(() => {
         const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
@@ -162,7 +162,7 @@ try {
       await expectText('Draven · 1 key piece', '.route-diagram li:first-child span')
       await expectText('Asinia · 1 key piece', '.route-diagram li:last-child span')
       await expectText('Bring both key pieces to Lachlann', '.route-diagram-destination span')
-      await expectText('Locate and activate the checkpoints at both tomb entrances before clearing the tombs. Use the cemetery\'s checkpoint travel to get to the other entrance when you return with a key piece.', '.zone-shortcut p')
+      await expectText('Activate the checkpoint at each tomb entrance as you find it. If both are active, use checkpoint travel to reach the other entrance after your first key.', '.zone-shortcut p')
       await waitFor('both branches and the destination to fit in the overlay', () => evaluate(`(() => {
         const panel = document.querySelector('.compact').getBoundingClientRect()
         const [left, right, gate] = [...document.querySelectorAll('.route-diagram li, .route-diagram-destination')]

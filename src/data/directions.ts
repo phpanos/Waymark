@@ -68,14 +68,20 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
     ["forward", "Pass as soon as Una opens the roots.", "Main path"],
     ["follow", "Head away from the entrance. Backtrack at dead ends.", "Cemetery of the Eternals"],
   ] },
-  G1_7: { origin: "Cemetery entrance", legs: [
-    ["loop", "Sweep the edges for both tombs. Check the middle if needed.", "The two tomb doors"],
-    ["follow", "Tag both tomb checkpoints. Clear either tomb first.", "Draven and Asinia"],
-    ["back", "Bring both keys to Lachlann at the Memorial Gate.", "Memorial Gate"],
+  G1_7: { origin: "Cemetery entrance", quickSteps: [
+    "Circle the edge and watch for checkpoints on the minimap.",
+    "Look near open alcoves along the edge for Draven’s mausoleum.",
+    "Look for Asinia’s tomb in edge alcoves or by a fenced graveyard near the middle.",
+    "Clear whichever tomb you find first. Bring both keys to Lachlann.",
+  ], legs: [
+    ["loop", "Circle the perimeter with the wall just in view. Watch for checkpoint icons.", "Cemetery edges"],
+    ["follow", "Check open alcoves along the edge and paths just inside it.", "Mausoleum of the Praetor"],
+    ["inward", "Check edge alcoves first. If needed, look near fenced grass with trees and tombstones toward the middle.", "Tomb of the Consort"],
+    ["back", "Clear either tomb first. With both keys, return to Lachlann by the waypoint.", "Memorial Gate"],
   ] },
   G1_8: { origin: "Mausoleum entrance", legs: [
-    ["across", "Cross the wheel tile. Check the far corner.", "Draven"],
-    ["follow", "If empty, follow the short wall to its other corner.", "Ribbed arena edge"],
+    ["across", "Find the round room with four exits in the middle. Cross it toward the far corner from the entrance.", "Wheel room"],
+    ["follow", "If the far corner is empty, check the long wall in line with the entrance. Look for a ribbed arena edge.", "Draven’s arena"],
   ] },
   G1_9: { origin: "Tomb entrance", quickSteps: [
     "Start along the wall beside the small alcove at the entrance.",
