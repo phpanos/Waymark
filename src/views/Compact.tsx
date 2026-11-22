@@ -28,6 +28,7 @@ function RouteDiagram({ diagram }: { diagram: NonNullable<Route['diagram']> }) {
     <ul className="route-diagram-branches" role="list">
       {diagram.branches.map(branch => <li key={branch.landmark}>
         <strong>{branch.landmark}</strong><span>{branch.detail}</span>
+        <p className="route-diagram-cue">{branch.cue}</p>
       </li>)}
     </ul>
     <p className="route-diagram-destination">
@@ -224,7 +225,7 @@ export function Compact({ state, previousZone = null, storyStep }: {
         {expanded && !recap.showRecap && milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
         {expanded && (hasDirections || recap.showRecap || recap.available) && <section className="overlay-details" aria-label="Objective details">
           {recap.showRecap ? <RewardRecap act={zone.act} recap={recap}/> : <>
-            {direction && <DirectionDiagram guide={direction}/>}
+            {direction && !route?.diagram && <DirectionDiagram guide={direction}/>}
             {shortcut && <aside className="zone-shortcut"><h2>Shortcut</h2><p>{shortcut.detail}</p></aside>}
             {hasDiagram && navigation ? <AreaOverview navigation={navigation} fork={route?.diagram}>
               {optionalObjectives}

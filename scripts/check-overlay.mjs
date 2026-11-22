@@ -166,8 +166,9 @@ try {
       await expectText('Asinia · 1 key piece', '.route-diagram li:last-child span')
       await expectText('Bring both key pieces to Lachlann', '.route-diagram-destination span')
       await expectText('Activate the checkpoint at each tomb entrance as you find it. If both are active, use checkpoint travel to reach the other entrance after your first key.', '.zone-shortcut p')
-      await waitFor('expanded directions to use 15px text', () => evaluate(`
-        getComputedStyle(document.querySelector('.direction-legs li p')).fontSize === '15px'
+      await expectText('Check edge alcoves, then look for fenced grass with trees and tombstones near the middle.', '.route-diagram li:last-child .route-diagram-cue')
+      await waitFor('expanded Cemetery cues to use 15px text', () => evaluate(`
+        getComputedStyle(document.querySelector('.route-diagram-cue')).fontSize === '15px'
       `))
       await waitFor('both branches and the destination to fit in the overlay', () => evaluate(`(() => {
         const panel = document.querySelector('.compact').getBoundingClientRect()
