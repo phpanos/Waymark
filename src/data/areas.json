@@ -87,7 +87,7 @@
   },
   { "id": "G1_9", "name": "Tomb of the Consort", "act": 1, "bosses": ["Asinia, the Praetor's Consort"], "objective": "Defeat Asinia and take her key piece",
     "optional": [
-      { "id": "G1_9:1", "compactReward": "Support Gem", "hint": "Search the Embattled Trove", "loot": "Uncut Support Gem from the Haunted Treasure" }
+      { "id": "G1_9:1", "compactReward": "Support Gem", "hint": "Defeat the rare guard at the Embattled Trove", "loot": "Level 1 Uncut Support Gem from the rare guard" }
     ]
   },
   { "id": "G1_10", "name": "Root Hollow", "act": 1, "bosses": ["The Rotten Druid"],

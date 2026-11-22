@@ -176,9 +176,9 @@ try {
           ['G1_1', 'The Riverbank', 'Clearfell Encampment', false],
           ['G1_town', 'Clearfell Encampment', 'Clearfell', true],
           ['G1_2', 'Clearfell', 'The Grelwood', true],
-          ['G2_town', 'The Ardura Caravan', 'The Halani Gates', true],
+          ['G2_town', 'The Ardura Caravan', 'Mastodon Badlands', true],
           ['G3_9', 'The Molten Vault', 'The Drowned City', true],
-          ['G4_town', 'Kingsmarch', 'Isle of Kin', true],
+          ['G4_town', 'Kingsmarch', 'Arastas', true],
         ]) {
           await appendFile(log, `Generating level 40 area "${area}"\r\n`)
           await expectText(title, '.zone-block h1')

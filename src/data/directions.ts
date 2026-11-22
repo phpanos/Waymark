@@ -77,8 +77,13 @@ export const directionsByArea: Readonly<Partial<Record<string, DirectionGuide>>>
     ["across", "Cross the wheel tile. Check the far corner.", "Draven"],
     ["follow", "If empty, follow the short wall to its other corner.", "Ribbed arena edge"],
   ] },
-  G1_9: { origin: "Tomb entrance", legs: [
-    ["follow", "Check both branches for Asinia and the support gem encounter.", "Asinia"],
+  G1_9: { origin: "Tomb entrance", quickSteps: [
+    "Start along the wall beside the small alcove at the entrance.",
+    "Look for a rectangular room with a pit. If the wall route misses it, check the central corridors.",
+  ], legs: [
+    ["follow", "Follow the wall beside the small entrance alcove first.", "Asinia’s arena"],
+    ["inward", "If the wall route misses it, search the central corridors toward the top of the minimap. Look for a rectangular chamber with a pit.", "Heart of the Tomb"],
+    ["back", "Take Asinia’s key piece back to the cemetery.", "Cemetery of the Eternals"],
   ] },
   G1_11: { origin: "Hunting Grounds entrance", legs: [
     ["loop", "Hug either wall for the exit and optional encounters.", "Signpost"],
