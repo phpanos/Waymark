@@ -1,9 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderToStaticMarkup } from 'react-dom/server'
+import Build from '../views/Build'
 import { Compact } from '../views/Compact'
 import type { Snapshot } from '../native/contract'
 import { adjacentStoryObjectives, campaignAreas, describeStoryStep, describeZone, searchCampaign, storyRoute, townRewards } from './presentation'
 import { permanentRewards } from './rewards'
+import { buildGemPriority, loadBuilds, saveBuilds, setGemCut } from './build-storage'
 import { useSession } from './session'
 
 const snapshot: Snapshot = {
@@ -11,6 +13,39 @@ const snapshot: Snapshot = {
   activePath: null, characterLevel: null, visible: true, detailsExpanded: false, rewardRecap: false, anchored: false, logError: null, windowError: null, notices: [], replaySession: 0,
   settings: { logPath: null, placement: { corner: 'topRight', insetX: 20, insetY: 20, followGame: true }, leagueStart: false, profiles: [], activeProfile: null, defaultCompleted: [] },
 }
+
+it('lets mid-campaign imports record any gem without advancing past earlier unowned gems', () => {
+  const storage = new Map<string, string>()
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => storage.get(key) ?? null,
+    setItem: (key: string, value: string) => storage.set(key, value),
+  })
+  try {
+    const filename = 'https://mobalytics.gg/poe-2/builds/leveling'
+    saveBuilds({
+      active: filename, levels: {}, gemCuts: {},
+      stages: [{ filename, source: '', gemGuide: {
+        name: 'Leveling guide',
+        variants: [{ label: 'lvl 1-30', skills: ['Starter skill', 'Utility skill'],
+          supports: [['Shared support', 'Starter skill'], ['Shared support', 'Utility skill']] }],
+      } }],
+    })
+    const priority = buildGemPriority(snapshot, loadBuilds())!
+    const [first, second] = priority.all.supports
+    setGemCut(snapshot, priority.scope, second.id, true)
+    expect(buildGemPriority(snapshot, loadBuilds())?.supports).toEqual([first])
+    const markup = renderToStaticMarkup(<Build state={snapshot} run={() => {}}/>)
+    expect(markup).toContain('Check the gems you already have.')
+    expect(markup).toContain('Shared support<small> for Starter skill</small>')
+    expect(markup).toContain('checked=""/><span>Shared support<small> for Utility skill</small>')
+    setGemCut(snapshot, priority.scope, first.id, true)
+    expect(buildGemPriority(snapshot, loadBuilds())?.supports).toEqual([])
+    setGemCut(snapshot, priority.scope, second.id, false)
+    expect(buildGemPriority(snapshot, loadBuilds())?.supports).toEqual([second])
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})
 
 describe('zone presentation', () => {
   it('resolves the reference area and scene-only records', () => {

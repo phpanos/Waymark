@@ -225,7 +225,7 @@ export function Compact({ state, previousZone = null, storyStep }: {
           {town.sourcePinned ? <span>Pinned for {town.source.townName}</span>
             : <span>Pin for {town.source.townName} · {town.source.reward}</span>}
         </p>}
-        {gemPriority && <GemPriority gem={gemPriority.gems[0]} support={gemPriority.supports[0]} onCut={build.cutGem} overlay/>}
+        {gemPriority && <GemPriority gem={gemPriority.gems[0]} support={gemPriority.supports[0]} onCut={build.cutGem}/>}
         {expanded && milestone && <Suspense fallback={null}><BuildMilestoneRow milestone={milestone} expanded={expanded}/></Suspense>}
         {expanded && hasDirections && <section className="overlay-details" aria-label="Objective details">
           {direction && !route?.diagram && <DirectionDiagram guide={direction}/>}
