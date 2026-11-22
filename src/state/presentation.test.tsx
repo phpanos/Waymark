@@ -245,6 +245,16 @@ describe('zone presentation', () => {
     const steps = markup.match(/<ol class="quick-route"[^>]*>(.*?)<\/ol>/)?.[1]
     expect(steps).toContain(cue)
   })
+  it('gives Asinia’s arena landmarks and shows the Embattled Trove as optional', () => {
+    const state = { ...snapshot, zone: { areaId: 'G1_9', name: null, level: 8 } }
+    const compact = renderToStaticMarkup(<Compact state={state}/>)
+    const expanded = renderToStaticMarkup(<Compact state={{ ...state, detailsExpanded: true }}/>)
+    expect(compact).toContain('Start along the wall beside the small alcove at the entrance.')
+    expect(compact).toContain('Look for a rectangular room with a pit.')
+    expect(expanded).toContain('Heart of the Tomb')
+    expect(expanded).toContain('Defeat the rare guard at the Embattled Trove')
+    expect(expanded).toContain('Level 1 Uncut Support Gem from the rare guard')
+  })
   it('shows the portal after collecting the girdle and keeps longer instructions in details', () => {
     const state = { ...snapshot, zone: { areaId: 'G1_5', name: null, level: 5 } }
     const compact = renderToStaticMarkup(<Compact state={state}/>)
