@@ -75,10 +75,11 @@
       ],
       "destination": { "landmark": "Memorial Gate", "detail": "Bring both key pieces to Lachlann" }
     }, "steps": [
-      { "landmark": "Cemetery edges", "detail": "Look for the Mausoleum of the Praetor and the Tomb of the Consort along the perimeter. You can clear them in either order." },
-      { "landmark": "Memorial Gate", "detail": "After you have both key pieces, return to Lachlann to open the gate." }
+      { "landmark": "Mausoleum of the Praetor", "detail": "Look in an open alcove on the edge or just inside the perimeter." },
+      { "landmark": "Tomb of the Consort", "detail": "Look in edge alcoves, then near the fenced grass and tombstones toward the middle." },
+      { "landmark": "Memorial Gate", "detail": "Clear the first tomb you find. Once you have both key pieces, return to Lachlann near the waypoint." }
     ] },
-    "shortcut": { "cue": "Activate both tomb entrance checkpoints", "detail": "Locate and activate the checkpoints at both tomb entrances before clearing the tombs. Use the cemetery's checkpoint travel to get to the other entrance when you return with a key piece." }
+    "shortcut": { "cue": "Activate tomb entrance checkpoints", "detail": "Activate the checkpoint at each tomb entrance as you find it. If both are active, use checkpoint travel to reach the other entrance after your first key." }
   },
   { "id": "G1_8", "name": "Mausoleum of the Praetor", "act": 1, "bosses": ["Draven, the Eternal Praetor"], "objective": "Defeat Draven and take his key piece",
     "optional": [
