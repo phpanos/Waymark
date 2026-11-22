@@ -66,7 +66,7 @@ export function Compact({ state, previousZone = null }: { state: Snapshot; previ
     const card = panel.current
     const body = content.current
     if (!card || !body) return
-    const controls = [...card.querySelectorAll<HTMLElement>('[data-reward-target]:enabled')]
+    const controls = [...card.querySelectorAll<HTMLElement>('[data-reward-target]:not(:disabled)')]
     const measure = () => {
       const height = Math.ceil(body.getBoundingClientRect().height) + 6
       if (height !== lastHeight.current) {

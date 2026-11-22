@@ -92,21 +92,24 @@ impl Runtime {
     fn read(&self) -> Snapshot {
         self.snapshot.lock().unwrap().clone()
     }
-    fn reward_click_at(
+    fn overlay_target_at(
         &self,
         rect: windows_sys::Win32::Foundation::RECT,
         dpi: u32,
         point: (i32, i32),
+        alt: bool,
     ) -> Option<RewardClick> {
         let state = self.snapshot.try_lock().ok()?;
-        if !state.visible || state.status != Status::Watching || state.replay_session != 0 {
+        if !state.visible
+            || (!alt && (state.status != Status::Watching || state.replay_session != 0))
+        {
             return None;
         }
         let targets = self.reward_targets.try_lock().ok()?;
         if targets.revision != state.revision {
             return None;
         }
-        targets.hit(rect, dpi, point)
+        targets.hit(rect, dpi, point, alt)
     }
     fn mutate(&self, app: &AppHandle, kind: Kind, f: impl FnOnce(&mut Snapshot) -> bool) {
         self.update(app, |state| f(state).then_some(kind));
@@ -245,8 +248,15 @@ fn set_reward_targets(
 
 #[tauri::command]
 fn toggle_act_timer(app: AppHandle, state: State<'_, Runtime>) -> Result<(), String> {
+    update_act_timer(&app, &state, None)
+}
+
+fn update_act_timer(app: &AppHandle, state: &Runtime, revision: Option<u64>) -> Result<(), String> {
     state
-        .try_edit_with_snapshot(&app, |snapshot, settings| {
+        .try_edit_with_snapshot(app, |snapshot, settings| {
+            if revision.is_some_and(|revision| !snapshot.visible || revision != snapshot.revision) {
+                return Ok(());
+            }
             let act = if snapshot.status == Status::Watching && snapshot.replay_session == 0 {
                 snapshot.zone.as_ref().and_then(act_timer::act_for_zone)
             } else {
@@ -260,8 +270,8 @@ fn toggle_act_timer(app: AppHandle, state: State<'_, Runtime>) -> Result<(), Str
         .map(|_| ())
 }
 
-fn toggle_timer_from_shortcut(app: &AppHandle) {
-    if let Err(error) = toggle_act_timer(app.clone(), app.state::<Runtime>()) {
+fn toggle_timer_with_notice(app: &AppHandle, revision: Option<u64>) {
+    if let Err(error) = update_act_timer(app, &app.state::<Runtime>(), revision) {
         report_notice(app, error);
     }
 }
@@ -643,7 +653,7 @@ pub fn run() {
                 app.global_shortcut()
                     .on_shortcut(ACT_TIMER_SHORTCUT, |app, _, event| {
                         if event.state == ShortcutState::Pressed {
-                            toggle_timer_from_shortcut(app);
+                            toggle_timer_with_notice(app, None);
                         }
                     })
             {
@@ -687,7 +697,7 @@ pub fn run() {
                     }
                     "toggle" => toggle(app),
                     "details" => toggle_details(app),
-                    "act-timer" => toggle_timer_from_shortcut(app),
+                    "act-timer" => toggle_timer_with_notice(app, None),
                     action @ ("recap" | "next" | "done" | "undo" | "pin" | "dismiss") => {
                         send_reward_action(app, action)
                     }

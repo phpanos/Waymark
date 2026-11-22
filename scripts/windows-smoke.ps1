@@ -120,7 +120,7 @@ function Invoke-RewardShortcut([byte]$Key) {
     }
 }
 
-function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View = 'rewards') {
+function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View = 'rewards', [switch]$Alt) {
     $output = node $Check $Profile $Log $View $Target
     if ($LASTEXITCODE -ne 0) { throw "Could not locate the reward control $Target." }
     $point = $output | Where-Object { $_ -match '^Reward control point \d+ \d+$' } | Select-Object -Last 1
@@ -133,10 +133,15 @@ function Invoke-RewardControlClick($Hwnd, $Check, $Profile, $Log, $Target, $View
         if (![OverlayCheck]::SetPhysicalCursorPos(($bounds.Left + [int]$parts[3]), ($bounds.Top + [int]$parts[4]))) {
             throw 'Could not position the pointer over the reward control.'
         }
+        if ($Alt) {
+            [OverlayCheck]::Alt($true)
+            Start-Sleep -Milliseconds 70
+        }
         [OverlayCheck]::PrimaryButton($true)
         Start-Sleep -Milliseconds 70
     } finally {
         [OverlayCheck]::PrimaryButton($false)
+        if ($Alt) { [OverlayCheck]::Alt($false) }
         [void][OverlayCheck]::SetPhysicalCursorPos($cursor.X, $cursor.Y)
     }
 }
@@ -426,9 +431,11 @@ try {
             if ($LASTEXITCODE -ne 0) { throw 'The Cemetery diagram did not close with Alt-click.' }
             node $check $profile $log quick-route
             if ($LASTEXITCODE -ne 0) { throw 'The compact route did not show the ordered portal steps.' }
-            Invoke-RewardShortcut 0x54 # T
+            Invoke-RewardControlClick $hwnd $check $profile $log click-point timer -Alt
             node $check $profile $log timer running-one
-            if ($LASTEXITCODE -ne 0) { throw 'The Act 1 timer did not start.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not start the Act 1 timer.' }
+            node $check $profile $log diagram collapsed
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click on the timer opened objective details.' }
             node $check $profile $log replay start
             if ($LASTEXITCODE -ne 0) { throw 'The diagnostics fixture did not start.' }
             [IO.File]::AppendAllText($log, "Generating level 16 area `"G2_1`"`r`n", $utf8)
@@ -448,9 +455,9 @@ try {
             [IO.File]::AppendAllText($log, "Generating level 2 area `"G1_2`"`r`n", $utf8)
             node $check $profile $log timer backtracked
             if ($LASTEXITCODE -ne 0) { throw 'Backtracking moved the timer to an earlier act.' }
-            Invoke-RewardShortcut 0x54 # T
+            Invoke-RewardControlClick $hwnd $check $profile $log click-point timer -Alt
             node $check $profile $log timer stopped-two
-            if ($LASTEXITCODE -ne 0) { throw 'The Act 2 timer did not stop.' }
+            if ($LASTEXITCODE -ne 0) { throw 'Alt-click did not stop the Act 2 timer.' }
 
             # Launch the same executable while the original instance owns the overlay.
             $settingsHwnd = [OverlayCheck]::FindWindow([NullString]::Value, 'Waymark settings')

@@ -50,7 +50,7 @@ struct Input {
     hook: HHOOK,
     timer: usize,
     gesture: Option<Gesture>,
-    reward_pressed: Option<(u32, reward_click::RewardClick)>,
+    target_pressed: Option<(u32, bool, reward_click::RewardClick)>,
 }
 
 pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
@@ -69,7 +69,7 @@ pub(super) fn install(app: AppHandle, hwnd: isize) -> io::Result<()> {
             hook,
             timer: 0,
             gesture: None,
-            reward_pressed: None,
+            target_pressed: None,
         });
     });
     Ok(())
@@ -134,16 +134,20 @@ unsafe extern "system" fn mouse_hook(code: i32, message: usize, data: isize) -> 
 
 impl Input {
     fn on_mouse(&mut self, message: u32, cursor: Point) -> bool {
-        if let Some((button_up, target)) = &self.reward_pressed {
+        if let Some((button_up, alt, target)) = &self.target_pressed {
             if message != *button_up {
                 return false;
             }
-            let activate = self.reward_at(cursor).as_ref() == Some(target);
-            let pressed = self.reward_pressed.take().unwrap().1;
+            let activate = self.target_at(cursor, *alt).as_ref() == Some(target);
+            let pressed = self.target_pressed.take().unwrap().2;
             if activate {
                 let handle = self.app.clone();
                 let _ = self.app.run_on_main_thread(move || {
-                    let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                    if pressed.id.as_deref() == Some(reward_click::ACT_TIMER_TARGET) {
+                        super::toggle_timer_with_notice(&handle, Some(pressed.revision));
+                    } else {
+                        let _ = handle.emit_to("overlay", reward_click::CHANNEL, pressed);
+                    }
                 });
             }
             return true;
@@ -167,11 +171,12 @@ impl Input {
         if message != button_down {
             return false;
         }
-        if unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } >= 0 {
-            if let Some(target) = self.reward_at(cursor) {
-                self.reward_pressed = Some((button_up, target));
-                return true;
-            }
+        let alt = unsafe { GetAsyncKeyState(i32::from(VK_MENU)) } < 0;
+        if let Some(target) = self.target_at(cursor, alt) {
+            self.target_pressed = Some((button_up, alt, target));
+            return true;
+        }
+        if !alt {
             return false;
         }
 
@@ -213,15 +218,18 @@ impl Input {
         true
     }
 
-    fn reward_at(&self, point: Point) -> Option<reward_click::RewardClick> {
+    fn target_at(&self, point: Point, alt: bool) -> Option<reward_click::RewardClick> {
         let hwnd = self.hwnd as HWND;
         let mut rect = RECT::default();
         if unsafe { IsWindowVisible(hwnd) == 0 || GetWindowRect(hwnd, &mut rect) == 0 } {
             return None;
         }
-        self.app
-            .state::<Runtime>()
-            .reward_click_at(rect, unsafe { GetDpiForWindow(hwnd) }, point)
+        self.app.state::<Runtime>().overlay_target_at(
+            rect,
+            unsafe { GetDpiForWindow(hwnd) },
+            point,
+            alt,
+        )
     }
 }
 

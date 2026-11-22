@@ -62,7 +62,7 @@ The quick directions for Acts 1–4 also draw on Keyson’s wall-following, junc
 
 Use the arrows beside the zone name to browse Waymark’s suggested story route, including town turn-ins and return visits. The guide uses one itinerary for branches you can visit in different orders, such as the Act 4 islands. Select **Live** to return to the detected zone. [Act 2 itinerary](https://www.definitivguide.com/docs/PoE2/Act%202/overview) · [Campaign walkthrough](https://pathofexile.gg/campaign/)
 
-Press **Alt+Shift+T** to start or stop the act timer, or use **Settings → Act timer**. When Waymark detects a later act, it saves the previous act’s time and resets the clock for the new act. A running timer continues into the new act and through app restarts. Switching campaign profiles stops the previous profile’s clock. See **Settings → Act timer** for the active profile’s saved times.
+To start or stop the act timer, **Alt+click** the time in the overlay, press **Alt+Shift+T**, or use **Settings → Act timer**. When Waymark detects a later act, it saves the previous act’s time and resets the clock for the new act. A running timer continues into the new act and through app restarts. Switching campaign profiles stops the previous profile’s clock. See **Settings → Act timer** for the active profile’s saved times.
 
 The Waterways and island directions also use the [0.5.5 campaign walkthrough](https://pathofexile.gg/campaign/), the [0.5.5 Act 3 route](https://worstguidesever.com/poe2-act-3-campaign-guide/), and the [0.5.5 Act 4 guide](https://domistae.github.io/poe2-leveling/poe2_act4_guide.html).
 

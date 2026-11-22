@@ -96,7 +96,9 @@ try {
     await expectText('Connected')
   }
   if (view === 'settings' || (view === 'overlay' && argument !== '1')) await expectText('Awaiting zone')
-  if (view === 'timer') {
+  if (view === 'timer' && argument === 'click-point') {
+    await rewardControlPoint('[data-reward-target="act-timer"]')
+  } else if (view === 'timer') {
     const ready = argument === 'ready-one'
     const running = !ready && argument !== 'stopped-two'
     const act = ready || argument === 'running-one' ? 1 : 2
