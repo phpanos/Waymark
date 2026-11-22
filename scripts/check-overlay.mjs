@@ -144,9 +144,12 @@ try {
     await expectText('Kill the Rust King. Take the final girdle.', '.quick-route li:nth-child(2)')
     await expectText('Portal to Renly for the Runed Spikes.', '.quick-route li:nth-child(3)')
     await expectText('Waypoint back to the Grelwood tree.', '.quick-route li:nth-child(4)')
-    await waitFor('the ordered steps to fit without a duplicate shortcut', () => evaluate(`(() => {
+    await waitFor('the 16px ordered steps to fit without a duplicate shortcut', () => evaluate(`(() => {
       const panel = document.querySelector('.compact').getBoundingClientRect()
-      return !document.querySelector('.shortcut-preview, .overlay-details') && panel.bottom <= innerHeight - 1
+      const steps = document.querySelectorAll('.quick-route li')
+      return steps.length === 4 && [...steps].every(step => getComputedStyle(step).fontSize === '16px' &&
+        step.scrollWidth <= step.clientWidth && step.getBoundingClientRect().bottom < panel.bottom) &&
+        !document.querySelector('.shortcut-preview, .overlay-details') && panel.bottom <= innerHeight - 1
     })()`))
   } else if (view === 'diagram') {
     if (argument === 'collapsed') {
@@ -163,6 +166,9 @@ try {
       await expectText('Asinia · 1 key piece', '.route-diagram li:last-child span')
       await expectText('Bring both key pieces to Lachlann', '.route-diagram-destination span')
       await expectText('Activate the checkpoint at each tomb entrance as you find it. If both are active, use checkpoint travel to reach the other entrance after your first key.', '.zone-shortcut p')
+      await waitFor('expanded directions to use 15px text', () => evaluate(`
+        getComputedStyle(document.querySelector('.direction-legs li p')).fontSize === '15px'
+      `))
       await waitFor('both branches and the destination to fit in the overlay', () => evaluate(`(() => {
         const panel = document.querySelector('.compact').getBoundingClientRect()
         const [left, right, gate] = [...document.querySelectorAll('.route-diagram li, .route-diagram-destination')]
