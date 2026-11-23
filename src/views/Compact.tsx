@@ -100,11 +100,11 @@ export function Compact({ state, previousZone = null, storyStep }: {
         }
         return right > left && bottom > top ? [{ id: control.dataset.rewardTarget || null, left, top, right, bottom }] : []
       })
-      const viewportHeight = window.innerHeight
-      const key = JSON.stringify([state.revision, viewportHeight, targets])
+      const { innerWidth, innerHeight } = window
+      const key = JSON.stringify([state.revision, innerWidth, innerHeight, targets])
       if (key === lastTargets.current) return
       lastTargets.current = key
-      void native.setRewardTargets(state.revision, viewportHeight, targets).catch(console.error)
+      void native.setRewardTargets(state.revision, innerWidth, innerHeight, targets).catch(console.error)
     }
     measure()
     const resize = new ResizeObserver(measure)

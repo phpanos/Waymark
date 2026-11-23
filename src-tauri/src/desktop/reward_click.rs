@@ -25,6 +25,7 @@ pub(super) struct RewardTarget {
 #[derive(Default)]
 pub(super) struct RewardTargets {
     pub revision: u64,
+    pub width: u16,
     pub height: u16,
     pub targets: Vec<RewardTarget>,
 }
@@ -35,16 +36,26 @@ impl RewardTargets {
             return None;
         }
         let scale = if dpi == 0 { 1.0 } else { f64::from(dpi) / 96.0 };
-        if (f64::from(rect.bottom - rect.top) - f64::from(self.height) * scale).abs() > 2.0 {
+        if (f64::from(rect.right - rect.left) - f64::from(self.width) * scale).abs() > 2.0 {
             return None;
         }
+        let height_matches =
+            (f64::from(rect.bottom - rect.top) - f64::from(self.height) * scale).abs() <= 2.0;
         let x = f64::from(x - rect.left) / scale;
         let y = f64::from(y - rect.top) / scale;
         let target = self.targets.iter().find(|target| {
+            let id = target.id.as_deref();
+            // The timer and guide arrows sit above the scrolling body and keep their
+            // offsets when only the native window height changes.
+            let fixed_to_top = matches!(
+                id,
+                Some(ACT_TIMER_TARGET | "guide:previous" | "guide:next" | "guide:live")
+            );
             matches!(
-                target.id.as_deref(),
+                id,
                 Some(ACT_TIMER_TARGET | ACT_REWARDS_TARGET | PAGE_UP_TARGET | PAGE_DOWN_TARGET)
             ) == alt
+                && (height_matches || fixed_to_top)
                 && x >= target.left
                 && x < target.right
                 && y >= target.top
@@ -65,6 +76,7 @@ mod tests {
     fn reward_target_respects_window_bounds_and_display_scale() {
         let mut targets = RewardTargets {
             revision: 8,
+            width: 328,
             height: 200,
             targets: vec![RewardTarget {
                 id: Some("G1_2:1".into()),
@@ -98,11 +110,57 @@ mod tests {
             )
             .is_none());
 
-        for id in [ACT_TIMER_TARGET, ACT_REWARDS_TARGET, PAGE_UP_TARGET, PAGE_DOWN_TARGET] {
+        for id in [
+            ACT_TIMER_TARGET,
+            ACT_REWARDS_TARGET,
+            PAGE_UP_TARGET,
+            PAGE_DOWN_TARGET,
+        ] {
             targets.targets[0].id = Some(id.into());
             assert!(targets.hit(rect, 144, (-420, 380), false).is_none());
             let hit = targets.hit(rect, 144, (-420, 380), true).unwrap();
             assert_eq!(hit.id.as_deref(), Some(id));
         }
+    }
+
+    #[test]
+    fn height_changes_preserve_guide_targets_but_width_changes_invalidate_them() {
+        let targets = RewardTargets {
+            revision: 8,
+            width: 328,
+            height: 172,
+            targets: vec![RewardTarget {
+                id: Some("guide:next".into()),
+                left: 281.0,
+                top: 48.0,
+                right: 305.0,
+                bottom: 70.0,
+            }],
+        };
+        let taller = RECT {
+            left: 0,
+            top: 0,
+            right: 328,
+            bottom: 240,
+        };
+        assert_eq!(
+            targets
+                .hit(taller, 96, (293, 60), false)
+                .unwrap()
+                .id
+                .as_deref(),
+            Some("guide:next")
+        );
+        assert!(targets
+            .hit(
+                RECT {
+                    right: 408,
+                    ..taller
+                },
+                96,
+                (293, 60),
+                false
+            )
+            .is_none());
     }
 }
