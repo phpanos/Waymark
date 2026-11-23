@@ -224,11 +224,13 @@ fn set_reward_targets(
     window: WebviewWindow,
     state: State<'_, Runtime>,
     revision: u64,
+    width: u16,
     height: u16,
     targets: Vec<RewardTarget>,
 ) {
     if window.label() != "overlay"
         || targets.len() > 24
+        || !(1..=settings::MAX_OVERLAY_WIDTH).contains(&width)
         || !(1..=MAX_OVERLAY_HEIGHT).contains(&height)
     {
         return;
@@ -237,6 +239,7 @@ fn set_reward_targets(
     if revision >= hitboxes.revision {
         *hitboxes = RewardTargets {
             revision,
+            width,
             height,
             targets,
         };

@@ -80,14 +80,31 @@ try {
     button.click()
     return true
   })()`))
+  const naturalOverlayHeight = `panel => {
+    const frame = panel.querySelector('.compact-content').getBoundingClientRect()
+    const viewport = panel.querySelector('.overlay-scroll').getBoundingClientRect()
+    const content = panel.querySelector('.overlay-scroll-content').getBoundingClientRect()
+    const height = Math.ceil(frame.height - viewport.height + content.height) + 6
+    return panel.matches('.with-quest-reward:not(.expanded)') ? Math.max(190, height) : height
+  }`
   async function rewardControlPoint(selector) {
-    const point = await waitFor('the visible reward control', () => evaluate(`(() => {
-      const bounds = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect()
-      const height = Math.ceil(document.querySelector('.compact').getBoundingClientRect().height) + 4
-      if (!bounds || bounds.bottom > innerHeight || Math.abs(innerHeight - height) > 1) return null
-      return [Math.round((bounds.left + bounds.width / 2) * devicePixelRatio),
-              Math.round((bounds.top + bounds.height / 2) * devicePixelRatio)]
-    })()`))
+    const point = await waitFor(`the visible control ${selector} after the overlay resizes`, async () => {
+      const layout = await evaluate(`(async () => {
+        const { settings: { placement } } = await window.__TAURI_INTERNALS__.invoke('snapshot')
+        const panel = document.querySelector('.compact')
+        const bounds = panel.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect()
+        const expected = Math.min(720, screen.availHeight, Math.max(placement.minHeight, (${naturalOverlayHeight})(panel)))
+        return {
+          bounds: bounds?.toJSON(), expected, height: innerHeight, scale: devicePixelRatio,
+        }
+      })()`)
+      const { bounds, expected, height, scale } = layout
+      if (!bounds || bounds.top < 0 || bounds.bottom > height || Math.abs(height - expected) > 1) {
+        throw new Error(JSON.stringify(layout))
+      }
+      return [Math.round((bounds.left + bounds.width / 2) * scale),
+              Math.round((bounds.top + bounds.height / 2) * scale)]
+    })
     console.log('Reward control point ' + point.join(' '))
   }
   const visibleBodyFits = `(() => {
@@ -131,13 +148,11 @@ try {
             const panel = document.querySelector('.compact')
             const body = panel.querySelector('.overlay-scroll')
             const flow = body.querySelector('.overlay-scroll-content')
-            const frame = panel.querySelector('.compact-content')
             const rewards = panel.querySelector('.act-rewards-toggle')
             const bounds = panel.getBoundingClientRect()
             const bodyBounds = body.getBoundingClientRect()
             const footerBounds = rewards.getBoundingClientRect()
-            const needed = Math.ceil(frame.getBoundingClientRect().height - bodyBounds.height +
-              flow.getBoundingClientRect().height) + 6
+            const needed = (${naturalOverlayHeight})(panel)
             return {
               area: panel.dataset.areaId, expanded: panel.classList.contains('expanded'),
               width: innerWidth, height: innerHeight, needed,

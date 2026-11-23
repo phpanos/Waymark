@@ -16,7 +16,8 @@ export const native = {
     invoke<boolean>('set_town_reward', { profile, reward, expected, status }),
   listenRewards: (accept: (action: RewardAction) => void) => listen<RewardAction>(rewardChannel, e => accept(e.payload)),
   listenRewardClicks: (accept: (click: RewardClick) => void) => listen<RewardClick>(rewardClickChannel, e => accept(e.payload)),
-  setRewardTargets: (revision: number, height: number, targets: RewardTarget[]) => invoke<void>('set_reward_targets', { revision, height, targets }),
+  setRewardTargets: (revision: number, width: number, height: number, targets: RewardTarget[]) =>
+    invoke<void>('set_reward_targets', { revision, width, height, targets }),
   toggle: () => invoke<void>('toggle_overlay'),
   toggleActTimer: () => invoke<void>('toggle_act_timer'),
   importMobalyticsGuide: (url: string) => invoke<unknown>('import_mobalytics_guide', { url }),
